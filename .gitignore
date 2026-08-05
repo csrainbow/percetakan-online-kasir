@@ -1,0 +1,11 @@
+*.bak*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.tgz
+data/
+logs/
+_debug/
+uploads/
+vendor/
