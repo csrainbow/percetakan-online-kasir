@@ -7,7 +7,7 @@ if (isset($_SESSION['customer_id'])) {
     exit;
 }
 
-$pageTitle = 'Pesanan Saya - Percetakan Ikky Share';
+$pageTitle = 'Pesanan Saya - Rainbow Printing';
 include 'includes/header.php';
 ?>
 
@@ -22,7 +22,7 @@ include 'includes/header.php';
 }
 .pesanan-container h1 {
     font-size: 28px;
-    color: #111111;
+    color: #2c3e50;
     text-align: center;
     margin-bottom: 8px;
 }
@@ -49,7 +49,7 @@ include 'includes/header.php';
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .pilihan-card:hover {
-    border-color: #e53935;
+    border-color: #f39c12;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     transform: translateY(-3px);
 }
@@ -60,7 +60,7 @@ include 'includes/header.php';
 }
 .pilihan-card h2 {
     font-size: 20px;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 10px;
 }
 .pilihan-card p {
@@ -70,7 +70,7 @@ include 'includes/header.php';
     margin-bottom: 6px;
 }
 .pilihan-card .highlight {
-    color: #111111;
+    color: #2c3e50;
     font-weight: 600;
 }
 .pilihan-card .btn-group {
@@ -93,18 +93,18 @@ include 'includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #000000;
+    background: #1a252f;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(44,62,80,0.3);
 }
 .btn-outline {
     background: #fff;
-    color: #111111;
-    border: 1px solid #111111;
+    color: #2c3e50;
+    border: 1px solid #2c3e50;
 }
 .btn-outline:hover {
     background: #f8f9fa;

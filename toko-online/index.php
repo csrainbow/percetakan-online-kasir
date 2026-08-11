@@ -23,7 +23,7 @@ include 'includes/header.php';
 .hero {
     text-align: center;
     padding: 60px 20px 50px;
-    background: linear-gradient(135deg, #111111 0%, #3498db 100%);
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
     color: #fff;
     border-radius: 16px;
     margin-bottom: 40px;
@@ -58,7 +58,7 @@ include 'includes/header.php';
     z-index: 1;
 }
 .hero h1 span {
-    color: #e53935;
+    color: #f39c12;
 }
 .hero p {
     font-size: 18px;
@@ -71,7 +71,7 @@ include 'includes/header.php';
     margin-right: auto;
 }
 .hero .btn {
-    background: #e53935;
+    background: #f39c12;
     color: #fff;
     padding: 14px 40px;
     border-radius: 50px;
@@ -84,7 +84,7 @@ include 'includes/header.php';
     z-index: 1;
 }
 .hero .btn:hover {
-    background: #c62828;
+    background: #d68910;
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(243,156,18,0.4);
 }
@@ -102,7 +102,7 @@ include 'includes/header.php';
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    border-bottom: 3px solid #111111;
+    border-bottom: 3px solid #2c3e50;
     transition: all 0.3s;
 }
 .home-stats .stat-item:hover {
@@ -112,7 +112,7 @@ include 'includes/header.php';
 .home-stats .stat-item .number {
     font-size: 28px;
     font-weight: 700;
-    color: #111111;
+    color: #2c3e50;
 }
 .home-stats .stat-item .label {
     font-size: 13px;
@@ -131,7 +131,7 @@ include 'includes/header.php';
 }
 .categories h2 {
     font-size: 24px;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 20px;
     display: flex;
     align-items: center;
@@ -141,7 +141,7 @@ include 'includes/header.php';
     content: '';
     flex: 1;
     height: 2px;
-    background: linear-gradient(90deg, #e53935, transparent);
+    background: linear-gradient(90deg, #f39c12, transparent);
 }
 .category-grid {
     display: grid;
@@ -162,7 +162,7 @@ include 'includes/header.php';
 .category-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border-color: #e53935;
+    border-color: #f39c12;
 }
 .category-icon {
     font-size: 36px;
@@ -180,7 +180,7 @@ include 'includes/header.php';
 }
 .featured h2 {
     font-size: 24px;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 20px;
     display: flex;
     align-items: center;
@@ -190,7 +190,7 @@ include 'includes/header.php';
     content: '';
     flex: 1;
     height: 2px;
-    background: linear-gradient(90deg, #e53935, transparent);
+    background: linear-gradient(90deg, #f39c12, transparent);
 }
 .product-grid {
     display: grid;
@@ -208,7 +208,7 @@ include 'includes/header.php';
 .product-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    border-color: #e53935;
+    border-color: #f39c12;
 }
 .product-img-link {
     display: block;
@@ -245,12 +245,12 @@ include 'includes/header.php';
     font-size: 14px;
     margin: 4px 0 6px;
     line-height: 1.4;
-    color: #111111;
+    color: #2c3e50;
 }
 .product-price {
     font-size: 17px;
     font-weight: 700;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 8px;
 }
 .product-info .btn {
@@ -262,12 +262,12 @@ include 'includes/header.php';
     font-size: 13px;
     text-decoration: none;
     transition: all 0.3s;
-    border: 1px solid #111111;
-    color: #111111;
+    border: 1px solid #2c3e50;
+    color: #2c3e50;
     background: transparent;
 }
 .product-info .btn:hover {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
 }
 
@@ -279,13 +279,13 @@ include 'includes/header.php';
     display: inline-block;
     padding: 12px 32px;
     border-radius: 6px;
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
     text-decoration: none;
     transition: all 0.3s;
 }
 .text-center .btn:hover {
-    background: #000000;
+    background: #1a252f;
     transform: translateY(-2px);
 }
 

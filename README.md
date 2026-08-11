@@ -16,7 +16,7 @@ percetakan-online-kasir/
 │   ├── payment/      # pembayaran & notifikasi (Midtrans)
 │   ├── includes/     # functions.php (WA, email, dll)
 │   ├── router.php    # pengaman php -S (blokir database.sqlite)
-│   └── *.php         # index, products, cart, checkout, cek-pesanan, faq, privacy-policy, terms-of-service, ...
+│   └── *.php         # index, products, cart, checkout, cek-pesanan, tentang-kami, upload-design, ...
 └── kasir/            # aplikasi kasir
     ├── pages/        # dashboard, penjualan, produk, pesanan, piutang, laporan, histori, pengaturan, log, rekap
     ├── layout/       # header & footer

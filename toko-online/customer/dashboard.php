@@ -51,7 +51,7 @@ include '../includes/header.php';
 .dashboard-header h1 {
     margin: 0;
     font-size: 24px;
-    color: #111111;
+    color: #2c3e50;
 }
 .dashboard-header .subtitle {
     color: #6c757d;
@@ -84,10 +84,10 @@ include '../includes/header.php';
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-.stat-item .number.total { color: #111111; }
-.stat-item .number.pending { color: #e53935; }
+.stat-item .number.total { color: #2c3e50; }
+.stat-item .number.pending { color: #f39c12; }
 .stat-item .number.paid { color: #27ae60; }
-.stat-item .number.dp { color: #e53935; }
+.stat-item .number.dp { color: #f39c12; }
 .stat-item .number.verification { color: #3498db; }
 
 /* 🔥 ORDER CARD */
@@ -101,7 +101,7 @@ include '../includes/header.php';
 }
 .order-card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border-color: #e53935;
+    border-color: #f39c12;
 }
 .order-card .order-header {
     display: flex;
@@ -114,11 +114,11 @@ include '../includes/header.php';
 .order-card .order-code {
     font-size: 16px;
     font-weight: 600;
-    color: #111111;
+    color: #2c3e50;
     text-decoration: none;
 }
 .order-card .order-code:hover {
-    color: #e53935;
+    color: #f39c12;
 }
 .order-card .order-date {
     font-size: 13px;
@@ -165,7 +165,7 @@ include '../includes/header.php';
 .progress-bar .fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #e53935, #27ae60);
+    background: linear-gradient(90deg, #f39c12, #27ae60);
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -192,7 +192,7 @@ include '../includes/header.php';
 .status-cancelled { background: #f8d7da; color: #721c24; }
 .status-unpaid { background: #e9ecef; color: #495057; }
 .status-pending_verification { background: #fff3cd; color: #856404; }
-.status-dp { background: #e53935; color: #fff; }
+.status-dp { background: #f39c12; color: #fff; }
 .status-paid { background: #27ae60; color: #fff; }
 
 /* 🔥 EMPTY STATE */
@@ -333,7 +333,7 @@ include '../includes/header.php';
                     <span>
                         <?= htmlspecialchars($item['product_name']) ?>
                         <?php if ($item['design_service'] === 'jasa'): ?>
-                            <span style="color:#d32f2f;font-size:12px;">(+ Jasa Desain)</span>
+                            <span style="color:#e67e22;font-size:12px;">(+ Jasa Desain)</span>
                         <?php endif; ?>
                         <?php if ($item['design_result_file']): ?>
                             <span style="color:#27ae60;font-size:12px;">✅ Hasil desain siap</span>
@@ -382,7 +382,7 @@ include '../includes/header.php';
                 <?php endif; ?>
                 
                 <?php if ($o['payment_status'] === 'dp' && $sisa > 0): ?>
-                    <a href="/payment/confirm.php?order=<?= urlencode($o['order_code']) ?>" class="btn btn-warning btn-sm" style="background:#e53935;color:#fff;border-color:#e53935;">
+                    <a href="/payment/confirm.php?order=<?= urlencode($o['order_code']) ?>" class="btn btn-warning btn-sm" style="background:#f39c12;color:#fff;border-color:#f39c12;">
                         <i class="fas fa-money-bill-wave"></i> Bayar Sisa (<?= formatRupiah($sisa) ?>)
                     </a>
                 <?php endif; ?>

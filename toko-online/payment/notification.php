@@ -166,13 +166,23 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
             $order['id']
         ]);
         $orderUpdated = true;
+
+        // 🔥 KIRIM WA KE PELANGGAN (Fonnte/Wablas)
+        if (function_exists('waOrderStatus')) {
+            try {
+                waOrderStatus($db, $order['id'], $newPaymentStatus === 'paid' ? 'paid' : 'dp');
+                logMidtrans("✅ WA sent to customer: " . $order['customer_phone']);
+            } catch (Exception $e) {
+                logMidtrans("❌ WA error: " . $e->getMessage());
+            }
+        }
         
         // 🔥 SIMPAN KE TABEL PAYMENTS
         $checkPayment = $db->prepare("SELECT id FROM payments WHERE order_id=? AND payment_type='midtrans' AND amount=?");
         $checkPayment->execute([$order['id'], $amount]);
         if (!$checkPayment->fetch()) {
             $stmt = $db->prepare("INSERT INTO payments (order_id, amount, bank_name, account_number, account_name, proof_image, payment_type, status, created_at) 
-                                   VALUES (?, ?, 'Midtrans', 'Online', 'Midtrans', '', 'midtrans', 'approved', NOW())");
+                                   VALUES (?, ?, 'Midtrans', 'Online', 'Midtrans', '', 'midtrans', 'approved', datetime('now'))");
             $stmt->execute([
                 $order['id'],
                 $amount,
@@ -214,7 +224,7 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
                     $message .= "Sisa pembayaran: Rp " . number_format($order['total'] - $newTotalPaid, 0, ',', '.') . "\n";
                     $message .= "Silakan lunasi sisa pembayaran melalui halaman pesanan Anda.\n\n";
                 }
-                $message .= "Terima kasih telah berbelanja di Percetakan Ikky Share!\n";
+                $message .= "Terima kasih telah berbelanja di Rainbow Printing!\n";
                 $message .= "Link: https://rainbowprinting.web.id/customer/order-detail.php?order=" . $order['order_code'];
                 sendEmail($customerEmail, $subject, $message);
                 logMidtrans("📧 Customer email sent to: $customerEmail");

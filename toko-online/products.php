@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 
-$pageTitle = 'Produk - Percetakan Ikky Share';
+$pageTitle = 'Produk - Rainbow Printing';
 
 // 🔥 🔥 FILTER & SORTING 🔥 🔥
 $category = $_GET['category'] ?? '';
@@ -84,7 +84,7 @@ include 'includes/header.php';
 }
 .products-header h1 {
     font-size: 24px;
-    color: #111111;
+    color: #2c3e50;
     margin: 0;
 }
 .products-header .product-count {
@@ -123,20 +123,20 @@ include 'includes/header.php';
     text-decoration: none;
     border: 1px solid #dee2e6;
     transition: all 0.3s;
-    color: #111111;
+    color: #2c3e50;
     background: #fff;
 }
 .filter-bar .btn:hover {
-    border-color: #e53935;
+    border-color: #f39c12;
     background: #fef9e7;
 }
 .filter-bar .btn.active {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
-    border-color: #111111;
+    border-color: #2c3e50;
 }
 .filter-bar .btn.active:hover {
-    background: #000000;
+    background: #1a252f;
 }
 .filter-bar .search-box {
     display: flex;
@@ -151,7 +151,7 @@ include 'includes/header.php';
     min-width: 180px;
 }
 .filter-bar .search-box input:focus {
-    border-color: #e53935;
+    border-color: #f39c12;
     outline: none;
 }
 .filter-bar .search-box .btn {
@@ -168,7 +168,7 @@ include 'includes/header.php';
     cursor: pointer;
 }
 .sort-select:focus {
-    border-color: #e53935;
+    border-color: #f39c12;
     outline: none;
 }
 
@@ -203,7 +203,7 @@ include 'includes/header.php';
 .product-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border-color: #e53935;
+    border-color: #f39c12;
 }
 .product-img-link {
     display: block;
@@ -243,13 +243,13 @@ include 'includes/header.php';
     font-size: 14px;
     margin: 4px 0 6px;
     line-height: 1.4;
-    color: #111111;
+    color: #2c3e50;
     flex: 1;
 }
 .product-price {
     font-size: 16px;
     font-weight: 700;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 8px;
 }
 .product-stock {
@@ -257,7 +257,7 @@ include 'includes/header.php';
     margin-bottom: 6px;
 }
 .product-stock .in-stock { color: #27ae60; }
-.product-stock .out-of-stock { color: #d32f2f; }
+.product-stock .out-of-stock { color: #e74c3c; }
 .product-info .btn {
     display: block;
     width: 100%;
@@ -267,12 +267,12 @@ include 'includes/header.php';
     font-size: 13px;
     text-decoration: none;
     transition: all 0.3s;
-    border: 1px solid #111111;
-    color: #111111;
+    border: 1px solid #2c3e50;
+    color: #2c3e50;
     background: transparent;
 }
 .product-info .btn:hover {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
 }
 
@@ -288,7 +288,7 @@ include 'includes/header.php';
     margin-bottom: 15px;
 }
 .empty-state h2 {
-    color: #111111;
+    color: #2c3e50;
     font-size: 22px;
     margin-bottom: 8px;
 }
@@ -300,12 +300,12 @@ include 'includes/header.php';
     display: inline-block;
     padding: 10px 28px;
     border-radius: 6px;
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
     text-decoration: none;
 }
 .empty-state .btn:hover {
-    background: #000000;
+    background: #1a252f;
 }
 
 /* 🔥 PAGINATION */
@@ -321,18 +321,18 @@ include 'includes/header.php';
     border: 1px solid #ddd;
     border-radius: 6px;
     text-decoration: none;
-    color: #111111;
+    color: #2c3e50;
     font-size: 14px;
     transition: all 0.3s;
 }
 .pagination a:hover {
     background: #f8f9fa;
-    border-color: #e53935;
+    border-color: #f39c12;
 }
 .pagination .active {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
-    border-color: #111111;
+    border-color: #2c3e50;
 }
 .pagination .disabled {
     opacity: 0.4;
@@ -443,7 +443,9 @@ include 'includes/header.php';
         <?php foreach ($products as $p): 
             $firstImg = getFirstProductImage($p['id']);
             $isCustom = $p['custom_size'];
-            $priceDisplay = $isCustom ? formatRupiah($p['price_per_m2']) . '/m²' : formatRupiah($p['price']);
+            $unitLabels = ['none'=>'','m2'=>'/m²','meter'=>'/m','lembar'=>'/lembar','buku'=>'/buku','rim'=>'/rim','pcs'=>'/pcs'];
+            $ul = $unitLabels[$p['size_unit'] ?? 'none'] ?? '';
+            $priceDisplay = $isCustom ? formatRupiah($p['price_per_m2']) . $ul : formatRupiah($p['price']);
             $inStock = $p['stock'] > 0;
             $icon = $categoryIcons[$p['category']] ?? '📄';
         ?>

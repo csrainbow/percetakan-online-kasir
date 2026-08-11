@@ -34,7 +34,7 @@ $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : '
 define('BASE_URL', $baseUrl);
 
 // 🔥 Nama Toko
-define('SITE_NAME', 'Percetakan Ikky Share');
+define('SITE_NAME', 'Rainbow Printing');
 define('SITE_DESCRIPTION', 'Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, dan kebutuhan percetakan lainnya.');
 
 // 🔥 WhatsApp

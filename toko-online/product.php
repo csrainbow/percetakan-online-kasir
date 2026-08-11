@@ -16,7 +16,7 @@ if (!$product) {
     $pageTitle = 'Produk Tidak Ditemukan';
     include 'includes/header.php';
     echo '<div style="text-align:center;padding:60px 20px;">';
-    echo '<h1 style="font-size:48px;color:#111111;">404</h1>';
+    echo '<h1 style="font-size:48px;color:#2c3e50;">404</h1>';
     echo '<p style="color:#6c757d;">Produk yang Anda cari tidak ditemukan.</p>';
     echo '<a href="products.php" class="btn btn-primary">Kembali ke Produk</a>';
     echo '</div>';
@@ -24,7 +24,7 @@ if (!$product) {
     exit;
 }
 
-$pageTitle = htmlspecialchars($product['name']) . ' - Percetakan Ikky Share';
+$pageTitle = htmlspecialchars($product['name']) . ' - Rainbow Printing';
 
 // 🔥 AMBIL PRODUK TERKAIT
 $related = $db->prepare("SELECT * FROM products WHERE category = ? AND id != ? LIMIT 4");
@@ -170,7 +170,7 @@ include 'includes/header.php';
 .slider-thumb.active,
 .slider-thumb:hover {
     opacity: 1;
-    border-color: #e53935;
+    border-color: #f39c12;
 }
 
 /* 🔥 PRODUCT INFO */
@@ -187,13 +187,13 @@ include 'includes/header.php';
 }
 .product-detail-info h1 {
     font-size: 26px;
-    color: #111111;
+    color: #2c3e50;
     margin: 0;
 }
 .product-detail-info .product-price {
     font-size: 24px;
     font-weight: 700;
-    color: #111111;
+    color: #2c3e50;
 }
 .product-detail-info .product-description {
     color: #555;
@@ -211,7 +211,7 @@ include 'includes/header.php';
     display: block;
     margin-bottom: 5px;
     font-size: 14px;
-    color: #111111;
+    color: #2c3e50;
 }
 .custom-size-inputs select,
 .custom-size-inputs input {
@@ -232,7 +232,7 @@ include 'includes/header.php';
     margin-top: 10px;
 }
 #size-total strong {
-    color: #111111;
+    color: #2c3e50;
 }
 
 /* 🔥 DESIGN SERVICE */
@@ -253,7 +253,7 @@ include 'includes/header.php';
 .design-service-options input[type="radio"] {
     width: 16px;
     height: 16px;
-    accent-color: #e53935;
+    accent-color: #f39c12;
 }
 #design-upload-area {
     margin: 8px 0 8px 28px;
@@ -288,9 +288,9 @@ include 'includes/header.php';
     justify-content: center;
 }
 .qty-control button:hover {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
-    border-color: #111111;
+    border-color: #2c3e50;
 }
 .qty-control input {
     width: 50px;
@@ -320,11 +320,11 @@ include 'includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #000000;
+    background: #1a252f;
     transform: translateY(-1px);
 }
 .btn-lg {
@@ -340,7 +340,7 @@ include 'includes/header.php';
 }
 .related h2 {
     font-size: 20px;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 15px;
 }
 .related .product-grid {
@@ -359,7 +359,7 @@ include 'includes/header.php';
 .related .product-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border-color: #e53935;
+    border-color: #f39c12;
 }
 .related .product-img-link {
     display: block;
@@ -384,12 +384,12 @@ include 'includes/header.php';
     font-size: 13px;
     margin: 0 0 4px;
     line-height: 1.4;
-    color: #111111;
+    color: #2c3e50;
 }
 .related .product-info .product-price {
     font-size: 15px;
     font-weight: 700;
-    color: #111111;
+    color: #2c3e50;
 }
 .related .product-info .btn {
     display: block;
@@ -398,12 +398,12 @@ include 'includes/header.php';
     font-size: 12px;
     padding: 6px;
     background: transparent;
-    color: #111111;
-    border: 1px solid #111111;
+    color: #2c3e50;
+    border: 1px solid #2c3e50;
     border-radius: 4px;
 }
 .related .product-info .btn:hover {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
 }
 
@@ -586,7 +586,7 @@ include 'includes/header.php';
                                data-vname="<?= htmlspecialchars($v['name'], ENT_QUOTES) ?>"
                                data-vprice="<?= $v['price'] ?>" onchange="calcPrice()">
                         <?= htmlspecialchars($v['name']) ?> 
-                        <span style="color:#d32f2f;font-size:13px;">+ <?= formatRupiah($v['price']) ?></span>
+                        <span style="color:#e67e22;font-size:13px;">+ <?= formatRupiah($v['price']) ?></span>
                     </label>
                 </div>
                 <?php endforeach; ?>
@@ -940,7 +940,7 @@ function addToCart(id, name, qty, price, isCustom, width, height, matPrice, matN
 function uploadDesignFile(file, callback) {
     var status = document.getElementById('design-file-status');
     status.textContent = '⏳ Mengupload...';
-    status.style.color = '#e53935';
+    status.style.color = '#f39c12';
     
     var formData = new FormData();
     formData.append('design_file', file);
@@ -957,20 +957,20 @@ function uploadDesignFile(file, callback) {
                     callback(resp.filename);
                 } else {
                     status.textContent = '❌ ' + (resp.message || 'Gagal upload');
-                    status.style.color = '#d32f2f';
+                    status.style.color = '#e74c3c';
                 }
             } catch (e) {
                 status.textContent = '❌ Gagal upload file';
-                status.style.color = '#d32f2f';
+                status.style.color = '#e74c3c';
             }
         } else {
             status.textContent = '❌ Server error (' + xhr.status + ')';
-            status.style.color = '#d32f2f';
+            status.style.color = '#e74c3c';
         }
     };
     xhr.onerror = function() {
         status.textContent = '❌ Network error';
-        status.style.color = '#d32f2f';
+        status.style.color = '#e74c3c';
     };
     xhr.send(formData);
 }
@@ -982,7 +982,7 @@ function showNotification(msg, type) {
     
     var div = document.createElement('div');
     div.className = 'notif-toast';
-    div.style.backgroundColor = type === 'error' ? '#d32f2f' : '#27ae60';
+    div.style.backgroundColor = type === 'error' ? '#e74c3c' : '#27ae60';
     div.textContent = msg;
     document.body.appendChild(div);
     

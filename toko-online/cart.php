@@ -26,7 +26,7 @@ include 'includes/header.php';
 }
 .cart-header h1 {
     font-size: 24px;
-    color: #111111;
+    color: #2c3e50;
     margin: 0;
 }
 .cart-header .cart-count {
@@ -54,7 +54,7 @@ include 'includes/header.php';
 }
 .cart-item:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border-color: #e53935;
+    border-color: #f39c12;
 }
 .cart-item .item-image {
     width: 70px;
@@ -80,7 +80,7 @@ include 'includes/header.php';
 .cart-item .item-name {
     font-weight: 600;
     font-size: 15px;
-    color: #111111;
+    color: #2c3e50;
 }
 .cart-item .item-detail {
     font-size: 13px;
@@ -90,7 +90,7 @@ include 'includes/header.php';
 .cart-item .item-price {
     font-weight: 600;
     font-size: 15px;
-    color: #111111;
+    color: #2c3e50;
     white-space: nowrap;
 }
 .cart-item .item-qty {
@@ -112,9 +112,9 @@ include 'includes/header.php';
     justify-content: center;
 }
 .cart-item .item-qty button:hover {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
-    border-color: #111111;
+    border-color: #2c3e50;
 }
 .cart-item .item-qty button:disabled {
     opacity: 0.4;
@@ -137,14 +137,14 @@ include 'includes/header.php';
 .cart-item .item-subtotal {
     font-weight: 700;
     font-size: 16px;
-    color: #111111;
+    color: #2c3e50;
     min-width: 100px;
     text-align: right;
 }
 .cart-item .item-remove {
     background: none;
     border: none;
-    color: #d32f2f;
+    color: #e74c3c;
     font-size: 20px;
     cursor: pointer;
     padding: 4px 8px;
@@ -186,7 +186,7 @@ include 'includes/header.php';
 .cart-summary .summary-item .value {
     font-size: 20px;
     font-weight: 700;
-    color: #111111;
+    color: #2c3e50;
 }
 .cart-summary .summary-actions {
     display: flex;
@@ -208,7 +208,7 @@ include 'includes/header.php';
     opacity: 0.5;
 }
 .empty-cart h2 {
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 8px;
 }
 .empty-cart p {
@@ -222,7 +222,7 @@ include 'includes/header.php';
 }
 .recommended h3 {
     font-size: 18px;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 15px;
 }
 .recommended-grid {
@@ -238,10 +238,10 @@ include 'includes/header.php';
     border: 1px solid #e9ecef;
     transition: all 0.3s;
     text-decoration: none;
-    color: #111111;
+    color: #2c3e50;
 }
 .recommended-card:hover {
-    border-color: #e53935;
+    border-color: #f39c12;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     transform: translateY(-2px);
 }
@@ -255,7 +255,7 @@ include 'includes/header.php';
 }
 .recommended-card .price {
     font-size: 13px;
-    color: #e53935;
+    color: #f39c12;
     font-weight: 600;
 }
 
@@ -439,9 +439,9 @@ function renderCart() {
         var dimLabel = isCustom && item.label ? ' (' + item.label + ')' : '';
         var dsLabel = '';
         if (item.designService === 'jasa') {
-            dsLabel = ' <span style="color:#d32f2f;">🎨 +Jasa Desain</span>';
+            dsLabel = ' <span style="color:#e67e22;">🎨 +Jasa Desain</span>';
         } else if (item.designService === 'upload') {
-            dsLabel = item.designFile ? ' <span style="color:#27ae60;">✅ File terupload</span>' : ' <span style="color:#e53935;">📎 File Desain (upload di checkout)</span>';
+            dsLabel = item.designFile ? ' <span style="color:#27ae60;">✅ File terupload</span>' : ' <span style="color:#f39c12;">📎 File Desain (upload di checkout)</span>';
         }
         
         var itemKey = getItemKey(item);
@@ -546,7 +546,7 @@ function showNotification(msg, type) {
     
     var div = document.createElement('div');
     div.className = 'notif-toast';
-    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#d32f2f' : '#e53935';
+    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#f39c12';
     div.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);background:' + bgColor + ';color:#fff;padding:12px 24px;border-radius:8px;z-index:99999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center;max-width:90%;';
     div.textContent = msg;
     document.body.appendChild(div);

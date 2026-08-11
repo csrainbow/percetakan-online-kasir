@@ -242,7 +242,7 @@ include '../includes/header.php';
 }
 .admin-sidebar {
     width: 220px;
-    background: #111111;
+    background: #2c3e50;
     padding: 20px 15px;
     border-radius: 8px;
     flex-shrink: 0;
@@ -251,7 +251,7 @@ include '../includes/header.php';
     height: fit-content;
 }
 .admin-sidebar h2 {
-    color: #e53935;
+    color: #f39c12;
     font-size: 16px;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -272,10 +272,10 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .admin-sidebar ul li a:hover { background: rgba(255,255,255,0.1); color: #fff; }
-.admin-sidebar ul li a.active { background: #e53935; color: #fff; }
+.admin-sidebar ul li a.active { background: #f39c12; color: #fff; }
 
 .admin-main { flex: 1; min-width: 0; }
-.admin-main h1 { font-size: 24px; color: #111111; margin-bottom: 20px; }
+.admin-main h1 { font-size: 24px; color: #2c3e50; margin-bottom: 20px; }
 
 .alert {
     padding: 12px 15px;
@@ -295,13 +295,13 @@ include '../includes/header.php';
     border: none;
     transition: all 0.3s;
 }
-.btn-primary { background: #111111; color: #fff; }
-.btn-primary:hover { background: #000000; }
+.btn-primary { background: #2c3e50; color: #fff; }
+.btn-primary:hover { background: #1a252f; }
 .btn-success { background: #27ae60; color: #fff; }
 .btn-success:hover { background: #1e8449; }
-.btn-danger { background: #d32f2f; color: #fff; }
-.btn-danger:hover { background: #b71c1c; }
-.btn-outline { background: #fff; color: #111111; border: 1px solid #111111; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-danger:hover { background: #c0392b; }
+.btn-outline { background: #fff; color: #2c3e50; border: 1px solid #2c3e50; }
 .btn-outline:hover { background: #f8f9fa; }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
 
@@ -368,10 +368,10 @@ include '../includes/header.php';
 }
 .admin-form h2 {
     font-size: 18px;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 15px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #e53935;
+    border-bottom: 2px solid #f39c12;
 }
 .form-group {
     margin-bottom: 15px;
@@ -381,7 +381,7 @@ include '../includes/header.php';
     font-weight: 600;
     margin-bottom: 5px;
     font-size: 14px;
-    color: #111111;
+    color: #2c3e50;
 }
 .form-group input, .form-group textarea, .form-group select {
     width: 100%;
@@ -391,7 +391,7 @@ include '../includes/header.php';
     font-size: 14px;
 }
 .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-    border-color: #e53935;
+    border-color: #f39c12;
     outline: none;
 }
 .form-row {
@@ -439,7 +439,7 @@ include '../includes/header.php';
     overflow: hidden;
     transition: all 0.3s;
 }
-.image-item:hover { border-color: #e53935; }
+.image-item:hover { border-color: #f39c12; }
 .image-item img {
     width: 100%;
     height: 100%;
@@ -451,7 +451,7 @@ include '../includes/header.php';
     right: 4px;
     width: 24px;
     height: 24px;
-    background: #d32f2f;
+    background: #e74c3c;
     color: #fff;
     border: none;
     border-radius: 50%;
@@ -500,6 +500,7 @@ include '../includes/header.php';
             <li><a href="dashboard.php">Dashboard</a></li>
             <li><a href="products.php" class="active">Produk</a></li>
             <li><a href="orders.php">Pesanan</a></li>
+            <li><a href="../kasir/" target="_blank">Kasir</a></li>
             <li><a href="edit-halaman.php?slug=tentang-kami">Tentang Kami</a></li>
             <li><a href="settings.php">Pengaturan</a></li>
             <li><a href="logout.php">Logout</a></li>
@@ -737,16 +738,16 @@ include '../includes/header.php';
                             </td>
                             <td>
                                 <?= $p['custom_size'] 
-                                    ? formatRupiah($p['price_per_m2']) . '/m²' 
+                                    ? formatRupiah($p['price_per_m2']) . $ul 
                                     : formatRupiah($p['price']) ?>
                             </td>
                             <td>
                                 <?php if ($p['stock'] > 10): ?>
                                     <span style="color:#27ae60;">✅ <?= $p['stock'] ?></span>
                                 <?php elseif ($p['stock'] > 0): ?>
-                                    <span style="color:#e53935;">⚠️ <?= $p['stock'] ?></span>
+                                    <span style="color:#f39c12;">⚠️ <?= $p['stock'] ?></span>
                                 <?php else: ?>
-                                    <span style="color:#d32f2f;">❌ Habis</span>
+                                    <span style="color:#e74c3c;">❌ Habis</span>
                                 <?php endif; ?>
                             </td>
                             <td>

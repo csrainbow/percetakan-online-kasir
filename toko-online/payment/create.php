@@ -229,7 +229,7 @@ if ($httpCode === 201 && isset($result['redirect_url'])) {
         
         // 🔥 Simpan transaksi ke payments
         $stmt = $db->prepare("INSERT INTO payments (order_id, amount, bank_name, account_number, account_name, proof_image, payment_type, status, created_at) 
-                               VALUES (?, ?, 'Midtrans', 'Online', 'Midtrans', '', 'midtrans', 'pending', NOW())");
+                               VALUES (?, ?, 'Midtrans', 'Online', 'Midtrans', '', 'midtrans', 'pending', CURRENT_TIMESTAMP)");
         $stmt->execute([$order['id'], $sisaPembayaran]);
         
         logMidtrans("✅ Payment created successfully for order: " . $order['order_code']);

@@ -16,7 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'qris_name', 'qris_merchant_id',
         'midtrans_server_key', 'midtrans_client_key',
         'invoice_template', 'invoice_footer', 'printer_options',
-        'whatsapp_number', 'footer_text'
+        'whatsapp_number', 'footer_text',
+        'wa_enabled', 'wa_provider', 'wa_token'
     ];
     
     try {
@@ -83,7 +84,7 @@ include '../includes/header.php';
 }
 .admin-sidebar {
     width: 220px;
-    background: #111111;
+    background: #2c3e50;
     padding: 20px 15px;
     border-radius: 8px;
     flex-shrink: 0;
@@ -92,7 +93,7 @@ include '../includes/header.php';
     height: fit-content;
 }
 .admin-sidebar h2 {
-    color: #e53935;
+    color: #f39c12;
     font-size: 16px;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -113,10 +114,10 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .admin-sidebar ul li a:hover { background: rgba(255,255,255,0.1); color: #fff; }
-.admin-sidebar ul li a.active { background: #e53935; color: #fff; }
+.admin-sidebar ul li a.active { background: #f39c12; color: #fff; }
 
 .admin-main { flex: 1; min-width: 0; }
-.admin-main h1 { font-size: 24px; color: #111111; margin-bottom: 20px; }
+.admin-main h1 { font-size: 24px; color: #2c3e50; margin-bottom: 20px; }
 
 .alert {
     padding: 12px 15px;
@@ -136,8 +137,8 @@ include '../includes/header.php';
     border: none;
     transition: all 0.3s;
 }
-.btn-primary { background: #111111; color: #fff; }
-.btn-primary:hover { background: #000000; }
+.btn-primary { background: #2c3e50; color: #fff; }
+.btn-primary:hover { background: #1a252f; }
 .btn-success { background: #27ae60; color: #fff; }
 .btn-success:hover { background: #1e8449; }
 
@@ -158,7 +159,7 @@ include '../includes/header.php';
 
 .settings-section h2 {
     font-size: 18px;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 15px;
     display: flex;
     align-items: center;
@@ -166,7 +167,7 @@ include '../includes/header.php';
 }
 .settings-section h2 .badge {
     font-size: 11px;
-    background: #e53935;
+    background: #f39c12;
     color: #fff;
     padding: 2px 10px;
     border-radius: 20px;
@@ -180,7 +181,7 @@ include '../includes/header.php';
     font-weight: 600;
     margin-bottom: 5px;
     font-size: 14px;
-    color: #111111;
+    color: #2c3e50;
 }
 .form-group .helper-text {
     font-size: 12px;
@@ -196,7 +197,7 @@ include '../includes/header.php';
     transition: border-color 0.3s;
 }
 .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-    border-color: #e53935;
+    border-color: #f39c12;
     outline: none;
 }
 .form-row {
@@ -225,7 +226,7 @@ include '../includes/header.php';
     font-size: 13px;
     color: #6c757d;
 }
-.qris-preview .qris-info strong { color: #111111; }
+.qris-preview .qris-info strong { color: #2c3e50; }
 
 /* 🔥 RESPONSIVE */
 @media (max-width: 768px) {
@@ -257,9 +258,9 @@ include '../includes/header.php';
     transition: all 0.3s;
     color: #6c757d;
 }
-.tab-nav .tab-btn:hover { background: #f8f9fa; color: #111111; }
+.tab-nav .tab-btn:hover { background: #f8f9fa; color: #2c3e50; }
 .tab-nav .tab-btn.active {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
 }
 .tab-section {
@@ -277,6 +278,7 @@ include '../includes/header.php';
             <li><a href="dashboard.php">Dashboard</a></li>
             <li><a href="products.php">Produk</a></li>
             <li><a href="orders.php">Pesanan</a></li>
+            <li><a href="../kasir/" target="_blank">Kasir</a></li>
             <li><a href="edit-halaman.php?slug=tentang-kami">Tentang Kami</a></li>
             <li><a href="settings.php" class="active">Pengaturan</a></li>
             <li><a href="logout.php">Logout</a></li>
@@ -310,7 +312,7 @@ include '../includes/header.php';
                     
                     <div class="form-group">
                         <label>Nama Toko</label>
-                        <input type="text" name="store_name" value="<?= htmlspecialchars($settings['store_name'] ?? 'Percetakan Ikky Share') ?>" placeholder="Nama toko Anda">
+                        <input type="text" name="store_name" value="<?= htmlspecialchars($settings['store_name'] ?? 'Rainbow Printing') ?>" placeholder="Nama toko Anda">
                     </div>
                     <div class="form-group">
                         <label>Alamat</label>
@@ -325,6 +327,28 @@ include '../includes/header.php';
                             <label>WhatsApp Number (untuk tombol kontak)</label>
                             <input type="text" name="whatsapp_number" value="<?= htmlspecialchars($settings['whatsapp_number'] ?? '') ?>" placeholder="628123456789">
                             <div class="helper-text">Gunakan format internasional tanpa + (contoh: 628123456789)</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notifikasi WhatsApp Pesanan Baru</label>
+                        <select name="wa_enabled">
+                            <option value="" <?= ($settings['wa_enabled'] ?? '') === '' ? 'selected' : '' ?>>Nonaktif</option>
+                            <option value="1" <?= ($settings['wa_enabled'] ?? '') === '1' ? 'selected' : '' ?>>Aktif</option>
+                        </select>
+                        <div class="helper-text">Kirim notifikasi WA ke nomor di atas setiap ada pesanan baru</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Penyedia Gateway</label>
+                            <select name="wa_provider">
+                                <option value="fonnte" <?= ($settings['wa_provider'] ?? 'fonnte') === 'fonnte' ? 'selected' : '' ?>>Fonnte</option>
+                                <option value="wablas" <?= ($settings['wa_provider'] ?? '') === 'wablas' ? 'selected' : '' ?>>Wablas</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Token API (Fonnte/Wablas)</label>
+                            <input type="text" name="wa_token" value="<?= htmlspecialchars($settings['wa_token'] ?? '') ?>" placeholder="Token dari dashboard Fonnte">
+                            <div class="helper-text">Token ada di menu Device Fonnte (tombol Token)</div>
                         </div>
                     </div>
                     <div class="form-group">
@@ -476,7 +500,7 @@ include '../includes/header.php';
                     
                     <div class="form-group">
                         <label>Teks Footer Invoice</label>
-                        <textarea name="invoice_footer" rows="2"><?= htmlspecialchars($settings['invoice_footer'] ?? 'Terima kasih telah berbelanja di Percetakan Ikky Share') ?></textarea>
+                        <textarea name="invoice_footer" rows="2"><?= htmlspecialchars($settings['invoice_footer'] ?? 'Terima kasih telah berbelanja di Percetakan Rainbow') ?></textarea>
                         <div class="helper-text">Teks yang muncul di bagian bawah invoice</div>
                     </div>
                 </div>
@@ -487,7 +511,7 @@ include '../includes/header.php';
                 <button type="submit" class="btn btn-primary" onclick="return confirmSave()">
                     <i class="fas fa-save"></i> Simpan Pengaturan
                 </button>
-                <button type="reset" class="btn btn-outline" style="background:#fff;color:#111111;border:1px solid #111111;padding:8px 16px;border-radius:6px;cursor:pointer;">
+                <button type="reset" class="btn btn-outline" style="background:#fff;color:#2c3e50;border:1px solid #2c3e50;padding:8px 16px;border-radius:6px;cursor:pointer;">
                     <i class="fas fa-undo"></i> Reset
                 </button>
             </div>

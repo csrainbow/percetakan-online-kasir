@@ -64,7 +64,7 @@ function showNotification(msg, type) {
     var div = document.createElement('div');
     div.className = 'notif-toast';
     
-    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#d32f2f' : type === 'warning' ? '#e53935' : '#3498db';
+    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : type === 'warning' ? '#f39c12' : '#3498db';
     var icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
     
     div.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);background:' + bgColor + ';color:#fff;padding:12px 24px;border-radius:8px;z-index:99999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center;max-width:90%;';
@@ -90,8 +90,7 @@ function confirmAction(message) {
 // ============================================
 
 function toggleMenu() {
-    var menu = document.querySelector('.nav-menu');
-    if (menu) menu.classList.toggle('active');
+    document.querySelector('.navbar-nav')?.classList.toggle('open');
 }
 
 // ============================================
@@ -257,9 +256,9 @@ function renderCart() {
         var dimLabel = item.customSize ? ' <span style="font-size:12px;color:#666;">(' + (item.label || '') + ')</span>' : '';
         var dsLabel = '';
         if (item.designService === 'jasa') {
-            dsLabel = ' <span style="font-size:12px;color:#d32f2f;">🎨 +Jasa Desain</span>';
+            dsLabel = ' <span style="font-size:12px;color:#e67e22;">🎨 +Jasa Desain</span>';
         } else if (item.designService === 'upload') {
-            dsLabel = item.designFile ? ' <span style="font-size:12px;color:#27ae60;">✅ File terupload</span>' : ' <span style="font-size:12px;color:#e53935;">📎 File Desain (upload di checkout)</span>';
+            dsLabel = item.designFile ? ' <span style="font-size:12px;color:#27ae60;">✅ File terupload</span>' : ' <span style="font-size:12px;color:#f39c12;">📎 File Desain (upload di checkout)</span>';
         }
         var itemKey = getItemKey(item);
         

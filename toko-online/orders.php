@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/config.php';
 if (!isAdmin()) redirect('/admin/index.php');
 
 // 🔥 🔥 FILTER & PENCARIAN 🔥 🔥
@@ -236,7 +236,7 @@ include '../includes/header.php';
 }
 .admin-sidebar {
     width: 220px;
-    background: #111111;
+    background: #2c3e50;
     padding: 20px 15px;
     border-radius: 8px;
     flex-shrink: 0;
@@ -245,7 +245,7 @@ include '../includes/header.php';
     height: fit-content;
 }
 .admin-sidebar h2 {
-    color: #e53935;
+    color: #f39c12;
     font-size: 16px;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -263,10 +263,10 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .admin-sidebar ul li a:hover { background: rgba(255,255,255,0.1); color: #fff; }
-.admin-sidebar ul li a.active { background: #e53935; color: #fff; }
+.admin-sidebar ul li a.active { background: #f39c12; color: #fff; }
 
 .admin-main { flex: 1; min-width: 0; }
-.admin-main h1 { font-size: 24px; color: #111111; margin-bottom: 20px; }
+.admin-main h1 { font-size: 24px; color: #2c3e50; margin-bottom: 20px; }
 
 /* STATS */
 .stats-mini {
@@ -316,11 +316,11 @@ include '../includes/header.php';
     cursor: pointer;
     font-size: 13px;
 }
-.filter-bar .btn-primary { background: #111111; color: #fff; }
-.filter-bar .btn-primary:hover { background: #000000; }
+.filter-bar .btn-primary { background: #2c3e50; color: #fff; }
+.filter-bar .btn-primary:hover { background: #1a252f; }
 .filter-bar .btn-success { background: #27ae60; color: #fff; }
 .filter-bar .btn-success:hover { background: #1e8449; }
-.filter-bar .btn-outline { background: #fff; color: #111111; border: 1px solid #111111; }
+.filter-bar .btn-outline { background: #fff; color: #2c3e50; border: 1px solid #2c3e50; }
 .filter-bar .btn-outline:hover { background: #f8f9fa; }
 
 /* TABLE */
@@ -354,27 +354,27 @@ include '../includes/header.php';
     font-size: 11px;
     font-weight: 600;
 }
-.status-pending { background: #e53935; color: #fff; }
+.status-pending { background: #f39c12; color: #fff; }
 .status-desain { background: #8e44ad; color: #fff; }
 .status-processed { background: #3498db; color: #fff; }
-.status-printing { background: #111111; color: #fff; }
+.status-printing { background: #2c3e50; color: #fff; }
 .status-done { background: #27ae60; color: #fff; }
-.status-cancelled { background: #d32f2f; color: #fff; }
+.status-cancelled { background: #e74c3c; color: #fff; }
 .status-unpaid { background: #95a5a6; color: #fff; }
-.status-dp { background: #e53935; color: #fff; }
+.status-dp { background: #f39c12; color: #fff; }
 .status-paid { background: #27ae60; color: #fff; }
 .status-pending_verification { background: #3498db; color: #fff; }
 
 .btn-sm { padding: 3px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
 .btn-success { background: #27ae60; color: #fff; }
 .btn-success:hover { background: #1e8449; }
-.btn-warning { background: #e53935; color: #fff; }
-.btn-warning:hover { background: #c62828; }
-.btn-danger { background: #d32f2f; color: #fff; }
-.btn-danger:hover { background: #b71c1c; }
+.btn-warning { background: #f39c12; color: #fff; }
+.btn-warning:hover { background: #d68910; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-danger:hover { background: #c0392b; }
 .btn-info { background: #3498db; color: #fff; }
 .btn-info:hover { background: #2c81ba; }
-.btn-outline { background: #fff; color: #111111; border: 1px solid #111111; }
+.btn-outline { background: #fff; color: #2c3e50; border: 1px solid #2c3e50; }
 .btn-outline:hover { background: #f8f9fa; }
 
 /* PAGINATION */
@@ -390,11 +390,11 @@ include '../includes/header.php';
     border: 1px solid #ddd;
     border-radius: 4px;
     text-decoration: none;
-    color: #111111;
+    color: #2c3e50;
     font-size: 13px;
 }
 .pagination a:hover { background: #f8f9fa; }
-.pagination .active { background: #111111; color: #fff; border-color: #111111; }
+.pagination .active { background: #2c3e50; color: #fff; border-color: #2c3e50; }
 
 /* ALERT */
 .alert {
@@ -446,7 +446,7 @@ include '../includes/header.php';
                 <span class="label">📦 Total</span>
             </div>
             <div class="stat-item">
-                <span class="number" style="color:#e53935;"><?= $stats['pending'] ?? 0 ?></span>
+                <span class="number" style="color:#f39c12;"><?= $stats['pending'] ?? 0 ?></span>
                 <span class="label">⏳ Pending</span>
             </div>
             <div class="stat-item">
@@ -454,7 +454,7 @@ include '../includes/header.php';
                 <span class="label">✅ Lunas</span>
             </div>
             <div class="stat-item">
-                <span class="number" style="color:#e53935;"><?= $stats['dp'] ?? 0 ?></span>
+                <span class="number" style="color:#f39c12;"><?= $stats['dp'] ?? 0 ?></span>
                 <span class="label">💰 DP</span>
             </div>
             <div class="stat-item">
@@ -525,7 +525,7 @@ include '../includes/header.php';
                         <td><?= formatRupiah($o['total']) ?></td>
                         <td><?= formatRupiah($o['total_paid']) ?></td>
                         <td>
-                            <strong style="color: <?= $sisa > 0 ? '#d32f2f' : '#27ae60' ?>">
+                            <strong style="color: <?= $sisa > 0 ? '#e74c3c' : '#27ae60' ?>">
                                 <?= formatRupiah($sisa) ?>
                             </strong>
                             <?php if ($sisa > 0): ?>

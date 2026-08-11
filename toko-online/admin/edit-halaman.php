@@ -86,7 +86,7 @@ include __DIR__ . '/../includes/header.php';
 
 .admin-sidebar {
     width: 220px;
-    background: #111111;
+    background: #2c3e50;
     padding: 20px 15px;
     border-radius: 8px;
     flex-shrink: 0;
@@ -96,7 +96,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .admin-sidebar h2 {
-    color: #e53935;
+    color: #f39c12;
     font-size: 16px;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -128,7 +128,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .admin-sidebar ul li a.active {
-    background: #e53935;
+    background: #f39c12;
     color: #fff;
 }
 
@@ -139,7 +139,7 @@ include __DIR__ . '/../includes/header.php';
 
 .admin-main h1 {
     font-size: 24px;
-    color: #111111;
+    color: #2c3e50;
     margin-bottom: 20px;
 }
 
@@ -176,7 +176,7 @@ include __DIR__ . '/../includes/header.php';
     display: block;
     font-weight: 600;
     margin-bottom: 5px;
-    color: #111111;
+    color: #2c3e50;
     font-size: 14px;
 }
 
@@ -190,7 +190,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .form-group .form-control:focus {
-    border-color: #e53935;
+    border-color: #f39c12;
     outline: none;
 }
 
@@ -225,18 +225,18 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .btn-primary {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
 }
 
 .btn-primary:hover {
-    background: #000000;
+    background: #1a252f;
 }
 
 .btn-outline {
     background: #fff;
-    color: #111111;
-    border: 1px solid #111111;
+    color: #2c3e50;
+    border: 1px solid #2c3e50;
 }
 
 .btn-outline:hover {
@@ -267,19 +267,19 @@ include __DIR__ . '/../includes/header.php';
     cursor: pointer;
     font-size: 13px;
     text-decoration: none;
-    color: #111111;
+    color: #2c3e50;
     transition: all 0.3s;
 }
 
 .page-selector .page-btn:hover {
-    border-color: #e53935;
+    border-color: #f39c12;
     background: #fef9e7;
 }
 
 .page-selector .page-btn.active {
-    background: #e53935;
+    background: #f39c12;
     color: #fff;
-    border-color: #e53935;
+    border-color: #f39c12;
 }
 
 /* 🔥 TOGGLE SWITCH */
@@ -382,9 +382,9 @@ input:checked + .slider:before {
 }
 
 .toolbar button:hover {
-    background: #111111;
+    background: #2c3e50;
     color: #fff;
-    border-color: #111111;
+    border-color: #2c3e50;
 }
 </style>
 
@@ -395,6 +395,7 @@ input:checked + .slider:before {
             <li><a href="dashboard.php">Dashboard</a></li>
             <li><a href="products.php">Produk</a></li>
             <li><a href="orders.php">Pesanan</a></li>
+            <li><a href="../kasir/" target="_blank">Kasir</a></li>
             <li><a href="edit-halaman.php?slug=tentang-kami" class="<?= $slug === 'tentang-kami' ? 'active' : '' ?>">Tentang Kami</a></li>
             <li><a href="settings.php">Pengaturan</a></li>
             <li><a href="logout.php">Logout</a></li>
@@ -496,7 +497,7 @@ input:checked + .slider:before {
         </form>
 
         <!-- 🔥 LIVE PREVIEW -->
-        <div id="livePreview" style="display:none;margin-top:20px;background:#fff;padding:25px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:2px solid #e53935;">
+        <div id="livePreview" style="display:none;margin-top:20px;background:#fff;padding:25px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:2px solid #f39c12;">
             <h3 style="display:flex;justify-content:space-between;align-items:center;">
                 <span>📱 Live Preview</span>
                 <button onclick="document.getElementById('livePreview').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">&times;</button>

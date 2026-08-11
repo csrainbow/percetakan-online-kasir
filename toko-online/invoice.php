@@ -151,12 +151,12 @@ foreach ($items as $item) {
 .invoice-wrapper { margin:20px auto;background:#fff;padding:30px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.06);width:100%;max-width:none; }
 .invoice-head { display:flex;justify-content:space-between;align-items:start;margin-bottom:15px; }
 .invoice-head-left { font-size:12px;color:#555; }
-.invoice-head-left strong { font-size:15px;color:#111111; }
+.invoice-head-left strong { font-size:15px;color:#2c3e50; }
 .invoice-head-right { text-align:right;font-size:12px;color:#555; }
-.invoice-head-right .inv-no { font-size:13px;font-weight:bold;color:#111111;margin-top:5px; }
+.invoice-head-right .inv-no { font-size:13px;font-weight:bold;color:#2c3e50;margin-top:5px; }
 .invoice-mid { display:flex;justify-content:space-between;margin-bottom:15px;padding:10px 12px;background:#f8f9fa;border-radius:6px;font-size:12px; }
 .invoice-table { width:100%;border-collapse:collapse;margin-bottom:10px; }
-.invoice-table th { background:#111111;color:#fff;padding:8px 10px;text-align:left;font-size:11px; }
+.invoice-table th { background:#2c3e50;color:#fff;padding:8px 10px;text-align:left;font-size:11px; }
 .invoice-table td { padding:7px 10px;border-bottom:1px solid #eee;font-size:12px; }
 .invoice-table .item-note { font-size:10px;color:#999; }
 .invoice-bottom { display:flex;justify-content:space-between;margin-top:10px;gap:20px; }
@@ -166,14 +166,14 @@ foreach ($items as $item) {
 .invoice-bottom-right { min-width:200px;font-size:12px; }
 .invoice-bottom-right table { width:100%;border-collapse:collapse; }
 .invoice-bottom-right td { padding:4px 8px;border-bottom:1px solid #ddd; }
-.invoice-bottom-right .total-row td { font-weight:bold;font-size:14px;border-top:2px solid #111111; }
+.invoice-bottom-right .total-row td { font-weight:bold;font-size:14px;border-top:2px solid #2c3e50; }
 .invoice-sign { display:flex;justify-content:space-between;margin-top:30px; }
 .invoice-sign div { text-align:center;min-width:180px;font-size:12px; }
 .invoice-sign .sign-space { margin-bottom:50px; }
 .invoice-footer2 { margin-top:20px;padding-top:10px;border-top:1px solid #ddd;text-align:center;font-size:10px;color:#999; }
 <?php endif; ?>
-.print-btn { position:fixed;top:80px;right:20px;padding:10px 20px;background:#111111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;z-index:100; }
-.print-btn:hover { background:#222222; }
+.print-btn { position:fixed;top:80px;right:20px;padding:10px 20px;background:#2c3e50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;z-index:100; }
+.print-btn:hover { background:#34495e; }
 .page-break { page-break-after:always; }
 @media print { @page { size:A5 landscape; margin:3mm; } .navbar,.footer,.print-btn,.no-print{display:none!important;} .invoice-wrapper{box-shadow:none;border-radius:0;padding:6px 4px;margin:0;max-width:none;width:100%;} body{background:#fff;} .main-content{padding:0;margin:0;max-width:none;} .container.main-content{max-width:none;padding:0;} .invoice-head,.invoice-mid{font-size:8px!important;} .invoice-head-left strong{font-size:11px!important;} .invoice-head-right .inv-no{font-size:9px!important;} .invoice-table th{padding:3px 4px!important;font-size:8px!important;} .invoice-table td{padding:2px 4px!important;font-size:8px!important;line-height:1.2!important;} .invoice-bottom{font-size:8px!important;} .invoice-sign{margin-top:8px!important;} .invoice-sign div{font-size:8px!important;} .invoice-sign .sign-space{margin-bottom:18px!important;} .invoice-footer2{font-size:7px!important;margin-top:5px!important;} .inv-no{margin-top:2px!important;font-size:9px!important;} .invoice-head-right p,.invoice-head-left p{font-size:8px!important;margin:0!important;line-height:1.2!important;} .invoice-table td:nth-child(6),.invoice-table td:nth-child(7){font-size:8px!important;white-space:nowrap;} .invoice-bottom-left ol{font-size:7px!important;line-height:1.3!important;padding-left:10px!important;margin:2px 0!important;} .invoice-bottom-left ol li{margin-bottom:1px!important;} .invoice-bottom-right td{padding:2px 4px!important;font-size:8px!important;} .invoice-bottom-right .total-row td{font-size:10px!important;} }
 </style>
@@ -248,7 +248,7 @@ foreach ($chunks as $chunk):
                     $varData = !empty($item['variants']) ? json_decode($item['variants'], true) : [];
                     if (!empty($varData)): 
                         foreach ($varData as $vr): ?>
-                            <br><small style="color:#d32f2f;">+ <?= htmlspecialchars($vr['name']) ?> <?= formatRupiah($vr['price']) ?></small>
+                            <br><small style="color:#e67e22;">+ <?= htmlspecialchars($vr['name']) ?> <?= formatRupiah($vr['price']) ?></small>
                     <?php endforeach; endif; ?>
                 </td>
                 <td><?= ($item['width'] && $item['height']) ? intval($item['width']) . ' &times; ' . intval($item['height']) : htmlspecialchars($item['unit_label'] ?: '-') ?></td>
@@ -300,7 +300,7 @@ foreach ($chunks as $chunk):
                 <tr><td>Sudah Dibayar</td><td style="text-align:right;color:#27ae60;"><?= formatRupiah($totalDibayar) ?></td></tr>
                 <tr class="total-row">
                     <td><strong>Sisa</strong></td>
-                    <td style="text-align:right;<?= $sisaAmount > 0 ? 'color:#d32f2f;' : 'color:#27ae60;' ?>">
+                    <td style="text-align:right;<?= $sisaAmount > 0 ? 'color:#e74c3c;' : 'color:#27ae60;' ?>">
                         <strong><?= $sisaAmount > 0 ? formatRupiah($sisaAmount) : '✅ LUNAS' ?></strong>
                     </td>
                 </tr>

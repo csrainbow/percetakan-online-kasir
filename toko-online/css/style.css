@@ -2,20 +2,20 @@
    ROOT VARIABLES
    ============================================ */
 :root {
-    --primary: #111111;
-    --primary-dark: #000000;
-    --primary-light: #222222;
-    --secondary: #e53935;
-    --secondary-dark: #c62828;
+    --primary: #2c3e50;
+    --primary-dark: #1a252f;
+    --primary-light: #34495e;
+    --secondary: #f39c12;
+    --secondary-dark: #d68910;
     --success: #27ae60;
     --success-dark: #1e8449;
-    --danger: #d32f2f;
-    --danger-dark: #b71c1c;
+    --danger: #e74c3c;
+    --danger-dark: #c0392b;
     --info: #3498db;
     --info-dark: #2c81ba;
-    --warning: #e53935;
+    --warning: #f39c12;
     --light: #f8f9fa;
-    --dark: #111111;
+    --dark: #2c3e50;
     --gray: #6c757d;
     --gray-light: #e9ecef;
     --white: #ffffff;
@@ -998,10 +998,10 @@ textarea.error {
 /* Payment Status */
 .status-unpaid { background: #e9ecef; color: #495057; }
 .status-pending_verification { background: #fff3cd; color: #856404; }
-.status-dp { background: #e53935; color: #fff; }
+.status-dp { background: #f39c12; color: #fff; }
 .status-paid { background: #27ae60; color: #fff; }
 .status-verified { background: #27ae60; color: #fff; }
-.status-rejected { background: #d32f2f; color: #fff; }
+.status-rejected { background: #e74c3c; color: #fff; }
 .status-approved { background: #27ae60; color: #fff; }
 
 /* ============================================
@@ -1445,7 +1445,7 @@ textarea.error {
 
 .page-body h3 {
     font-size: 18px;
-    color: #222222;
+    color: #34495e;
     margin: 25px 0 10px;
 }
 

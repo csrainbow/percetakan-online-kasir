@@ -321,6 +321,24 @@ try {
     } catch (Exception $e) {
         logOrder("Email error: " . $e->getMessage());
     }
+
+    // 🔥 🔥 KIRIM NOTIFIKASI WHATSAPP 🔥 🔥
+    try {
+        $waTo = getSetting('whatsapp_number') ?: WHATSAPP_NUMBER;
+        $waMsg = "🛒 *PESANAN BARU (TOKO ONLINE)*\n"
+            . "No: " . $orderCode . "\n"
+            . "Nama: " . $name . "\n"
+            . "Telepon: " . $phoneClean . "\n"
+            . "Total: Rp " . number_format($total, 0, ',', '.') . "\n"
+            . "Metode: " . $paymentMethod . "\n"
+            . "Item: " . count($validItems) . " item\n"
+            . "Waktu: " . date('d/m/Y H:i') . "\n"
+            . "Detail: https://rainbowprinting.web.id/admin/order-detail.php?id=" . $orderId;
+        $waOk = waSend($waTo, $waMsg);
+        logOrder("WA notification sent", ['to' => $waTo, 'ok' => $waOk]);
+    } catch (Exception $e) {
+        logOrder("WA error: " . $e->getMessage());
+    }
     
     // 🔥 🔥 RESPONSE 🔥 🔥
     echo json_encode([

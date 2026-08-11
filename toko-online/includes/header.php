@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? 'Percetakan Ikky Share - Percetakan Online Samarinda') ?></title>
+    <title><?= htmlspecialchars($pageTitle ?? 'Rainbow Printing - Percetakan Online Samarinda') ?></title>
     
     <!-- 🔥 Meta Tags SEO -->
     <meta name="description" content="Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, spanduk, dan kebutuhan percetakan lainnya. Harga terjangkau, kualitas terbaik.">
-    <meta name="keywords" content="percetakan online samarinda, percetakan murah samarinda, cetak undangan samarinda, cetak stiker samarinda, cetak banner samarinda, cetak spanduk samarinda, cetak kartu nama samarinda, cetak brosur samarinda, cetak kalender samarinda, digital printing samarinda, percetakan terpercaya samarinda, percetakan ikky share, rainbow printing samarinda, cetak foto samarinda, cetak flyer samarinda, percetakan offset samarinda, sablon samarinda, uv printer samarinda, percetakan terdekat samarinda, percetakan 24 jam samarinda">
+    <meta name="keywords" content="percetakan online samarinda, percetakan murah samarinda, cetak undangan samarinda, cetak stiker samarinda, cetak banner samarinda, cetak spanduk samarinda, cetak kartu nama samarinda, cetak brosur samarinda, cetak kalender samarinda, digital printing samarinda, percetakan terpercaya samarinda, rainbow printing samarinda, cetak foto samarinda, cetak flyer samarinda, percetakan offset samarinda, sablon samarinda, uv printer samarinda, percetakan terdekat samarinda">
     <meta name="robots" content="index, follow">
-    <meta name="author" content="Percetakan Ikky Share">
-    <meta name="theme-color" content="#111111">
+    <meta name="author" content="Rainbow Printing">
+    <meta name="theme-color" content="#2c3e50">
     
     <!-- 🔥 Open Graph / Social Media -->
-    <meta property="og:title" content="<?= htmlspecialchars($pageTitle ?? 'Percetakan Ikky Share') ?>">
+    <meta property="og:title" content="<?= htmlspecialchars($pageTitle ?? 'Rainbow Printing') ?>">
     <meta property="og:description" content="Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, dan kebutuhan percetakan lainnya.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rainbowprinting.web.id">
+    <meta property="og:image" content="https://rainbowprinting.web.id/og-image.jpg">
+    
+    <!-- 🔥 Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
     <!-- 🔥 CSS Utama -->
     <link rel="stylesheet" href="/css/style.css?v=<?= filemtime(__DIR__ . '/../css/style.css') ?: time() ?>">
@@ -62,7 +67,7 @@
            NAVBAR
            ============================================ */
         .navbar { 
-            background: #111111; 
+            background: #2c3e50; 
             padding: 12px 0; 
             color: #fff;
             position: sticky;
@@ -86,8 +91,8 @@
             transition: color 0.3s;
             letter-spacing: 0.5px;
         }
-        .navbar-brand:hover { color: #e53935; }
-        .navbar-brand span { color: #e53935; }
+        .navbar-brand:hover { color: #f39c12; }
+        .navbar-brand span { color: #f39c12; }
         
         .navbar-nav { 
             display: flex; 
@@ -108,19 +113,19 @@
         }
         
         .navbar-nav a:hover { 
-            color: #e53935; 
-            border-bottom-color: #e53935;
+            color: #f39c12; 
+            border-bottom-color: #f39c12;
         }
         
         .navbar-nav a.active { 
-            color: #e53935; 
+            color: #f39c12; 
             font-weight: 600;
-            border-bottom-color: #e53935;
+            border-bottom-color: #f39c12;
         }
         
         /* 🔥 Cart Badge */
         .cart-badge { 
-            background: #d32f2f; 
+            background: #e74c3c; 
             color: #fff; 
             border-radius: 50%; 
             padding: 2px 8px; 
@@ -233,24 +238,24 @@
            FOOTER STICKY
            ============================================ */
         .footer {
-            background: #111111;
+            background: #2c3e50;
             color: #fff;
             padding: 30px 0 15px;
             margin-top: auto;
-            border-top: 4px solid #e53935;
+            border-top: 4px solid #f39c12;
         }
-        .footer a { color: #e53935; text-decoration: none; }
+        .footer a { color: #f39c12; text-decoration: none; }
         .footer a:hover { text-decoration: underline; }
         .footer .container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
-        .footer h4 { margin-bottom: 10px; color: #e53935; font-size: 16px; }
+        .footer h4 { margin-bottom: 10px; color: #f39c12; font-size: 16px; }
         .footer ul { list-style: none; padding: 0; }
         .footer ul li { margin-bottom: 6px; }
         .footer ul li a { color: #ccc; font-size: 13px; transition: color 0.3s; }
-        .footer ul li a:hover { color: #e53935; text-decoration: none; }
+        .footer ul li a:hover { color: #f39c12; text-decoration: none; }
         .footer-bottom {
             grid-column: 1 / -1;
             text-align: center;
@@ -290,19 +295,19 @@
             font-size: 12px;
             font-weight: 600;
         }
-        .status-pending { background: #e53935; color: #fff; }
+        .status-pending { background: #f39c12; color: #fff; }
         .status-desain { background: #8e44ad; color: #fff; }
         .status-processed { background: #3498db; color: #fff; }
-        .status-printing { background: #111111; color: #fff; }
+        .status-printing { background: #2c3e50; color: #fff; }
         .status-done { background: #27ae60; color: #fff; }
-        .status-cancelled { background: #d32f2f; color: #fff; }
-        .status-failed { background: #d32f2f; color: #fff; }
+        .status-cancelled { background: #e74c3c; color: #fff; }
+        .status-failed { background: #e74c3c; color: #fff; }
         .status-unpaid { background: #95a5a6; color: #fff; }
-        .status-dp { background: #e53935; color: #fff; }
+        .status-dp { background: #f39c12; color: #fff; }
         .status-paid { background: #27ae60; color: #fff; }
         .status-pending_verification { background: #3498db; color: #fff; }
         .status-verified { background: #27ae60; color: #fff; }
-        .status-rejected { background: #d32f2f; color: #fff; }
+        .status-rejected { background: #e74c3c; color: #fff; }
     </style>
 </head>
 <body>
@@ -310,8 +315,8 @@
 <!-- 🔥 NAVBAR -->
 <nav class="navbar" role="navigation" aria-label="Menu Utama">
     <div class="container">
-        <a href="/" class="navbar-brand" aria-label="Percetakan Ikky Share Beranda">
-            Percetakan Ikky Share
+        <a href="/" class="navbar-brand" aria-label="Rainbow Printing Beranda">
+            Rainbow <span>Printing</span>
         </a>
         
         <button class="navbar-toggle" 

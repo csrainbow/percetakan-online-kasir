@@ -19,6 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_status'])) {
         $stmt = $db->prepare("UPDATE orders SET status=? WHERE id=?");
         $stmt->execute([$_POST['status'], $_POST['order_id']]);
+        $newStatus = $_POST['status'];
+        if (in_array($newStatus, ['processed', 'printing', 'done'])) {
+            waOrderStatus($db, intval($_POST['order_id']), $newStatus);
+        }
         $_SESSION['success'] = "✅ Status pesanan berhasil diupdate!";
         header('Location: ' . $returnTo);
         exit;
@@ -79,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['success'] = "💰 Pembayaran DP berhasil diverifikasi! Sisa: " . formatRupiah($total - $totalPaid);
         }
         
+        waOrderStatus($db, intval($_POST['order_id']), $totalPaid >= $total ? 'paid' : 'dp');
         header('Location: ' . $returnTo);
         exit;
     }
@@ -104,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->prepare("UPDATE payments SET payment_type='dp' WHERE id=? AND (payment_type IS NULL OR payment_type='')")->execute([$_POST['payment_id']]);
         
         $_SESSION['success'] = "💰 Pembayaran DP berhasil diverifikasi (paksa)!";
+        waOrderStatus($db, intval($_POST['order_id']), 'dp');
         header('Location: ' . $returnTo);
         exit;
     }
@@ -112,6 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['design_done'])) {
         $db->prepare("UPDATE orders SET status='processed' WHERE id=? AND status='desain'")->execute([$_POST['order_id']]);
         $_SESSION['success'] = "🎨 Desain selesai! Pesanan masuk ke proses cetak.";
+        waOrderStatus($db, intval($_POST['order_id']), 'processed');
         header('Location: ' . $returnTo);
         exit;
     }
@@ -265,6 +272,7 @@ include '../includes/header.php';
             <li><a href="dashboard.php">Dashboard</a></li>
             <li><a href="products.php">Produk</a></li>
             <li><a href="orders.php" class="active">Pesanan</a></li>
+            <li><a href="../kasir/" target="_blank">Kasir</a></li>
             <li><a href="settings.php">Pengaturan</a></li>
             <li><a href="logout.php">Logout</a></li>
         </ul>
@@ -287,7 +295,7 @@ include '../includes/header.php';
                 <span class="label">📦 Total</span>
             </div>
             <div class="stat-item">
-                <span class="number" style="color:#e53935;"><?= $stats['pending'] ?? 0 ?></span>
+                <span class="number" style="color:#f39c12;"><?= $stats['pending'] ?? 0 ?></span>
                 <span class="label">⏳ Pending</span>
             </div>
             <div class="stat-item">
@@ -295,7 +303,7 @@ include '../includes/header.php';
                 <span class="label">✅ Lunas</span>
             </div>
             <div class="stat-item">
-                <span class="number" style="color:#e53935;"><?= $stats['dp'] ?? 0 ?></span>
+                <span class="number" style="color:#f39c12;"><?= $stats['dp'] ?? 0 ?></span>
                 <span class="label">💰 DP</span>
             </div>
             <div class="stat-item">
@@ -371,7 +379,7 @@ include '../includes/header.php';
                         <td><?= formatRupiah($o['total']) ?></td>
                         <td><?= formatRupiah($o['total_paid']) ?></td>
                         <td>
-                            <strong style="color: <?= $sisa > 0 ? '#d32f2f' : '#27ae60' ?>">
+                            <strong style="color: <?= $sisa > 0 ? '#e74c3c' : '#27ae60' ?>">
                                 <?= formatRupiah($sisa) ?>
                             </strong>
                             <?php if ($sisa > 0): ?>
