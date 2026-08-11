@@ -3,7 +3,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../config.php';
 
 // 🔥 CEK SESSION - CUSTOMER HARUS LOGIN
 if (!isset($_SESSION['customer_id'])) {
@@ -110,7 +110,7 @@ if ($serverKey && $orderCode) {
                 $checkPayment->execute([$order['id'], $grossAmount]);
                 if (!$checkPayment->fetch()) {
                     $stmt = $db->prepare("INSERT INTO payments (order_id, amount, bank_name, account_number, account_name, proof_image, payment_type, status, created_at) 
-                                           VALUES (?, ?, 'Midtrans', 'Online', 'Midtrans', '', 'midtrans', 'approved', datetime('now'))");
+                                           VALUES (?, ?, 'Midtrans', 'Online', 'Midtrans', '', 'midtrans', 'approved', NOW())");
                     $stmt->execute([
                         $order['id'],
                         $grossAmount,
@@ -188,7 +188,7 @@ include '../includes/header.php';
 }
 .order-success h1 {
     font-size: 28px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 10px;
 }
 .order-success .subtitle {
@@ -208,7 +208,7 @@ include '../includes/header.php';
     margin: 8px 0;
 }
 .order-detail-card strong {
-    color: #2c3e50;
+    color: #111111;
 }
 .status-badge {
     display: inline-block;
@@ -218,10 +218,10 @@ include '../includes/header.php';
     font-weight: 600;
 }
 .status-paid { background: #27ae60; color: #fff; }
-.status-dp { background: #f39c12; color: #fff; }
-.status-pending_verification { background: #f39c12; color: #fff; }
+.status-dp { background: #e53935; color: #fff; }
+.status-pending_verification { background: #e53935; color: #fff; }
 .status-unpaid { background: #95a5a6; color: #fff; }
-.status-failed { background: #e74c3c; color: #fff; }
+.status-failed { background: #d32f2f; color: #fff; }
 .status-desain { background: #8e44ad; color: #fff; }
 .status-processed { background: #3498db; color: #fff; }
 .status-done { background: #27ae60; color: #fff; }
@@ -246,7 +246,7 @@ include '../includes/header.php';
 .payment-summary .item .value {
     font-size: 16px;
     font-weight: bold;
-    color: #2c3e50;
+    color: #111111;
 }
 .btn-group {
     display: flex;
@@ -266,16 +266,16 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -288,22 +288,22 @@ include '../includes/header.php';
     background: #1e8449;
 }
 .btn-warning {
-    background: #f39c12;
+    background: #e53935;
     color: #fff;
 }
 .btn-warning:hover {
-    background: #d68910;
+    background: #c62828;
 }
 .btn-danger {
-    background: #e74c3c;
+    background: #d32f2f;
     color: #fff;
 }
 .btn-danger:hover {
-    background: #c0392b;
+    background: #b71c1c;
 }
 .midtrans-error {
     background: #fef9e7;
-    border: 1px solid #f39c12;
+    border: 1px solid #e53935;
     padding: 12px 16px;
     border-radius: 6px;
     color: #856404;
@@ -321,7 +321,7 @@ include '../includes/header.php';
 .progress-bar-fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #f39c12, #27ae60);
+    background: linear-gradient(90deg, #e53935, #27ae60);
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -420,7 +420,7 @@ include '../includes/header.php';
         </div>
         <div class="item">
             <div class="label">Sisa</div>
-            <div class="value" style="color:<?= $sisaPembayaran > 0 ? '#e74c3c' : '#27ae60' ?>;">
+            <div class="value" style="color:<?= $sisaPembayaran > 0 ? '#d32f2f' : '#27ae60' ?>;">
                 <?= $sisaPembayaran > 0 ? formatRupiah($sisaPembayaran) : '✅ LUNAS' ?>
             </div>
         </div>
@@ -461,7 +461,7 @@ include '../includes/header.php';
             </span>
         </p>
         <?php if ($order['payment_status'] === 'dp' && $sisaPembayaran > 0): ?>
-            <p style="color:#f39c12;font-weight:bold;margin-top:5px;">
+            <p style="color:#e53935;font-weight:bold;margin-top:5px;">
                 💰 Sisa pembayaran: <?= formatRupiah($sisaPembayaran) ?>
             </p>
         <?php endif; ?>

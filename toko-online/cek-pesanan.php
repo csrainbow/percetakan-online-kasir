@@ -72,7 +72,7 @@ include 'includes/header.php';
 
 .cek-container h1 {
     font-size: 24px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 10px;
 }
 
@@ -98,7 +98,7 @@ include 'includes/header.php';
     display: block;
     font-weight: 600;
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 5px;
 }
 .cek-form .form-group input {
@@ -110,7 +110,7 @@ include 'includes/header.php';
     transition: border-color 0.3s;
 }
 .cek-form .form-group input:focus {
-    border-color: #f39c12;
+    border-color: #e53935;
     outline: none;
     box-shadow: 0 0 0 3px rgba(243,156,18,0.15);
 }
@@ -140,7 +140,7 @@ include 'includes/header.php';
 }
 .last-order-box .order-code {
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
     font-weight: normal;
 }
 
@@ -158,7 +158,7 @@ include 'includes/header.php';
     font-size: 14px;
 }
 .order-detail-card strong {
-    color: #2c3e50;
+    color: #111111;
 }
 
 /* 🔥 PAYMENT SUMMARY */
@@ -170,7 +170,7 @@ include 'includes/header.php';
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 10px;
-    border-left: 4px solid #f39c12;
+    border-left: 4px solid #e53935;
 }
 .payment-summary .item {
     text-align: center;
@@ -184,11 +184,11 @@ include 'includes/header.php';
 .payment-summary .item .value {
     font-size: 18px;
     font-weight: bold;
-    color: #2c3e50;
+    color: #111111;
 }
 .payment-summary .item .value.success { color: #27ae60; }
-.payment-summary .item .value.danger { color: #e74c3c; }
-.payment-summary .item .value.warning { color: #f39c12; }
+.payment-summary .item .value.danger { color: #d32f2f; }
+.payment-summary .item .value.warning { color: #e53935; }
 
 .progress-bar-container {
     margin-top: 10px;
@@ -200,7 +200,7 @@ include 'includes/header.php';
 .progress-bar-fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #f39c12, #27ae60);
+    background: linear-gradient(90deg, #e53935, #27ae60);
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -229,11 +229,11 @@ include 'includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
 }
 .btn-success {
     background: #27ae60;
@@ -243,16 +243,16 @@ include 'includes/header.php';
     background: #1e8449;
 }
 .btn-warning {
-    background: #f39c12;
+    background: #e53935;
     color: #fff;
 }
 .btn-warning:hover {
-    background: #d68910;
+    background: #c62828;
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -405,7 +405,7 @@ include 'includes/header.php';
         </div>
 
         <!-- 🔥 ITEMS -->
-        <h2 style="font-size:18px;color:#2c3e50;margin-bottom:15px;">📦 Item Pesanan</h2>
+        <h2 style="font-size:18px;color:#111111;margin-bottom:15px;">📦 Item Pesanan</h2>
         <div style="overflow-x:auto;">
             <table class="table">
                 <thead>
@@ -428,14 +428,14 @@ include 'includes/header.php';
                             $varData = !empty($item['variants']) ? json_decode($item['variants'], true) : [];
                             if (!empty($varData)): 
                                 foreach ($varData as $vr): ?>
-                                    <br><small style="color:#e67e22;">+ <?= htmlspecialchars($vr['name']) ?> <?= formatRupiah($vr['price']) ?></small>
+                                    <br><small style="color:#d32f2f;">+ <?= htmlspecialchars($vr['name']) ?> <?= formatRupiah($vr['price']) ?></small>
                             <?php endforeach; endif; ?>
                         </td>
                         <td><?= htmlspecialchars($item['material_name']) ?: '-' ?></td>
                         <td><?= ($item['width'] && $item['height']) ? intval($item['width']) . '×' . intval($item['height']) . ' cm' : '-' ?></td>
                         <td>
                             <?php if ($item['design_service'] === 'jasa'): ?>
-                                <span style="display:inline-block;padding:2px 10px;background:#f39c12;color:#fff;border-radius:4px;font-size:11px;font-weight:bold;">🎨 Jasa Desain</span>
+                                <span style="display:inline-block;padding:2px 10px;background:#e53935;color:#fff;border-radius:4px;font-size:11px;font-weight:bold;">🎨 Jasa Desain</span>
                             <?php elseif ($item['design_service'] === 'upload'): ?>
                                 <span style="display:inline-block;padding:2px 10px;background:#3498db;color:#fff;border-radius:4px;font-size:11px;">📎 Upload File</span>
                             <?php else: ?>
@@ -502,7 +502,7 @@ include 'includes/header.php';
             <?php endif; ?>
 
             <?php if ($result['payment_method'] === 'cod' && $result['payment_status'] === 'unpaid'): ?>
-                <div style="padding:12px 16px;background:#eaf2f8;border-radius:8px;color:#2c3e50;width:100%;text-align:center;">
+                <div style="padding:12px 16px;background:#eaf2f8;border-radius:8px;color:#111111;width:100%;text-align:center;">
                     💵 Pembayaran dilakukan saat barang diterima (COD).
                 </div>
             <?php endif; ?>

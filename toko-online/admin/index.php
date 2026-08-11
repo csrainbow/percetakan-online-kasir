@@ -8,8 +8,10 @@ require_once __DIR__ . '/../config.php';
 // 🔥 CLEAN OUTPUT BUFFER
 ob_start();
 
+// ✅ FIX: Inisialisasi variabel error agar tidak undefined
 $error = '';
-$pageTitle = 'Admin Login - Rainbow Printing';
+
+$pageTitle = 'Admin Login - Percetakan Ikky Share';
 
 // 🔥 CEK APAKAH SUDAH LOGIN
 if (isAdmin()) {
@@ -138,7 +140,7 @@ include '../includes/header.php';
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #2c3e50, #f39c12);
+    background: linear-gradient(90deg, #111111, #e53935);
 }
 
 .login-logo {
@@ -149,19 +151,19 @@ include '../includes/header.php';
 .login-logo .logo-icon {
     width: 64px;
     height: 64px;
-    background: #2c3e50;
+    background: #111111;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 32px;
-    color: #f39c12;
+    color: #e53935;
     margin-bottom: 12px;
 }
 
 .login-logo h1 {
     font-size: 24px;
-    color: #2c3e50;
+    color: #111111;
     font-weight: 700;
     margin: 0;
 }
@@ -180,7 +182,7 @@ include '../includes/header.php';
     display: block;
     font-weight: 600;
     font-size: 13px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 6px;
 }
 
@@ -208,14 +210,14 @@ include '../includes/header.php';
 }
 
 .login-form .input-group input:focus {
-    border-color: #f39c12;
+    border-color: #e53935;
     background: #fff;
     outline: none;
     box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.15);
 }
 
 .login-form .input-group input.error {
-    border-color: #e74c3c;
+    border-color: #d32f2f;
     background: #fff5f5;
 }
 
@@ -238,7 +240,7 @@ include '../includes/header.php';
 }
 
 .toggle-password:hover {
-    color: #2c3e50;
+    color: #111111;
 }
 
 /* 🔥 Remember Me */
@@ -262,12 +264,12 @@ include '../includes/header.php';
 .form-options label input[type="checkbox"] {
     width: 16px;
     height: 16px;
-    accent-color: #f39c12;
+    accent-color: #e53935;
     cursor: pointer;
 }
 
 .form-options a {
-    color: #f39c12;
+    color: #e53935;
     text-decoration: none;
 }
 
@@ -279,7 +281,7 @@ include '../includes/header.php';
 .btn-login {
     width: 100%;
     padding: 14px;
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -294,7 +296,7 @@ include '../includes/header.php';
 }
 
 .btn-login:hover {
-    background: #1a252f;
+    background: #000000;
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
 }
@@ -379,7 +381,7 @@ include '../includes/header.php';
 }
 
 .login-footer a {
-    color: #f39c12;
+    color: #e53935;
     text-decoration: none;
 }
 
@@ -416,7 +418,7 @@ include '../includes/header.php';
                 <div class="logo-icon">
                     <i class="fas fa-print"></i>
                 </div>
-                <h1>Rainbow Printing</h1>
+                <h1>Percetakan Ikky Share</h1>
                 <p>Admin Panel</p>
             </div>
 
@@ -449,7 +451,7 @@ include '../includes/header.php';
             <form method="POST" class="login-form" id="loginForm" autocomplete="off">
                 <div class="form-group">
                     <label for="username">
-                        <i class="fas fa-user" style="color:#f39c12;"></i> Username
+                        <i class="fas fa-user" style="color:#e53935;"></i> Username
                     </label>
                     <div class="input-group">
                         <span class="input-icon"><i class="fas fa-user"></i></span>
@@ -462,7 +464,7 @@ include '../includes/header.php';
 
                 <div class="form-group">
                     <label for="password">
-                        <i class="fas fa-lock" style="color:#f39c12;"></i> Password
+                        <i class="fas fa-lock" style="color:#e53935;"></i> Password
                     </label>
                     <div class="input-group">
                         <span class="input-icon"><i class="fas fa-lock"></i></span>
@@ -499,7 +501,7 @@ include '../includes/header.php';
                     <a href="/login.php" target="_blank"><i class="fas fa-user"></i> Customer Login</a>
                 </p>
                 <p style="font-size:12px;color:#999;margin-top:8px;">
-                    &copy; <?= date('Y') ?> Rainbow Printing. All rights reserved.
+                    &copy; <?= date('Y') ?> Percetakan Ikky Share. All rights reserved.
                 </p>
             </div>
         </div>

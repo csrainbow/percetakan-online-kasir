@@ -82,15 +82,25 @@ if ($sisaPembayaran <= 0) {
 $isDp = ($totalPaid == 0);
 $isPelunasan = ($totalPaid > 0 && $sisaPembayaran > 0);
 
-// Ambil daftar bank dari settings
-$bankList = getSetting('bank_accounts');
-if ($bankList) {
-    $bankList = json_decode($bankList, true);
-} else {
+// Ambil daftar bank dari settings (disimpan per-bank di admin)
+$bankList = [];
+for ($i = 1; $i <= 3; $i++) {
+    $bankName = getSetting("bank{$i}_name");
+    $bankAccount = getSetting("bank{$i}_account");
+    $bankHolder = getSetting("bank{$i}_name_holder");
+    if ($bankName && $bankAccount) {
+        $bankList[] = [
+            'bank' => $bankName,
+            'account_number' => $bankAccount,
+            'account_name' => $bankHolder ?: '-'
+        ];
+    }
+}
+if (empty($bankList)) {
     $bankList = [
-        ['bank' => 'BCA', 'account_number' => '1234567890', 'account_name' => 'Rainbow Printing'],
-        ['bank' => 'Mandiri', 'account_number' => '9876543210', 'account_name' => 'Rainbow Printing'],
-        ['bank' => 'BNI', 'account_number' => '5555555555', 'account_name' => 'Rainbow Printing']
+        ['bank' => 'BCA', 'account_number' => '1234567890', 'account_name' => 'Percetakan Ikky Share'],
+        ['bank' => 'Mandiri', 'account_number' => '9876543210', 'account_name' => 'Percetakan Ikky Share'],
+        ['bank' => 'BNI', 'account_number' => '5555555555', 'account_name' => 'Percetakan Ikky Share']
     ];
 }
 
@@ -210,12 +220,12 @@ include '../includes/header.php';
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 25px;
-    border-left: 4px solid #f39c12;
+    border-left: 4px solid #e53935;
 }
 .payment-summary-box .amount {
     font-size: 28px;
     font-weight: bold;
-    color: #2c3e50;
+    color: #111111;
 }
 .payment-summary-box .label {
     color: #6c757d;
@@ -229,7 +239,7 @@ include '../includes/header.php';
     font-size: 14px;
 }
 .payment-type-dp {
-    background: #f39c12;
+    background: #e53935;
     color: #fff;
 }
 .payment-type-pelunasan {
@@ -246,11 +256,11 @@ include '../includes/header.php';
     transition: all 0.2s;
 }
 .bank-card:hover {
-    border-color: #f39c12;
+    border-color: #e53935;
     background: #fef9e7;
 }
 .bank-card.selected {
-    border-color: #f39c12;
+    border-color: #e53935;
     background: #fef9e7;
     box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.2);
 }
@@ -305,11 +315,11 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
 }
 .btn-primary:disabled {
     opacity: 0.6;
@@ -317,8 +327,8 @@ include '../includes/header.php';
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -355,10 +365,10 @@ include '../includes/header.php';
 }
 .info-box-dp {
     background: #fef9e7;
-    border-color: #f39c12;
+    border-color: #e53935;
 }
 .info-box-dp strong {
-    color: #f39c12;
+    color: #e53935;
 }
 .info-box-pelunasan {
     background: #e8f5e9;
@@ -456,7 +466,7 @@ include '../includes/header.php';
         </div>
         <?php if ($sisaPembayaran > 0 && $sisaPembayaran < $order['total']): ?>
             <div style="margin-top:10px;background:#fff;border-radius:4px;height:6px;overflow:hidden;">
-                <div style="width:<?= round(($totalPaid/$order['total'])*100) ?>%;height:100%;background:linear-gradient(90deg,#f39c12,#27ae60);"></div>
+                <div style="width:<?= round(($totalPaid/$order['total'])*100) ?>%;height:100%;background:linear-gradient(90deg,#e53935,#27ae60);"></div>
             </div>
             <small style="color:#999;"><?= round(($totalPaid/$order['total'])*100) ?>% dari total sudah dibayar</small>
         <?php endif; ?>
@@ -517,7 +527,7 @@ include '../includes/header.php';
             </div>
             
             <?php if ($isDp): ?>
-                <small style="color:#f39c12;display:block;margin-top:5px;">
+                <small style="color:#e53935;display:block;margin-top:5px;">
                     ⚠️ Minimal DP adalah 70% dari total pesanan
                 </small>
             <?php endif; ?>
@@ -616,7 +626,7 @@ function previewImage(input) {
             var sizeMB = (fileSize / 1024 / 1024).toFixed(2);
             var maxMB = (maxSize / 1024 / 1024).toFixed(0);
             fileInfo.innerHTML = '❌ File <strong>' + fileName + '</strong> (' + sizeMB + 'MB) melebihi batas maksimal ' + maxMB + 'MB';
-            fileInfo.style.color = '#e74c3c';
+            fileInfo.style.color = '#d32f2f';
             input.value = '';
             preview.classList.remove('show');
             return;
@@ -658,7 +668,7 @@ function showNotification(msg, type) {
     
     var div = document.createElement('div');
     div.className = 'notif-toast';
-    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#f39c12';
+    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#d32f2f' : '#e53935';
     div.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);background:' + bgColor + ';color:#fff;padding:12px 24px;border-radius:8px;z-index:99999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center;max-width:90%;';
     div.textContent = msg;
     document.body.appendChild(div);

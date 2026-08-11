@@ -41,7 +41,7 @@ $methodLabel = $methodLabels[$order['payment_method']] ?? ucfirst($order['paymen
 // 🔥 CEK APAKAH CUSTOMER LOGIN
 $isLoggedIn = isset($_SESSION['customer_id']);
 
-$pageTitle = 'Pesanan Berhasil - Rainbow Printing';
+$pageTitle = 'Pesanan Berhasil - Percetakan Ikky Share';
 include 'includes/header.php';
 ?>
 
@@ -65,7 +65,7 @@ include 'includes/header.php';
 }
 .order-success h1 {
     font-size: 26px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 8px;
 }
 .order-success .subtitle {
@@ -83,7 +83,7 @@ include 'includes/header.php';
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 10px;
-    border-left: 4px solid #f39c12;
+    border-left: 4px solid #e53935;
 }
 .payment-summary .item {
     text-align: center;
@@ -97,11 +97,11 @@ include 'includes/header.php';
 .payment-summary .item .value {
     font-size: 16px;
     font-weight: bold;
-    color: #2c3e50;
+    color: #111111;
 }
 .payment-summary .item .value.success { color: #27ae60; }
-.payment-summary .item .value.danger { color: #e74c3c; }
-.payment-summary .item .value.warning { color: #f39c12; }
+.payment-summary .item .value.danger { color: #d32f2f; }
+.payment-summary .item .value.warning { color: #e53935; }
 
 /* 🔥 PROGRESS BAR */
 .progress-container {
@@ -116,7 +116,7 @@ include 'includes/header.php';
 .progress-bar .fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #f39c12, #27ae60);
+    background: linear-gradient(90deg, #e53935, #27ae60);
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -140,7 +140,7 @@ include 'includes/header.php';
     font-size: 14px;
 }
 .order-detail-card strong {
-    color: #2c3e50;
+    color: #111111;
 }
 
 /* 🔥 STATUS BADGE */
@@ -152,8 +152,8 @@ include 'includes/header.php';
     font-weight: 600;
 }
 .status-unpaid { background: #95a5a6; color: #fff; }
-.status-pending_verification { background: #f39c12; color: #fff; }
-.status-dp { background: #f39c12; color: #fff; }
+.status-pending_verification { background: #e53935; color: #fff; }
+.status-dp { background: #e53935; color: #fff; }
 .status-paid { background: #27ae60; color: #fff; }
 
 /* 🔥 INFO BOX */
@@ -166,7 +166,7 @@ include 'includes/header.php';
 }
 .info-box-warning {
     background: #fff3cd;
-    border-color: #f39c12;
+    border-color: #e53935;
     color: #856404;
 }
 .info-box-warning strong { color: #b7950b; }
@@ -197,11 +197,11 @@ include 'includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
 }
 .btn-success {
     background: #27ae60;
@@ -211,16 +211,16 @@ include 'includes/header.php';
     background: #1e8449;
 }
 .btn-warning {
-    background: #f39c12;
+    background: #e53935;
     color: #fff;
 }
 .btn-warning:hover {
-    background: #d68910;
+    background: #c62828;
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -350,7 +350,7 @@ include 'includes/header.php';
         </p>
         <p><strong>🏦 Metode:</strong> <?= htmlspecialchars($methodLabel) ?></p>
         <?php if ($isDp && $sisaPembayaran > 0): ?>
-            <p style="color:#f39c12;font-weight:bold;margin-top:5px;">
+            <p style="color:#e53935;font-weight:bold;margin-top:5px;">
                 💰 Sisa pembayaran: <?= formatRupiah($sisaPembayaran) ?>
             </p>
         <?php endif; ?>

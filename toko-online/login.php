@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 
-$pageTitle = 'Masuk - Rainbow Printing';
+$pageTitle = 'Masuk - Percetakan Ikky Share';
 $error = '';
 $email = '';
 
@@ -112,7 +112,7 @@ include 'includes/header.php';
 }
 .login-box h1 {
     font-size: 22px;
-    color: #2c3e50;
+    color: #111111;
     text-align: center;
     margin-bottom: 5px;
 }
@@ -131,7 +131,7 @@ include 'includes/header.php';
     display: block;
     font-weight: 600;
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 5px;
 }
 .form-group .input-group {
@@ -155,13 +155,13 @@ include 'includes/header.php';
     background: #f8f9fa;
 }
 .form-group .input-group input:focus {
-    border-color: #f39c12;
+    border-color: #e53935;
     background: #fff;
     outline: none;
     box-shadow: 0 0 0 3px rgba(243,156,18,0.15);
 }
 .form-group .input-group input.error {
-    border-color: #e74c3c;
+    border-color: #d32f2f;
     background: #fff5f5;
 }
 .form-group .input-group input.error:focus {
@@ -182,7 +182,7 @@ include 'includes/header.php';
     padding: 4px;
 }
 .toggle-password:hover {
-    color: #2c3e50;
+    color: #111111;
 }
 
 /* 🔥 Options */
@@ -204,11 +204,11 @@ include 'includes/header.php';
 .form-options label input[type="checkbox"] {
     width: 16px;
     height: 16px;
-    accent-color: #f39c12;
+    accent-color: #e53935;
     cursor: pointer;
 }
 .form-options a {
-    color: #f39c12;
+    color: #e53935;
     text-decoration: none;
 }
 .form-options a:hover {
@@ -219,7 +219,7 @@ include 'includes/header.php';
 .btn-login {
     width: 100%;
     padding: 12px;
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -233,7 +233,7 @@ include 'includes/header.php';
     gap: 10px;
 }
 .btn-login:hover {
-    background: #1a252f;
+    background: #000000;
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(44,62,80,0.3);
 }
@@ -307,7 +307,7 @@ include 'includes/header.php';
     color: #6c757d;
 }
 .login-footer a {
-    color: #f39c12;
+    color: #e53935;
     text-decoration: none;
 }
 .login-footer a:hover {

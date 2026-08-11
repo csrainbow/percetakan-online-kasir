@@ -1,21 +1,22 @@
 # Percetakan Online + Kasir
 
-Aplikasi **toko online** (PHP vanilla + SQLite) dan **kasir / point-of-sale** untuk usaha percetakan.
+Satu repo, satu folder, satu instalasi: aplikasi **toko online** dan **kasir / point-of-sale**
+untuk usaha percetakan dalam satu kesatuan (PHP vanilla + SQLite).
 Ringan, tanpa framework, tanpa dependency composer — jalan di STB/PC/Raspberry Pi (Debian/Ubuntu/Armbian).
 
 ## Isi Repo
 
 ```
 percetakan-online-kasir/
-├── install.sh        # instalasi otomatis (nginx + php-fpm + systemd)
+├── install.sh        # 1-klik install (download repo → paket → service → selesai)
 ├── uninstall.sh      # hapus aplikasi (data dibackup dulu)
-├── toko-online/      # toko online (rainbowprinting.web.id)
+├── toko-online/      # toko online (Percetakan Rainbow, rainbowprinting.web.id)
 │   ├── admin/        # dashboard admin: pesanan, produk, pembayaran, pengaturan
 │   ├── customer/     # dashboard pelanggan
 │   ├── payment/      # pembayaran & notifikasi (Midtrans)
 │   ├── includes/     # functions.php (WA, email, dll)
 │   ├── router.php    # pengaman php -S (blokir database.sqlite)
-│   └── *.php         # index, products, cart, checkout, cek-pesanan, ...
+│   └── *.php         # index, products, cart, checkout, cek-pesanan, faq, privacy-policy, terms-of-service, ...
 └── kasir/            # aplikasi kasir
     ├── pages/        # dashboard, penjualan, produk, pesanan, piutang, laporan, histori, pengaturan, log, rekap
     ├── layout/       # header & footer
@@ -73,14 +74,16 @@ percetakan-online-kasir/
   (diinstal otomatis oleh `install.sh`)
 - Port default: kasir `8081`, toko online `8000` (bisa diubah)
 
-## Instalasi (metode curl)
+## Instalasi (1 klik, metode curl)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/csrainbow/percetakan-online-kasir/main/install.sh | sudo bash
 ```
 
-Instalasi langsung dari tarball GitHub: download → salin aplikasi → generate
-`NOTA_SECRET` & hash password admin → pasang service & nginx → selesai.
+Satu perintah ini akan: download repo → install paket (php, nginx) → salin `toko-online/`
+dan `kasir/` ke `/var/www` → generate `NOTA_SECRET` & hash password admin → pasang
+systemd service & nginx → selesai. Halaman kasir juga tersedia di dalam toko online
+(`http://<IP>:8000/kasir`) lewat symlink.
 
 ### Variabel opsional (via env)
 

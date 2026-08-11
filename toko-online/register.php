@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 
-$pageTitle = 'Daftar Akun - Rainbow Printing';
+$pageTitle = 'Daftar Akun - Percetakan Ikky Share';
 $error = '';
 $success = '';
 
@@ -119,7 +119,7 @@ include 'includes/header.php';
 }
 .register-box h1 {
     font-size: 22px;
-    color: #2c3e50;
+    color: #111111;
     text-align: center;
     margin-bottom: 5px;
 }
@@ -138,7 +138,7 @@ include 'includes/header.php';
     display: block;
     font-weight: 600;
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 4px;
 }
 .form-group .input-group {
@@ -170,14 +170,14 @@ include 'includes/header.php';
 }
 .form-group .input-group input:focus,
 .form-group .input-group textarea:focus {
-    border-color: #f39c12;
+    border-color: #e53935;
     background: #fff;
     outline: none;
     box-shadow: 0 0 0 3px rgba(243,156,18,0.15);
 }
 .form-group .input-group input.error,
 .form-group .input-group textarea.error {
-    border-color: #e74c3c;
+    border-color: #d32f2f;
     background: #fff5f5;
 }
 .form-group .input-group input.success,
@@ -196,7 +196,7 @@ include 'includes/header.php';
     margin-top: 4px;
 }
 .helper-text.error {
-    color: #e74c3c;
+    color: #d32f2f;
 }
 .helper-text.success {
     color: #27ae60;
@@ -216,7 +216,7 @@ include 'includes/header.php';
     padding: 4px;
 }
 .toggle-password:hover {
-    color: #2c3e50;
+    color: #111111;
 }
 
 /* 🔥 Password Strength */
@@ -234,8 +234,8 @@ include 'includes/header.php';
     transition: width 0.5s ease;
     border-radius: 4px;
 }
-.password-strength .bar.weak { background: #e74c3c; width: 25%; }
-.password-strength .bar.medium { background: #f39c12; width: 50%; }
+.password-strength .bar.weak { background: #d32f2f; width: 25%; }
+.password-strength .bar.medium { background: #e53935; width: 50%; }
 .password-strength .bar.strong { background: #27ae60; width: 75%; }
 .password-strength .bar.very-strong { background: #2ecc71; width: 100%; }
 .password-strength-text {
@@ -248,7 +248,7 @@ include 'includes/header.php';
 .btn-register {
     width: 100%;
     padding: 12px;
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -262,7 +262,7 @@ include 'includes/header.php';
     gap: 10px;
 }
 .btn-register:hover {
-    background: #1a252f;
+    background: #000000;
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(44,62,80,0.3);
 }
@@ -331,7 +331,7 @@ include 'includes/header.php';
     color: #6c757d;
 }
 .register-footer a {
-    color: #f39c12;
+    color: #e53935;
     text-decoration: none;
 }
 .register-footer a:hover {
@@ -359,7 +359,7 @@ include 'includes/header.php';
         <div class="logo-icon">
             <span class="icon">🌈</span>
             <h1>Daftar Akun</h1>
-            <p class="subtitle">Mulai belanja dengan akun Rainbow Printing</p>
+            <p class="subtitle">Mulai belanja dengan akun Percetakan Ikky Share</p>
         </div>
 
         <!-- 🔥 ALERT -->
@@ -498,7 +498,7 @@ document.getElementById('password').addEventListener('input', function() {
     
     var level = 'weak';
     var label = 'Lemah';
-    var color = '#e74c3c';
+    var color = '#d32f2f';
     var width = '20%';
     
     if (strength >= 4) {
@@ -514,12 +514,12 @@ document.getElementById('password').addEventListener('input', function() {
     } else if (strength >= 2) {
         level = 'medium';
         label = 'Sedang';
-        color = '#f39c12';
+        color = '#e53935';
         width = '50%';
     } else {
         level = 'weak';
         label = 'Lemah';
-        color = '#e74c3c';
+        color = '#d32f2f';
         width = '25%';
     }
     

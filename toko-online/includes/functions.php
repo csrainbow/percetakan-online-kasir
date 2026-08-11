@@ -1,6 +1,6 @@
 <?php
 // ============================================
-// FUNCTIONS - Rainbow Printing
+// FUNCTIONS - Percetakan Ikky Share
 // ============================================
 
 // 🔥 Inisialisasi Database
@@ -237,19 +237,6 @@ function initDatabase() {
         error_log("Failed to create admin_logs table: " . $e->getMessage());
     }
 
-    // 🔥 TABEL CUSTOMER_LOGS
-    try {
-        $db->exec("CREATE TABLE IF NOT EXISTS customer_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            customer_id INTEGER,
-            action VARCHAR(50),
-            ip_address VARCHAR(45),
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-    } catch (Exception $e) {
-        error_log("Failed to create customer_logs table: " . $e->getMessage());
-    }
-
     // 🔥 TABEL REGISTER_ATTEMPTS (Rate Limiting Registrasi)
     try {
         $db->exec("CREATE TABLE IF NOT EXISTS register_attempts (
@@ -396,8 +383,8 @@ if (!function_exists('seedContentPages')) {
 function seedContentPages($db) {
     $pages = [
         ['slug' => 'tentang-kami', 'title' => 'Tentang Kami', 'content' => '
-<h2>Selamat Datang di Percetakan Rainbow</h2>
-<p>Percetakan Rainbow adalah percetakan kecil yang berkomitmen memberikan solusi cetak dan desain grafis berkualitas untuk UMKM, komunitas, dan masyarakat umum. Kami percaya setiap usaha berhak tampil profesional dengan desain dan cetakan yang menarik.</p>
+<h2>Selamat Datang di Percetakan Ikky Share</h2>
+<p>Percetakan Ikky Share adalah percetakan kecil yang berkomitmen memberikan solusi cetak dan desain grafis berkualitas untuk UMKM, komunitas, dan masyarakat umum. Kami percaya setiap usaha berhak tampil profesional dengan desain dan cetakan yang menarik.</p>
 
 <h3>🔥 Konsep Desain yang Menarik Perhatian Publik</h3>
 <p>Di era digital, <strong>desain adalah senjata utama</strong> untuk merebut perhatian. Konsep desain kami bertumpu pada tiga pilar:</p>
@@ -428,7 +415,7 @@ function seedContentPages($db) {
     <li>Cetak custom ukuran, bahan, dan finishing</li>
 </ul>
 
-<h3>🏪 Kenapa Pilih Percetakan Rainbow?</h3>
+<h3>🏪 Kenapa Pilih Percetakan Ikky Share?</h3>
 <ul>
     <li><strong>Harga UMKM Pas di Kantong</strong> — kualitas tidak harus mahal. Kami kasih harga yang ramah buat usaha kecil dan menengah.</li>
     <li><strong>Bisa Custom Sesuai Mau</strong> — ukuran, bahan, desain, semuanya bisa diatur sesuai kebutuhan Anda.</li>
@@ -439,7 +426,7 @@ function seedContentPages($db) {
 <h3>📍 Lokasi</h3>
 <p>Kami berbasis di Kota Anda, siap melayani cetak dan desain untuk wilayah sekitar maupun pengiriman ke seluruh Indonesia.</p>
 
-<p><em>Percetakan Rainbow — Cetak Profesional, Harga UMKM.</em></p>'],
+<p><em>Percetakan Ikky Share — Cetak Profesional, Harga UMKM.</em></p>'],
         ['slug' => 'privacy-policy', 'title' => 'Kebijakan Privasi', 'content' => '<h2>Kebijakan Privasi</h2><p>Kami menghargai privasi Anda. Data pribadi Anda aman dan tidak akan disebarluaskan.</p>'],
         ['slug' => 'terms-of-service', 'title' => 'Syarat & Ketentuan', 'content' => '<h2>Syarat & Ketentuan</h2><p>Dengan menggunakan layanan kami, Anda menyetujui syarat dan ketentuan yang berlaku.</p>'],
         ['slug' => 'faq', 'title' => 'FAQ', 'content' => '<h2>Pertanyaan yang Sering Diajukan</h2><p><strong>Q: Berapa lama proses cetak?</strong><br>A: Proses cetak memakan waktu 1-3 hari kerja.</p>'],
@@ -479,29 +466,26 @@ function seedSettings($db) {
     $settings = [
         ['key' => 'bank1_name', 'value' => 'BRI'],
         ['key' => 'bank1_account', 'value' => '1234567890'],
-        ['key' => 'bank1_name_holder', 'value' => 'Rainbow Printing'],
+        ['key' => 'bank1_name_holder', 'value' => 'Percetakan Ikky Share'],
         ['key' => 'bank2_name', 'value' => 'BCA'],
         ['key' => 'bank2_account', 'value' => '0987654321'],
-        ['key' => 'bank2_name_holder', 'value' => 'Rainbow Printing'],
+        ['key' => 'bank2_name_holder', 'value' => 'Percetakan Ikky Share'],
         ['key' => 'bank3_name', 'value' => 'Mandiri'],
         ['key' => 'bank3_account', 'value' => '5555555555'],
-        ['key' => 'bank3_name_holder', 'value' => 'Rainbow Printing'],
+        ['key' => 'bank3_name_holder', 'value' => 'Percetakan Ikky Share'],
         ['key' => 'midtrans_server_key', 'value' => ''],
         ['key' => 'midtrans_client_key', 'value' => ''],
-        ['key' => 'store_name', 'value' => 'Rainbow Printing'],
+        ['key' => 'store_name', 'value' => 'Percetakan Ikky Share'],
         ['key' => 'store_address', 'value' => 'Jl. Contoh No. 123, Samarinda'],
         ['key' => 'store_phone', 'value' => '081234567890'],
         ['key' => 'whatsapp_number', 'value' => '6281234567890'],
-        ['key' => 'wa_enabled', 'value' => ''],
-        ['key' => 'wa_provider', 'value' => 'fonnte'],
-        ['key' => 'wa_token', 'value' => ''],
         ['key' => 'admin_email', 'value' => 'admin@rainbowprinting.com'],
         ['key' => 'qris_name', 'value' => ''],
         ['key' => 'qris_merchant_id', 'value' => ''],
         ['key' => 'qris_image', 'value' => ''],
         ['key' => 'sendgrid_api_key', 'value' => ''],
         ['key' => 'invoice_template', 'value' => 'classic'],
-        ['key' => 'invoice_footer', 'value' => 'Terima kasih telah berbelanja di Rainbow Printing'],
+        ['key' => 'invoice_footer', 'value' => 'Terima kasih telah berbelanja di Percetakan Ikky Share'],
         ['key' => 'printer_options', 'value' => 'In-Fus/Solvent,Digital Printing,Offset,UV Printer,Sablon'],
         ['key' => 'footer_text', 'value' => 'Percetakan online terpercaya di Samarinda'],
         ['key' => 'social_facebook', 'value' => ''],
@@ -526,55 +510,6 @@ if (!function_exists('formatRupiah')) {
         $amount = is_numeric($amount) ? $amount : 0;
         return 'Rp ' . number_format($amount, 0, ',', '.');
     }
-
-function waSend($to, $message) {
-    if (!getSetting('wa_enabled') || !getSetting('wa_token')) {
-        return false;
-    }
-    $provider = getSetting('wa_provider') === 'wablas' ? 'wablas' : 'fonnte';
-    $to = preg_replace('/\D+/', '', (string)$to);
-    if ($to === '') {
-        return false;
-    }
-    $ch = curl_init();
-    if ($provider === 'wablas') {
-        if (substr($to, 0, 1) === '0') {
-            $to = '62' . substr($to, 1);
-        }
-        curl_setopt_array($ch, [
-            CURLOPT_URL => 'https://patp.wablas.com/api/send-message',
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode(['phone' => $to, 'message' => $message, 'token' => getSetting('wa_token')]),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 8,
-        ]);
-    } else {
-        curl_setopt_array($ch, [
-            CURLOPT_URL => 'https://api.fonnte.com/send',
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode(['target' => $to, 'message' => $message, 'countryCode' => '62']),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: ' . getSetting('wa_token')],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 8,
-        ]);
-    }
-    $res = curl_exec($ch);
-    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $err = curl_error($ch);
-    curl_close($ch);
-    $ok = false;
-    if ($err === '' && is_string($res) && $res !== '') {
-        $j = json_decode($res, true);
-        if (is_array($j)) {
-            $ok = $j['status'] === true || $j['status'] === 'true' || $j['status'] === 1 || $j['status'] === '1';
-        }
-    }
-    if ($code !== 200 || !$ok) {
-        error_log('WA notif gagal: ' . $provider . ' | code ' . $code . ' | ' . ($err !== '' ? $err : mb_substr((string)$res, 0, 120)));
-    }
-    return $ok;
-}
 }
 
 if (!function_exists('getSetting')) {
@@ -598,7 +533,7 @@ if (!function_exists('sendEmail')) {
             $fromEmail = 'admin@rainbowprinting.web.id';
             $data = [
                 'personalizations' => [['to' => [['email' => $to]]]],
-                'from' => ['email' => $fromEmail, 'name' => 'Rainbow Printing'],
+                'from' => ['email' => $fromEmail, 'name' => 'Percetakan Ikky Share'],
                 'subject' => $subject,
                 'content' => [['type' => $contentType, 'value' => $message]],
             ];

@@ -18,7 +18,7 @@ $banks = array_filter($banks, function($b) {
 $qrisName = getSetting('qris_name');
 $qrisImage = getSetting('qris_image');
 $midtransServerKey = getSetting('midtrans_server_key');
-$storeName = getSetting('store_name') ?: 'Rainbow Printing';
+$storeName = getSetting('store_name') ?: 'Percetakan Ikky Share';
 
 // 🔥 AMBIL DATA CUSTOMER JIKA LOGIN
 $customerData = ['name' => '', 'phone' => '', 'address' => ''];
@@ -42,7 +42,7 @@ include 'includes/header.php';
 }
 .checkout-container h1 {
     font-size: 24px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 5px;
 }
 .checkout-container .subtitle {
@@ -78,10 +78,10 @@ include 'includes/header.php';
 .checkout-form h2,
 .checkout-summary h2 {
     font-size: 18px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 15px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #f39c12;
+    border-bottom: 2px solid #e53935;
 }
 
 /* 🔥 FORM */
@@ -92,7 +92,7 @@ include 'includes/header.php';
     display: block;
     font-weight: 600;
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 5px;
 }
 .form-group input,
@@ -109,7 +109,7 @@ include 'includes/header.php';
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-    border-color: #f39c12;
+    border-color: #e53935;
     outline: none;
     box-shadow: 0 0 0 3px rgba(243,156,18,0.15);
 }
@@ -134,7 +134,7 @@ include 'includes/header.php';
 .payment-info h4 {
     font-size: 14px;
     margin-bottom: 10px;
-    color: #2c3e50;
+    color: #111111;
 }
 .bank-list {
     display: grid;
@@ -148,7 +148,7 @@ include 'includes/header.php';
 }
 .bank-item .bank-name {
     font-weight: 600;
-    color: #2c3e50;
+    color: #111111;
 }
 .bank-item .bank-detail {
     font-size: 13px;
@@ -175,7 +175,7 @@ include 'includes/header.php';
     border-radius: 8px;
     color: #856404;
     font-size: 13px;
-    border-left: 4px solid #f39c12;
+    border-left: 4px solid #e53935;
 }
 .cod-warning.show {
     display: block;
@@ -197,7 +197,7 @@ include 'includes/header.php';
     gap: 8px;
 }
 .user-badge .logout-link {
-    color: #e74c3c;
+    color: #d32f2f;
     font-size: 12px;
     text-decoration: none;
 }
@@ -219,7 +219,7 @@ include 'includes/header.php';
     padding: 12px 0 0;
     font-size: 18px;
     font-weight: 700;
-    border-top: 2px solid #2c3e50;
+    border-top: 2px solid #111111;
     margin-top: 8px;
 }
 .summary-empty {
@@ -245,11 +245,11 @@ include 'includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
 }
 .btn-primary:disabled {
     opacity: 0.6;
@@ -261,8 +261,8 @@ include 'includes/header.php';
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -300,7 +300,7 @@ include 'includes/header.php';
     <div id="checkout-empty" style="display:none;">
         <div style="text-align:center;padding:60px 20px;background:#fff;border-radius:10px;border:1px solid #e9ecef;">
             <div style="font-size:48px;margin-bottom:15px;">🛒</div>
-            <h3 style="color:#2c3e50;margin-bottom:8px;">Keranjang Kosong</h3>
+            <h3 style="color:#111111;margin-bottom:8px;">Keranjang Kosong</h3>
             <p style="color:#6c757d;">Belum ada produk di keranjang Anda.</p>
             <a href="products.php" class="btn btn-primary" style="margin-top:15px;">Mulai Belanja</a>
         </div>
@@ -379,7 +379,7 @@ include 'includes/header.php';
                         <?php endforeach; ?>
                         <?php if (empty($banks)): ?>
                             <div class="bank-item">
-                                <div class="bank-detail" style="color:#e74c3c;">
+                                <div class="bank-detail" style="color:#d32f2f;">
                                     ⚠️ Belum ada rekening bank yang dikonfigurasi. Hubungi admin.
                                 </div>
                             </div>
@@ -396,7 +396,7 @@ include 'includes/header.php';
                     <?php if ($qrisImage): ?>
                         <img src="/uploads/<?= htmlspecialchars($qrisImage) ?>" alt="QRIS" class="qris-image">
                     <?php else: ?>
-                        <p style="color:#e74c3c;">⚠️ QRIS belum dikonfigurasi. Hubungi admin.</p>
+                        <p style="color:#d32f2f;">⚠️ QRIS belum dikonfigurasi. Hubungi admin.</p>
                     <?php endif; ?>
                     <?php if ($qrisName): ?>
                         <p style="text-align:center;">a.n. <strong><?= htmlspecialchars($qrisName) ?></strong></p>
@@ -426,7 +426,7 @@ include 'includes/header.php';
                     <p style="color:#555;font-size:14px;">
                         Pembayaran dilakukan saat barang diterima di alamat tujuan.
                     </p>
-                    <p style="color:#e74c3c;font-size:13px;margin-top:8px;">
+                    <p style="color:#d32f2f;font-size:13px;margin-top:8px;">
                         ⚠️ COD hanya tersedia untuk area tertentu. Konfirmasi via WhatsApp setelah order.
                     </p>
                 </div>
@@ -604,7 +604,7 @@ function showNotification(msg, type) {
     
     var div = document.createElement('div');
     div.className = 'notif-toast';
-    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#f39c12';
+    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#d32f2f' : '#e53935';
     div.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);background:' + bgColor + ';color:#fff;padding:12px 24px;border-radius:8px;z-index:99999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center;max-width:90%;';
     div.textContent = msg;
     document.body.appendChild(div);

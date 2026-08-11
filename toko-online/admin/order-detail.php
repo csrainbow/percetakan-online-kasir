@@ -90,7 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_design_result'
                 }
 
                 $_SESSION['success'] = "✅ Hasil desain berhasil diupload! Customer sudah diberi notifikasi.";
-                waOrderStatus($db, $orderId, 'processed', "🎨 Hasil desain sudah siap!\n📎 Lihat/download hasil: https://rainbowprinting.web.id/uploads/designs/" . $filename);
                 echo '<script>location.href="order-detail.php?id=' . $orderId . '";</script>';
                 exit;
             }
@@ -123,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_notification']))
             $fullMessage .= $message . "\n\n";
             $fullMessage .= "Pesanan: " . $order['order_code'] . "\n";
             $fullMessage .= "Status: " . ucfirst($order['status']) . "\n\n";
-            $fullMessage .= "Terima kasih,\nRainbow Printing";
+            $fullMessage .= "Terima kasih,\nPercetakan Ikky Share";
             
             $emailSent = sendEmail($customer['email'], $subject, $fullMessage);
             
@@ -159,7 +158,7 @@ include '../includes/header.php';
 }
 .admin-sidebar {
     width: 220px;
-    background: #2c3e50;
+    background: #111111;
     padding: 20px 15px;
     border-radius: 8px;
     flex-shrink: 0;
@@ -168,7 +167,7 @@ include '../includes/header.php';
     height: fit-content;
 }
 .admin-sidebar h2 {
-    color: #f39c12;
+    color: #e53935;
     font-size: 16px;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -195,7 +194,7 @@ include '../includes/header.php';
     color: #fff;
 }
 .admin-sidebar ul li a.active {
-    background: #f39c12;
+    background: #e53935;
     color: #fff;
 }
 .admin-main {
@@ -204,7 +203,7 @@ include '../includes/header.php';
 }
 .admin-main h1 {
     font-size: 24px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 20px;
 }
 .order-detail-grid {
@@ -221,7 +220,7 @@ include '../includes/header.php';
 }
 .card h3 {
     font-size: 16px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 12px;
     padding-bottom: 8px;
     border-bottom: 1px solid #eee;
@@ -237,19 +236,19 @@ include '../includes/header.php';
     font-size: 12px;
     font-weight: 600;
 }
-.status-pending { background: #f39c12; color: #fff; }
+.status-pending { background: #e53935; color: #fff; }
 .status-desain { background: #8e44ad; color: #fff; }
 .status-processed { background: #3498db; color: #fff; }
-.status-printing { background: #2c3e50; color: #fff; }
+.status-printing { background: #111111; color: #fff; }
 .status-done { background: #27ae60; color: #fff; }
-.status-cancelled { background: #e74c3c; color: #fff; }
-.status-failed { background: #e74c3c; color: #fff; }
+.status-cancelled { background: #d32f2f; color: #fff; }
+.status-failed { background: #d32f2f; color: #fff; }
 .status-unpaid { background: #95a5a6; color: #fff; }
-.status-dp { background: #f39c12; color: #fff; }
+.status-dp { background: #e53935; color: #fff; }
 .status-paid { background: #27ae60; color: #fff; }
 .status-pending_verification { background: #3498db; color: #fff; }
 .status-verified { background: #27ae60; color: #fff; }
-.status-rejected { background: #e74c3c; color: #fff; }
+.status-rejected { background: #d32f2f; color: #fff; }
 .status-approved { background: #27ae60; color: #fff; }
 
 .btn {
@@ -262,15 +261,15 @@ include '../includes/header.php';
     border: none;
     transition: all 0.3s;
 }
-.btn-primary { background: #2c3e50; color: #fff; }
-.btn-primary:hover { background: #1a252f; }
+.btn-primary { background: #111111; color: #fff; }
+.btn-primary:hover { background: #000000; }
 .btn-success { background: #27ae60; color: #fff; }
 .btn-success:hover { background: #1e8449; }
-.btn-danger { background: #e74c3c; color: #fff; }
-.btn-danger:hover { background: #c0392b; }
-.btn-warning { background: #f39c12; color: #fff; }
-.btn-warning:hover { background: #d68910; }
-.btn-outline { background: #fff; color: #2c3e50; border: 1px solid #2c3e50; }
+.btn-danger { background: #d32f2f; color: #fff; }
+.btn-danger:hover { background: #b71c1c; }
+.btn-warning { background: #e53935; color: #fff; }
+.btn-warning:hover { background: #c62828; }
+.btn-outline { background: #fff; color: #111111; border: 1px solid #111111; }
 .btn-outline:hover { background: #f8f9fa; }
 .btn-sm { padding: 4px 10px; font-size: 11px; }
 
@@ -310,7 +309,6 @@ include '../includes/header.php';
             <li><a href="dashboard.php">Dashboard</a></li>
             <li><a href="products.php">Produk</a></li>
             <li><a href="orders.php" class="active">Pesanan</a></li>
-            <li><a href="../kasir/" target="_blank">Kasir</a></li>
             <li><a href="edit-halaman.php?slug=tentang-kami">Tentang Kami</a></li>
             <li><a href="settings.php">Pengaturan</a></li>
             <li><a href="logout.php">Logout</a></li>
@@ -335,7 +333,7 @@ include '../includes/header.php';
         <h1>📋 Detail Pesanan: <?= htmlspecialchars($order['order_code']) ?></h1>
         
         <!-- 🔥 INFO PEMBAYARAN RINGKAS -->
-        <div style="background:<?= $sisaPembayaran > 0 ? '#fef9e7' : '#e8f5e9' ?>;padding:15px;border-radius:8px;border:1px solid <?= $sisaPembayaran > 0 ? '#f39c12' : '#27ae60' ?>;margin-bottom:20px;">
+        <div style="background:<?= $sisaPembayaran > 0 ? '#fef9e7' : '#e8f5e9' ?>;padding:15px;border-radius:8px;border:1px solid <?= $sisaPembayaran > 0 ? '#e53935' : '#27ae60' ?>;margin-bottom:20px;">
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
                 <div>
                     <strong style="color:#555;">Total Pesanan</strong><br>
@@ -347,13 +345,13 @@ include '../includes/header.php';
                 </div>
                 <div>
                     <strong style="color:#555;">Sisa Pembayaran</strong><br>
-                    <span style="font-size:20px;font-weight:bold;color:<?= $sisaPembayaran > 0 ? '#e74c3c' : '#27ae60' ?>;">
+                    <span style="font-size:20px;font-weight:bold;color:<?= $sisaPembayaran > 0 ? '#d32f2f' : '#27ae60' ?>;">
                         <?= formatRupiah($sisaPembayaran) ?>
                     </span>
                 </div>
                 <div>
                     <strong style="color:#555;">Status</strong><br>
-                    <span style="font-size:16px;font-weight:bold;color:<?= $sisaPembayaran > 0 ? '#f39c12' : '#27ae60' ?>;">
+                    <span style="font-size:16px;font-weight:bold;color:<?= $sisaPembayaran > 0 ? '#e53935' : '#27ae60' ?>;">
                         <?= $sisaPembayaran > 0 ? '💰 DP (' . $persentaseDibayar . '%)' : '✅ LUNAS' ?>
                     </span>
                     <?php if ($lastPaymentType): ?>
@@ -363,7 +361,7 @@ include '../includes/header.php';
             </div>
             <?php if ($sisaPembayaran > 0): ?>
                 <div style="margin-top:10px;background:#fff;border-radius:4px;height:8px;overflow:hidden;">
-                    <div style="width:<?= $persentaseDibayar ?>%;height:100%;background:linear-gradient(90deg,#f39c12,#e67e22);"></div>
+                    <div style="width:<?= $persentaseDibayar ?>%;height:100%;background:linear-gradient(90deg,#e53935,#d32f2f);"></div>
                 </div>
                 <small style="color:#999;"><?= $persentaseDibayar ?>% dari total sudah dibayar</small>
             <?php endif; ?>
@@ -430,12 +428,12 @@ include '../includes/header.php';
             <div class="card" style="position:relative;padding-top:25px;">
                 <?php if ($p['status'] === 'verified' || $p['status'] === 'approved' || $p['status'] === 'paid'): ?>
                     <?php if ($isDpPayment): ?>
-                        <span style="position:absolute;top:-8px;right:10px;background:#f39c12;color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">💰 DP</span>
+                        <span style="position:absolute;top:-8px;right:10px;background:#e53935;color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">💰 DP</span>
                     <?php else: ?>
                         <span style="position:absolute;top:-8px;right:10px;background:#27ae60;color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">✅ LUNAS</span>
                     <?php endif; ?>
                 <?php elseif ($p['status'] === 'rejected'): ?>
-                    <span style="position:absolute;top:-8px;right:10px;background:#e74c3c;color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">❌ DITOLAK</span>
+                    <span style="position:absolute;top:-8px;right:10px;background:#d32f2f;color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">❌ DITOLAK</span>
                 <?php else: ?>
                     <span style="position:absolute;top:-8px;right:10px;background:#95a5a6;color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">⏳ <?= ucfirst($p['status']) ?></span>
                 <?php endif; ?>
@@ -453,7 +451,7 @@ include '../includes/header.php';
                 
                 <?php if ($p['status'] === 'verified' || $p['status'] === 'approved' || $p['status'] === 'paid'): ?>
                     <?php if ($isDpPayment): ?>
-                        <p style="font-size:12px;color:#f39c12;margin-top:-5px;">
+                        <p style="font-size:12px;color:#e53935;margin-top:-5px;">
                             <strong>Sisa:</strong> <?= formatRupiah($order['total'] - $runningTotal) ?>
                             <br><small>(<?= round(($runningTotal/$order['total'])*100) ?>% dari total)</small>
                         </p>
@@ -495,14 +493,14 @@ include '../includes/header.php';
                         $varData = !empty($item['variants']) ? json_decode($item['variants'], true) : [];
                         if (!empty($varData)): 
                             foreach ($varData as $vr): ?>
-                                <br><small style="color:#e67e22;">+ <?= htmlspecialchars($vr['name']) ?> <?= formatRupiah($vr['price']) ?></small>
+                                <br><small style="color:#d32f2f;">+ <?= htmlspecialchars($vr['name']) ?> <?= formatRupiah($vr['price']) ?></small>
                         <?php endforeach; endif; ?>
                     </td>
                     <td><?= htmlspecialchars($item['material_name']) ?: '-' ?></td>
                     <td><?= ($item['width'] && $item['height']) ? intval($item['width']) . '×' . intval($item['height']) . ' cm' : '-' ?></td>
                     <td>
                         <?php if ($item['design_service'] === 'jasa'): ?>
-                            <span style="display:inline-block;padding:3px 10px;background:#f39c12;color:#fff;border-radius:4px;font-size:12px;font-weight:bold;">Jasa Desain</span>
+                            <span style="display:inline-block;padding:3px 10px;background:#e53935;color:#fff;border-radius:4px;font-size:12px;font-weight:bold;">Jasa Desain</span>
                         <?php elseif ($item['design_service'] === 'upload'): ?>
                             <span style="display:inline-block;padding:3px 10px;background:#3498db;color:#fff;border-radius:4px;font-size:12px;">Upload File</span>
                             <?php if ($item['design_file']): ?>
@@ -557,7 +555,7 @@ include '../includes/header.php';
                     <a href="/invoice.php?order=<?= urlencode($order['order_code']) ?>" target="_blank" class="btn btn-success" style="margin-top:10px;">🧾 Terbitkan / Lihat Invoice</a>
                 </div>
             <?php elseif (!$isPaid && !$isDp && $order['status'] !== 'done'): ?>
-                <div style="padding:15px;background:#fef9e7;border-radius:8px;border:1px solid #f39c12;">
+                <div style="padding:15px;background:#fef9e7;border-radius:8px;border:1px solid #e53935;">
                     <h3 style="margin:0 0 10px;color:#b7950b;">⏳ Belum Bisa Terbitkan Invoice</h3>
                     <p style="margin:0;font-size:13px;color:#b7950b;">
                         <?php if ($hasJasa): ?>
@@ -572,11 +570,11 @@ include '../includes/header.php';
         
         <!-- 🔥 FORM KIRIM NOTIFIKASI -->
         <div style="margin-top:20px;padding:15px;background:#e8f0fe;border-radius:8px;border:1px solid #4a90d9;">
-            <h3 style="margin:0 0 10px;color:#2c3e50;">📧 Kirim Notifikasi ke Customer</h3>
+            <h3 style="margin:0 0 10px;color:#111111;">📧 Kirim Notifikasi ke Customer</h3>
             <form method="POST" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;">
                 <input type="hidden" name="send_notification" value="1">
                 <div style="flex:1;min-width:200px;">
-                    <textarea name="notification_message" rows="2" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;" placeholder="Tulis pesan notifikasi...">Pesanan Anda sedang diproses. Terima kasih telah berbelanja di Rainbow Printing.</textarea>
+                    <textarea name="notification_message" rows="2" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;" placeholder="Tulis pesan notifikasi...">Pesanan Anda sedang diproses. Terima kasih telah berbelanja di Percetakan Ikky Share.</textarea>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;">
                     <label style="font-size:13px;cursor:pointer;">

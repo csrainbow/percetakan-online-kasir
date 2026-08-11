@@ -86,7 +86,7 @@ session_destroy();
 // 🔥 🔥 REDIRECT KE HALAMAN UTAMA DENGAN PESAN 🔥 🔥
 // Gunakan session baru untuk flash message
 session_start();
-$_SESSION['success'] = '✅ Anda telah berhasil logout. Terima kasih telah berbelanja di Rainbow Printing!';
+$_SESSION['success'] = '✅ Anda telah berhasil logout. Terima kasih telah berbelanja di Percetakan Ikky Share!';
 
 header('Location: /index.php');
 exit;

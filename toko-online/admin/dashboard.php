@@ -54,7 +54,7 @@ include '../includes/header.php';
 
 .admin-sidebar {
     width: 220px;
-    background: #2c3e50;
+    background: #111111;
     padding: 20px 15px;
     border-radius: 8px;
     flex-shrink: 0;
@@ -64,7 +64,7 @@ include '../includes/header.php';
 }
 
 .admin-sidebar h2 {
-    color: #f39c12;
+    color: #e53935;
     font-size: 16px;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -96,7 +96,7 @@ include '../includes/header.php';
 }
 
 .admin-sidebar ul li a.active {
-    background: #f39c12;
+    background: #e53935;
     color: #fff;
 }
 
@@ -107,7 +107,7 @@ include '../includes/header.php';
 
 .admin-main h1 {
     font-size: 24px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 20px;
 }
 
@@ -124,13 +124,13 @@ include '../includes/header.php';
     border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     text-align: center;
-    border-left: 4px solid #2c3e50;
+    border-left: 4px solid #111111;
 }
 
 .stat-card .stat-value {
     font-size: 28px;
     font-weight: bold;
-    color: #2c3e50;
+    color: #111111;
 }
 
 .stat-card .stat-label {
@@ -139,10 +139,10 @@ include '../includes/header.php';
     margin-top: 4px;
 }
 
-.stat-card.primary { border-left-color: #2c3e50; }
+.stat-card.primary { border-left-color: #111111; }
 .stat-card.success { border-left-color: #27ae60; }
-.stat-card.warning { border-left-color: #f39c12; }
-.stat-card.danger { border-left-color: #e74c3c; }
+.stat-card.warning { border-left-color: #e53935; }
+.stat-card.danger { border-left-color: #d32f2f; }
 .stat-card.info { border-left-color: #3498db; }
 .stat-card.purple { border-left-color: #8e44ad; }
 
@@ -173,7 +173,7 @@ include '../includes/header.php';
     margin-top: 4px;
 }
 
-.payment-stat-card .stat-value.dp { color: #f39c12; }
+.payment-stat-card .stat-value.dp { color: #e53935; }
 .payment-stat-card .stat-value.paid { color: #27ae60; }
 .payment-stat-card .stat-value.unpaid { color: #95a5a6; }
 .payment-stat-card .stat-value.verification { color: #3498db; }
@@ -189,7 +189,7 @@ include '../includes/header.php';
 
 .chart-container h3 {
     font-size: 16px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 15px;
 }
 
@@ -220,7 +220,7 @@ include '../includes/header.php';
 }
 
 .chart-bar.amount {
-    background: linear-gradient(180deg, #2c3e50, #3498db);
+    background: linear-gradient(180deg, #111111, #3498db);
 }
 
 .chart-label {
@@ -272,16 +272,16 @@ include '../includes/header.php';
     font-weight: 600;
 }
 
-.status-pending { background: #f39c12; color: #fff; }
+.status-pending { background: #e53935; color: #fff; }
 .status-desain { background: #8e44ad; color: #fff; }
 .status-processed { background: #3498db; color: #fff; }
-.status-printing { background: #2c3e50; color: #fff; }
+.status-printing { background: #111111; color: #fff; }
 .status-done { background: #27ae60; color: #fff; }
-.status-cancelled { background: #e74c3c; color: #fff; }
-.status-failed { background: #e74c3c; color: #fff; }
+.status-cancelled { background: #d32f2f; color: #fff; }
+.status-failed { background: #d32f2f; color: #fff; }
 
 .status-unpaid { background: #95a5a6; color: #fff; }
-.status-dp { background: #f39c12; color: #fff; }
+.status-dp { background: #e53935; color: #fff; }
 .status-paid { background: #27ae60; color: #fff; }
 .status-pending_verification { background: #3498db; color: #fff; }
 
@@ -317,7 +317,6 @@ include '../includes/header.php';
             <li><a href="dashboard.php" class="active">Dashboard</a></li>
             <li><a href="products.php">Produk</a></li>
             <li><a href="orders.php">Pesanan</a></li>
-            <li><a href="../kasir/" target="_blank">Kasir</a></li>
             <li><a href="edit-halaman.php?slug=tentang-kami">Tentang Kami</a></li>
             <li><a href="settings.php">Pengaturan</a></li>
             <li><a href="logout.php">Logout</a></li>
@@ -347,7 +346,7 @@ include '../includes/header.php';
         </div>
 
         <!-- 🔥 🔥 STATISTIK PEMBAYARAN 🔥 🔥 -->
-        <h2 style="font-size:18px;color:#2c3e50;margin-bottom:15px;">💰 Status Pembayaran</h2>
+        <h2 style="font-size:18px;color:#111111;margin-bottom:15px;">💰 Status Pembayaran</h2>
         <div class="payment-stats">
             <div class="payment-stat-card">
                 <div class="stat-value paid"><?= $paidOrders ?></div>
@@ -384,7 +383,7 @@ include '../includes/header.php';
                     <div class="chart-label">
                         <?= date('M Y', strtotime($stat['month'] . '-01')) ?>
                         <br>
-                        <small style="font-weight:bold;color:#2c3e50;"><?= formatRupiah($stat['total_amount']) ?></small>
+                        <small style="font-weight:bold;color:#111111;"><?= formatRupiah($stat['total_amount']) ?></small>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -393,7 +392,7 @@ include '../includes/header.php';
         <?php endif; ?>
 
         <!-- 🔥 PESANAN TERBARU -->
-        <h2 style="font-size:18px;color:#2c3e50;margin-bottom:15px;">📋 Pesanan Terbaru</h2>
+        <h2 style="font-size:18px;color:#111111;margin-bottom:15px;">📋 Pesanan Terbaru</h2>
         <table class="table">
             <thead>
                 <tr>
@@ -428,7 +427,7 @@ include '../includes/header.php';
                             ?>
                         </span>
                         <?php if ($o['payment_status'] === 'dp'): ?>
-                            <br><small style="color:#f39c12;">Sisa: <?= formatRupiah($sisa) ?></small>
+                            <br><small style="color:#e53935;">Sisa: <?= formatRupiah($sisa) ?></small>
                         <?php endif; ?>
                     </td>
                     <td><?= date('d/m/Y H:i', strtotime($o['created_at'])) ?></td>

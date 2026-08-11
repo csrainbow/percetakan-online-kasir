@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = 'Profil Saya - Rainbow Printing';
+$pageTitle = 'Profil Saya - Percetakan Ikky Share';
 include '../includes/header.php';
 ?>
 
@@ -87,7 +87,7 @@ include '../includes/header.php';
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #2c3e50, #f39c12);
+    background: linear-gradient(135deg, #111111, #e53935);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -98,7 +98,7 @@ include '../includes/header.php';
 .profile-header-info h1 {
     margin: 0;
     font-size: 24px;
-    color: #2c3e50;
+    color: #111111;
 }
 .profile-header-info .subtitle {
     color: #6c757d;
@@ -123,7 +123,7 @@ include '../includes/header.php';
 .profile-stats .stat .number {
     font-size: 20px;
     font-weight: bold;
-    color: #2c3e50;
+    color: #111111;
 }
 .profile-stats .stat .label {
     font-size: 12px;
@@ -143,7 +143,7 @@ include '../includes/header.php';
     display: block;
     font-weight: 600;
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 5px;
 }
 .profile-form .form-group .helper-text {
@@ -162,7 +162,7 @@ include '../includes/header.php';
 }
 .profile-form .form-group input:focus,
 .profile-form .form-group textarea:focus {
-    border-color: #f39c12;
+    border-color: #e53935;
     outline: none;
     box-shadow: 0 0 0 3px rgba(243,156,18,0.15);
 }
@@ -201,27 +201,27 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
     transform: translateY(-1px);
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
 }
 .btn-outline:hover {
     background: #f8f9fa;
 }
 .btn-danger {
-    background: #e74c3c;
+    background: #d32f2f;
     color: #fff;
 }
 .btn-danger:hover {
-    background: #c0392b;
+    background: #b71c1c;
 }
 
 .alert {
@@ -339,8 +339,8 @@ include '../includes/header.php';
                       placeholder="Masukkan alamat lengkap"><?= htmlspecialchars($customer['address'] ?? '') ?></textarea>
         </div>
 
-        <div style="border-top:2px solid #f39c12;padding-top:15px;margin-top:5px;">
-            <h3 style="font-size:15px;color:#2c3e50;margin-bottom:10px;">
+        <div style="border-top:2px solid #e53935;padding-top:15px;margin-top:5px;">
+            <h3 style="font-size:15px;color:#111111;margin-bottom:10px;">
                 🔒 Ganti Password
             </h3>
             <div class="form-group">
@@ -407,12 +407,12 @@ function confirmSave() {
 document.getElementById('phone')?.addEventListener('blur', function() {
     var phone = this.value.trim();
     if (phone && !phone.match(/^0\d{8,12}$/) && !phone.match(/^628\d{8,12}$/)) {
-        this.style.borderColor = '#e74c3c';
+        this.style.borderColor = '#d32f2f';
         this.style.boxShadow = '0 0 0 3px rgba(231,76,60,0.15)';
         // Tampilkan peringatan
         var helper = this.parentElement.parentElement.querySelector('.helper-text');
         if (helper) {
-            helper.style.color = '#e74c3c';
+            helper.style.color = '#d32f2f';
             helper.textContent = '⚠️ Format tidak valid! Gunakan 08123456789 atau 628123456789';
         }
     } else {
