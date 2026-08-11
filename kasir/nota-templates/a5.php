@@ -39,13 +39,14 @@ if (empty($publik)) {
         $waHref = wa_href($telpToko, "Halo " . setting('nama_toko') . ", saya {$ps['pelanggan']}. Saya sudah melihat nota {$ps['no_pesanan']} total " . rp($ps['total']) . ". Mohon konfirmasi pesanan saya.");
     }
 }
+$refNota = $ref ?? 'pesanan';
 ?>
 <div class="print-aksi">
     <?php if (empty($publik)): ?>
     <a href="index.php?p=<?= e($back_page) ?>" class="back-btn">Kembali</a>
     <button onclick="cetakNota()" class="print-btn">🖨️ Cetak / Simpan PDF</button>
     <?php if ($waHref): ?>
-        <a href="<?= e($waHref) ?>" target="_blank" class="print-btn wa">💬 WhatsApp Pelanggan</a>
+        <a href="#" onclick="waKirim(event)" data-ref="<?= e($refNota) ?>" data-id="<?= (int)$ps['id'] ?>" class="print-btn wa">💬 WhatsApp Pelanggan</a>
     <?php endif; ?>
     <?php else: ?>
     <a href="nota-pdf.php?ref=<?= e($ref) ?>&id=<?= (int)$id ?>&k=<?= e($k) ?>" class="print-btn">⬇️ Download PDF</a>
@@ -59,6 +60,35 @@ if (empty($publik)) {
 
 <script src="assets/print.js"></script>
 <script>
+function waKirim(ev) {
+    ev.preventDefault();
+    var btn = ev.currentTarget;
+    var ref = btn.getAttribute('data-ref');
+    var id = btn.getAttribute('data-id');
+    var old = btn.textContent;
+    btn.textContent = '⏳ Mengirim...';
+    var fd = new FormData();
+    fd.append('id', id);
+    fd.append('ref', ref);
+    fetch('wa-send.php', { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d.ok) {
+                btn.textContent = '✅ Terkirim';
+                setTimeout(function () { btn.textContent = old; }, 3000);
+            } else if (d.fallback) {
+                window.open(d.fallback, '_blank');
+                btn.textContent = old;
+            } else {
+                btn.textContent = old;
+                alert(d.msg || 'Gagal mengirim WhatsApp.');
+            }
+        })
+        .catch(function () {
+            btn.textContent = old;
+            alert('Gagal menghubungi server.');
+        });
+}
 if (location.search.includes('auto=1')) {
     setTimeout(function () { cetakNota(); }, 400);
 }

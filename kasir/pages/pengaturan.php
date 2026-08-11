@@ -3,7 +3,7 @@ require_once __DIR__ . '/../config.php';
 require_login();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!empty($_POST['simpan_pengaturan'])) {
+    if (!empty($_POST['simpan_toko'])) {
         if (!is_superadmin()) {
             flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
         } else {
@@ -17,12 +17,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_setting('nota_template', in_array($nt, ['struk', 'a5']) ? $nt : 'struk');
             $sl = $_POST['struk_lebar'] ?? '80';
             set_setting('struk_lebar', in_array($sl, ['80', '58']) ? $sl : '80');
+            flash_set('success', 'Pengaturan toko disimpan.');
+        }
+        header('Location: index.php?p=pengaturan');
+        exit;
+    }
+
+    if (!empty($_POST['simpan_wa'])) {
+        if (!is_superadmin()) {
+            flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
+        } else {
             set_setting('wa_enabled', !empty($_POST['wa_enabled']) ? '1' : '');
             set_setting('wa_provider', ($_POST['wa_provider'] ?? '') === 'wablas' ? 'wablas' : 'fonnte');
             set_setting('wa_token', trim($_POST['wa_token'] ?? ''));
             set_setting('wa_admin_number', trim($_POST['wa_admin_number'] ?? ''));
             set_setting('wa_notif_pembayaran', !empty($_POST['wa_notif_pembayaran']) ? '1' : '');
-            flash_set('success', 'Pengaturan toko disimpan.');
+            flash_set('success', 'Pengaturan notifikasi disimpan.');
         }
         header('Location: index.php?p=pengaturan');
         exit;
@@ -204,7 +214,7 @@ require __DIR__ . '/../layout/header.php';
                 <input type="text" name="footer_struk" value="<?= e(setting('footer_struk')) ?>">
             </label>
             <label>URL Publik Kasir (untuk QR di struk/nota)
-                <input type="text" name="url_publik" value="<?= e(setting('url_publik', 'https://rainbowprinting.web.id/kasir')) ?>" placeholder="https://rainbowprinting.web.id/kasir">
+                <input type="text" name="url_publik" value="<?= e(setting('url_publik', 'https://percetakan-ikkyshare.web.id/kasir')) ?>" placeholder="https://percetakan-ikkyshare.web.id/kasir">
             </label>
             <label>Tipe Nota Bawaan
                 <select name="nota_template">
@@ -219,7 +229,7 @@ require __DIR__ . '/../layout/header.php';
                 </select>
             </label>
             <p class="muted kecil">Halaman Pesanan / Piutang / Kasir menyediakan pilihan cetak langsung; ini hanya default bila tidak ada pilihan.</p>
-            <button type="submit" class="btn" name="simpan_pengaturan" value="1">Simpan</button>
+            <button type="submit" class="btn" name="simpan_toko" value="1">Simpan</button>
         </form>
     </div>
 
@@ -260,7 +270,7 @@ require __DIR__ . '/../layout/header.php';
                 Juga kirim notif saat pembayaran pesanan diterima
             </label>
             <p class="muted kecil">Cara: daftar gratis di <b>fonnte.com</b> (atau wablas.com), salin API token dari dashboard, tempel di atas, isi nomor admin, centang aktifkan, simpan. Setiap pesanan baru otomatis terkirim ke WhatsApp nomor tersebut.</p>
-            <button type="submit" class="btn" name="simpan_pengaturan" value="1">Simpan Notifikasi</button>
+            <button type="submit" class="btn" name="simpan_wa" value="1">Simpan Notifikasi</button>
         </form>
     </div>
     <?php endif; ?>

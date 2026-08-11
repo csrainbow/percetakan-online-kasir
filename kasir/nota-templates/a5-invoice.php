@@ -39,6 +39,10 @@ $sisaAmount = (float)$ps['sisa'];
     <table class="invoice-head">
         <tr>
             <td class="invoice-head-left">
+                <?php $logoImg = $invoiceLogo ?? setting('logo_image', 'assets/logo-ikky.jpeg'); ?>
+                <?php if ($logoImg): ?>
+                    <img src="<?= e($logoImg) ?>" alt="Logo" style="float:left;width:90px;height:auto;margin:0 8px 4px 0;">
+                <?php endif; ?>
                 <strong><?= e(setting('nama_toko')) ?></strong>
                 <p><?= nl2br(e(setting('alamat'))) ?></p>
                 <p>Telp: <?= e(setting('telp')) ?></p>
@@ -59,7 +63,7 @@ $sisaAmount = (float)$ps['sisa'];
         <tr>
             <td><strong>No. Pesanan:</strong> <?= e($ps['no_pesanan']) ?></td>
             <td><strong>Kasir:</strong> <?= e($user['username'] ?? '-') ?></td>
-            <td><strong>Status Pembayaran:</strong> <?= $ps['pembayaran_status'] === 'Batal' ? 'BATAL' : ($sisaAmount <= 0 ? 'LUNAS' : 'BELUM LUNAS (DP)') ?></td>
+            <td><strong>Status Pembayaran:</strong> <?= $ps['pembayaran_status'] === 'Batal' ? 'BATAL' : ($ps['pembayaran_status'] === 'Lunas' ? 'LUNAS' : ($ps['pembayaran_status'] === 'DP' ? 'DP' : 'BELUM BAYAR')) ?></td>
             <?php if ($sisaAmount > 0): ?>
             <td><strong>Sisa:</strong> <?= rp($sisaAmount) ?></td>
             <?php endif; ?>
@@ -139,3 +143,4 @@ $sisaAmount = (float)$ps['sisa'];
         <?= e(setting('footer_struk') ?: 'Terima kasih atas kepercayaan Anda.') ?>
     </div>
 </div>
+

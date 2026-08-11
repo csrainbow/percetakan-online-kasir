@@ -15,6 +15,9 @@
 </div>
 
 <div class="struk">
+    <?php if (setting('logo_struk', 'assets/logo-struk.jpeg')): ?>
+        <img class="logo-struk" src="<?= e(setting('logo_struk', 'assets/logo-struk.jpeg')) ?>" alt="Logo" style="display:block;margin:0 auto 4px;max-width:80%;width:150px;height:auto;">
+    <?php endif; ?>
     <div class="center">
         <h3><?= e(setting('nama_toko')) ?></h3>
         <p class="muted kecil"><?= e(setting('alamat')) ?></p>
@@ -28,8 +31,7 @@
         <?php if ($ps['telepon']): ?>
             <tr><td>Telepon</td><td>: <?= e($ps['telepon']) ?></td></tr>
         <?php endif; ?>
-        <tr><td>Status</td><td>: <?= e($ps['status']) ?></td></tr>
-        <tr><td>Pembayaran</td><td>: <?= e($ps['pembayaran_status']) ?></td></tr>
+        <tr><td>Status</td><td>: <?= in_array($ps['status'], ['Selesai', 'Batal']) ? e($ps['status']) : e($ps['pembayaran_status']) ?></td></tr>
         <?php if ($ps['deskripsi']): ?>
             <tr><td>Pesanan</td><td>: <?= nl2br(e($ps['deskripsi'])) ?></td></tr>
         <?php endif; ?>
@@ -58,9 +60,9 @@
         <hr>
     <?php endif; ?>
     <?php if ($ref === 'penjualan' && ($ps['status'] ?? '') === 'Menunggu QRIS'): ?>
-        <p class="center muted kecil">Menunggu konfirmasi QRIS — transaksi sah setelah dana masuk.</p>
+        <p class="center muted kecil">Menunggu konfirmasi QRIS ??? transaksi sah setelah dana masuk.</p>
     <?php endif; ?>
-    <?php if ($ps['pembayaran_status'] === 'Belum Lunas'): ?>
+    <?php if ($ps['pembayaran_status'] === 'Belum Bayar' || $ps['pembayaran_status'] === 'DP'): ?>
         <p class="center muted kecil">Barang akan dikirim/diambil setelah pelunasan.</p>
     <?php elseif ($ps['status'] === 'Selesai'): ?>
         <p class="center muted kecil">Pesanan sudah selesai dan diambil.</p>
@@ -71,7 +73,7 @@
             <img class="qris-struk" src="<?= e(setting('qris_image')) ?>" alt="QRIS">
         </div>
     <?php endif; ?>
-    <?php if ($ref === 'penjualan' || ($ps['status'] ?? '') === 'Selesai'): ?>
+    <?php if ($ps['status'] === 'Selesai'): ?>
     <div class="center">
         <p class="muted kecil">Scan untuk nota digital / cetak A5</p>
         <img class="qris-struk" src="<?= e($qrSrc) ?>" alt="QR Nota">
@@ -89,3 +91,5 @@ if (location.search.includes('auto=1')) {
 </script>
 </body>
 </html>
+
+

@@ -17,13 +17,16 @@ percetakan-online-kasir/
 │   ├── router.php    # pengaman php -S (blokir database.sqlite)
 │   └── *.php         # index, products, cart, checkout, cek-pesanan, ...
 └── kasir/            # aplikasi kasir
-    ├── pages/        # dashboard, penjualan, produk, pesanan, piutang, laporan, histori, pengaturan, log
+    ├── pages/        # dashboard, penjualan, produk, pesanan, piutang, laporan, histori, pengaturan, log, rekap
     ├── layout/       # header & footer
     ├── nota-templates/ # struk 80mm & nota A5
+    ├── etc/          # file cloudflared.service + cron watchdog (opsional)
     ├── assets/       # css & js
     ├── db.php        # koneksi SQLite + migrasi otomatis + data awal
-    ├── router.php    # pengaman php -S
-    └── config.php    # konfigurasi (NOTA_SECRET)
+    ├── router.php    # pengaman php -S (blokir folder data)
+    ├── wa-send.php   # helper notifikasi WhatsApp (Fonnte / Wablas)
+    ├── cloudflared-watchdog.sh # watchdog Cloudflare Tunnel (auto-restart)
+    └── config.php    # konfigurasi (zona waktu, NOTA_SECRET, url publik)
 ```
 
 ## Fitur Utama
@@ -46,6 +49,22 @@ percetakan-online-kasir/
 - Notifikasi WhatsApp otomatis:
   - Pesanan baru → ke nomor toko
   - Status berubah (dibayar/DP/diproses/dicetak/selesai) → ke nomor WA pelanggan
+
+## Pembaruan Terkini (kasir, 11 Agu 2026)
+
+- **Zona waktu Asia/Makassar (WITA)** — semua waktu konsisten dengan jam perangkat
+  (sebelumnya WIB, selisih 1 jam; riwayat lama sudah disesuaikan ke WITA)
+- **Laporan konsisten** — pembayaran dari pesanan Batal/dihapus tidak ikut terhitung;
+  export CSV, total pembayaran masuk, dan per-hari kini sama nilainya
+- **Dashboard per kasir akurat** — nilai atribusi kasir hanya menghitung pesanan aktif
+- **Pesanan multi-item** — 1 pesanan bisa berisi banyak produk (tabel `pesanan_item`)
+- **Atribusi kasir** — setiap transaksi tercatat `user_id` pembuatnya (kasir / admin)
+- **Nota publik** — URL nota bertanda tangan `NOTA_SECRET` (`nota-publik.php`),
+  bisa dibagikan ke pelanggan lewat WhatsApp
+- **WA notif ulang** — kirim ulang pesan WhatsApp ke pelanggan dari menu pesanan (`wa-send.php`)
+- **Cloudflare Tunnel watchdog** — `cloudflared` auto-restart bila tunnel mati
+  (`etc/cloudflared.service` + `etc/cloudflared-watchdog.cron` + `cloudflared-watchdog.sh`)
+- Backup database dengan nama ber-timestamp otomatis saat ada perubahan besar
 
 ## Kebutuhan
 

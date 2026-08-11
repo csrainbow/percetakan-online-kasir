@@ -27,8 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['bayar_piutang'])) {
     } elseif ($jumlah <= 0) {
         flash_set('error', 'Jumlah pembayaran tidak valid.');
     } else {
-        $totalDibayar = (float)DB::one("SELECT COALESCE(SUM(jumlah),0) t FROM pembayaran WHERE ref_type='pesanan' AND ref_id = ?", [$id])['t'];
-        $sisa = $ps['total'] - $totalDibayar;
+        $sisa = max(0, (float)$ps['sisa']);
         if ($jumlah > $sisa) {
             $jumlah = $sisa;
         }
@@ -41,6 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['bayar_piutang'])) {
         if (setting('wa_notif_pembayaran') && setting('wa_admin_number') !== '') {
             wa_send(setting('wa_admin_number'), "💵 *PELUNASAN PIUTANG*\nNo: " . $ps['no_pesanan'] . "\nPelanggan: " . $ps['pelanggan'] . "\nJumlah: " . rp($jumlah) . "\nMetode: " . $metode . "\nWaktu: " . date('d/m/Y H:i'));
         }
+        wa_pelanggan([
+            'id' => $id,
+            'no_pesanan' => $ps['no_pesanan'],
+            'pelanggan' => $ps['pelanggan'],
+            'telepon' => $ps['telepon'],
+            'total' => $ps['total'],
+            'status' => $status,
+        ], $sisaBaru <= 0 ? 'lunas' : 'dp');
         flash_set('success', 'Pembayaran piutang diterima.');
     }
     header('Location: index.php?p=piutang');
@@ -108,7 +115,7 @@ require __DIR__ . '/../layout/header.php';
                         <span class="badge warn">QRIS Menunggu</span>
                     <?php endif; ?>
                 </div>
-                <div class="badge DP">DP</div>
+                <div class="badge DP"><?= e(pembayaran_status_label($ps['total'] - $ps['sisa'], $ps['total'], $ps['status'])) ?></div>
             </div>
             <div class="order-body">
                 <div>

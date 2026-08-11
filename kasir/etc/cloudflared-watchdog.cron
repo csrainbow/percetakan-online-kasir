@@ -1,0 +1,2 @@
+MAILTO=""
+*/5 * * * * root /usr/local/bin/cloudflared-watchdog.sh

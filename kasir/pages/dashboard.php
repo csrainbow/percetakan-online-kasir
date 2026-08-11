@@ -62,7 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['konfirmasi_penjualan
 }
 
 $sc = scope_sql('p');
-$hariIni = DB::one("SELECT COALESCE(SUM(p.total),0) total, COUNT(*) c FROM penjualan p WHERE date(p.tgl) = date('now','localtime') AND $sc");
+$hariIni = DB::one("SELECT COALESCE(SUM(total),0) total, SUM(c) c FROM (
+    SELECT p.total AS total, 1 AS c FROM penjualan p WHERE date(p.tgl) = date('now','localtime') AND $sc
+    UNION ALL
+    SELECT pe.total AS total, 1 AS c FROM pesanan pe
+    WHERE date(pe.tgl) = date('now','localtime') AND pe.status != 'Batal' AND pe.deleted = 0 AND " . scope_sql('pe') . "
+)");
 $piutang = DB::one("SELECT COALESCE(SUM(pe.sisa),0) sisa, COUNT(*) c FROM pesanan pe WHERE pe.status = 'DP' AND pe.deleted = 0 AND " . scope_sql('pe'));
 $pesananAktif = DB::one("SELECT COUNT(*) c FROM pesanan pe WHERE pe.status IN ('DP','Lunas') AND pe.deleted = 0 AND " . scope_sql('pe'));
 $stokMenipis = DB::q("SELECT * FROM produk WHERE stok <= stok_min ORDER BY (stok - stok_min) ASC LIMIT 5");
@@ -92,7 +97,7 @@ usort($aktivitas7, function ($a, $b) {
     return strcmp($a['d'], $b['d']);
 });
 
-$pesananTerbaruTr = DB::q("SELECT pe.no_pesanan, pe.tgl, pe.total, pe.status, pe.id FROM pesanan pe
+$pesananTerbaruTr = DB::q("SELECT pe.no_pesanan, pe.tgl, pe.total, pe.status, pe.id, pe.sisa FROM pesanan pe
                            WHERE " . scope_sql('pe') . " AND pe.deleted = 0 AND pe.status != 'Batal' ORDER BY pe.id DESC LIMIT 8");
 $gabTr = [];
 foreach ($transaksiTerbaru as $tr) {
@@ -101,7 +106,7 @@ foreach ($transaksiTerbaru as $tr) {
 }
 foreach ($pesananTerbaruTr as $ps) {
     $gabTr[] = ['jenis' => 'Pesanan', 'no' => $ps['no_pesanan'], 'tgl' => $ps['tgl'], 'total' => (float)$ps['total'],
-        'metode' => $ps['status'], 'status' => $ps['status'], 'id' => $ps['id']];
+        'metode' => $ps['status'], 'status' => $ps['status'], 'sisa' => (float)($ps['sisa'] ?? 0), 'id' => $ps['id']];
 }
 usort($gabTr, function ($a, $b) {
     return strcmp($b['tgl'], $a['tgl']);
@@ -115,7 +120,7 @@ if (is_superadmin() && scope_user_id() === 0) {
         (SELECT COALESCE(SUM(p.total),0) FROM penjualan p WHERE p.user_id = u.id) total_penjualan,
         (SELECT COUNT(*) FROM pesanan pe WHERE pe.user_id = u.id AND pe.status IN ('DP','Lunas')) pesanan_aktif,
         (SELECT COALESCE(SUM(pp.jumlah),0) FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
-         WHERE pp.user_id = u.id AND pp.ref_type = 'pesanan'
+         WHERE pp.user_id = u.id AND pp.ref_type = 'pesanan' AND pe.deleted = 0 AND pe.status != 'Batal'
          AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%')) terima_pesanan
         FROM users u");
 usort($perKasir, function ($a, $b) {
@@ -202,12 +207,13 @@ require __DIR__ . '/../layout/header.php';
                 <thead><tr><th>No</th><th>Pelanggan</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody>
                 <?php foreach ($pesananTerbaru as $ps): ?>
+                    <?php $labelPs = !empty($ps['no_pesanan']) && !in_array($ps['status'], ['Selesai', 'Batal']) ? pembayaran_status_label((float)$ps['total'] - (float)$ps['sisa'], (float)$ps['total'], $ps['status']) : ($ps['status'] ?? 'Lunas'); ?>
                     <tr>
                         <td><?= e($ps['no_pesanan'] ?? $ps['no_invoice']) ?></td>
                         <td><?= e($ps['pelanggan'] ?? ('Transaksi ' . $ps['metode'])) ?></td>
                         <td><?= rp($ps['sisa'] ?? $ps['total']) ?></td>
                         <td>
-                            <span class="badge <?= e($ps['status'] ?? 'Lunas') ?>"><?= e($ps['status'] ?? 'Lunas') ?></span>
+                            <span class="badge <?= e($ps['status'] ?? 'Lunas') ?>"><?= e($labelPs) ?></span>
                             <?php if (!empty($ps['estimasi']) && is_telat($ps)): ?>
                                 <span class="badge bahaya">TELAT</span>
                             <?php endif; ?>
@@ -243,7 +249,9 @@ require __DIR__ . '/../layout/header.php';
                     <td><?= e($tr['no']) ?></td>
                     <td><?= tgl($tr['tgl']) ?></td>
                     <td><?= rp($tr['total']) ?></td>
-                    <td><?= e($tr['metode']) ?></td>
+                    <td><?= $tr['jenis'] === 'Pesanan'
+                        ? e(in_array($tr['status'], ['Selesai', 'Batal']) ? $tr['status'] : pembayaran_status_label($tr['total'] - $tr['sisa'], $tr['total'], $tr['status']))
+                        : e($tr['metode']) ?></td>
                     <td>
                         <?php if ($tr['jenis'] === 'Kasir' && $tr['status'] === 'Menunggu QRIS'): ?>
                             <span class="badge warn">Menunggu QRIS</span>

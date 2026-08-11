@@ -40,17 +40,12 @@ function nota_data($ref, $id) {
             return null;
         }
         $pembayaran = DB::q("SELECT * FROM pembayaran WHERE ref_type = 'pesanan' AND ref_id = ? ORDER BY id", [$id]);
-        foreach ($pembayaran as $pb) {
-            $totalBayar += (float)$pb['jumlah'];
-        }
         $ps = $row;
         $ps['total'] = (float)$ps['total'];
         $ps['dp'] = (float)$ps['dp'];
-        $ps['sisa'] = max(0, (float)$ps['total'] - $totalBayar);
-        $ps['pembayaran_status'] = ($totalBayar >= $ps['total'] - 0.01) ? 'Lunas' : 'Belum Lunas';
-        if ($ps['status'] === 'Batal') {
-            $ps['pembayaran_status'] = 'Batal';
-        }
+        $ps['sisa'] = max(0, (float)$ps['sisa']);
+        $totalBayar = max(0, $ps['total'] - $ps['sisa']);
+        $ps['pembayaran_status'] = pembayaran_status_label($totalBayar, $ps['total'], $ps['status']);
         $pitems = DB::q('SELECT nama, qty, harga, subtotal FROM pesanan_item WHERE pesanan_id = ? ORDER BY id', [$id]);
         if ($pitems) {
             $viewItems = array_map(function ($i) {

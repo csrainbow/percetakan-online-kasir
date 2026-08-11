@@ -98,7 +98,7 @@ require __DIR__ . '/../layout/header.php';
                     <td><?= e($ps['pembuat'] ?? '-') ?></td>
                     <td><?= rp($ps['total']) ?></td>
                     <td>
-                        <span class="badge <?= e($ps['status']) ?>"><?= e($ps['status']) ?></span>
+                        <span class="badge <?= e($ps['status']) ?>"><?= in_array($ps['status'], ['Selesai', 'Batal']) ? e($ps['status']) : e(pembayaran_status_label((float)$ps['total'] - (float)$ps['sisa'], (float)$ps['total'], $ps['status'])) ?></span>
                         <?php if ((int)$ps['deleted']): ?>
                             <span class="badge bahaya">Dihapus</span>
                         <?php endif; ?>

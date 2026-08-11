@@ -1,6 +1,6 @@
 <?php
 session_start();
-date_default_timezone_set('Asia/Jakarta');
+date_default_timezone_set('Asia/Makassar');
 
 define('APP_NAME', 'Kasir Percetakan');
 define('DB_PATH', __DIR__ . '/data/kasir.db');
@@ -94,6 +94,21 @@ function set_setting($key, $value) {
     DB::run('INSERT INTO pengaturan (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', [$key, $value]);
 }
 
+function pembayaran_status_label($totalBayar, $total, $status = '') {
+    if ($status === 'Batal') {
+        return 'Batal';
+    }
+    $dibayar = (float)$totalBayar;
+    $totalF = (float)$total;
+    if ($dibayar <= 0.01) {
+        return 'Belum Bayar';
+    }
+    if ($dibayar >= $totalF - 0.01) {
+        return 'Lunas';
+    }
+    return 'DP';
+}
+
 function next_number($prefix, $table) {
     $row = DB::one("SELECT COALESCE(MAX(id), 0) + 1 AS m FROM $table");
     return $prefix . '-' . date('ymd') . '-' . str_pad($row['m'], 4, '0', STR_PAD_LEFT);
@@ -118,7 +133,7 @@ function is_telat($ps) {
         && strtotime($ps['estimasi']) < time();
 }
 
-function wa_send($to, $message) {
+function wa_send($to, $message, $imageUrl = '') {
     if (!setting('wa_enabled') || !setting('wa_token')) {
         return false;
     }
@@ -136,7 +151,11 @@ function wa_send($to, $message) {
         $headers = ['Content-Type: application/json'];
     } else {
         $url = 'https://api.fonnte.com/send';
-        $payload = json_encode(['target' => $to, 'message' => $message, 'countryCode' => '62']);
+        $body = ['target' => $to, 'message' => $message, 'countryCode' => '62'];
+        if ($imageUrl !== '') {
+            $body['url'] = $imageUrl;
+        }
+        $payload = json_encode($body);
         $headers = ['Content-Type: application/json', 'Authorization: ' . setting('wa_token')];
     }
     $ch = curl_init($url);
@@ -167,4 +186,43 @@ function wa_send($to, $message) {
 function barcode_src($data) {
     return 'https://barcode.tec-it.com/barcode.ashx?data=' . rawurlencode((string)$data)
         . '&code=Code128&format=png&dpi=200&modulewidth=1&caption=false&backgroundcolor=FFFFFF';
+}
+
+function nota_publik_url($ref, $id, $t = 'a5') {
+    $k = nota_token($ref, $id);
+    return rtrim(setting('url_publik', 'https://rainbowprinting.web.id/kasir'), '/')
+        . '/nota-publik.php?ref=' . $ref . '&id=' . $id . '&t=' . $t . '&k=' . $k;
+}
+
+function wa_pelanggan($ps, $event, $extra = '') {
+    if (empty($ps['telepon'])) {
+        return false;
+    }
+    $name = $ps['pelanggan'] ?? '';
+    $code = $ps['no_pesanan'] ?? '';
+    $total = (float)($ps['total'] ?? 0);
+    $link = nota_publik_url('pesanan', (int)$ps['id'], 'struk');
+    $linkNota = nota_publik_url('pesanan', (int)$ps['id']);
+    $waAdmin = setting('wa_admin_number', '') !== '' ? setting('wa_admin_number') : setting('telp');
+    $msgs = [
+        'baru'   => "🖨️ *PESANAN DITERIMA*\n\nHalo $name, pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nStatus pesanan Anda: *BELUM LUNAS* — mohon segera melakukan pembayaran.\n\nSetelah transfer, mohon konfirmasi dengan mengirimkan *bukti transfer* ke WhatsApp admin: $waAdmin\n\n📄 *Struk:* $link\n*Keterangan:* Belum lunas — silakan bayar\n\nTerima kasih 🙏",
+        'dp'     => "💰 *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sudah kami terima.\n\nStatus pesanan bisa dicek di: $link\n\nTerima kasih 🙏",
+        'lunas'  => "✅ *PEMBAYARAN LUNAS*\n\nHalo $name, pembayaran pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nPesanan Anda akan segera kami kerjakan.\n\n📄 *Struk:* $link\n\nTerima kasih 🙏",
+        'selesai' => "🎉 *PESANAN SELESAI*\n\nHalo $name, pesanan *$code* sudah selesai dan siap untuk diambil / dikirim.\n\nBerikut struk dengan *barcode nota A5* untuk diunduh:\n$link\n\nTerima kasih sudah mempercayakan kami 🙏",
+        'batal'  => "ℹ️ *PESANAN DIBATALKAN*\n\nHalo $name, pesanan *$code* telah dibatalkan. Jika ada kendala, silakan hubungi kami kembali.\n\nTerima kasih 🙏",
+    ];
+    $message = $msgs[$event] ?? '';
+    if ($message === '') {
+        return false;
+    }
+    if ($extra !== '') {
+        $message .= "\n\n" . $extra;
+    }
+    $message .= "\n\n— " . setting('nama_toko', 'PERCETAKAN RAINBOW');
+    $imageUrl = '';
+    if ($event === 'selesai') {
+        $imageUrl = 'https://barcode.tec-it.com/barcode.ashx?data=' . rawurlencode($linkNota)
+            . '&code=MobileQRCode&format=png&dpi=300&modulewidth=4&caption=false&backgroundcolor=FFFFFF';
+    }
+    return wa_send($ps['telepon'], $message, $imageUrl);
 }
