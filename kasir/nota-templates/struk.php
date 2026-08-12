@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nota <?= e($ps['no_pesanan']) ?></title>
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=<?= filemtime(__DIR__ . '/../assets/style.css') ?>">
 <script src="assets/print.js"></script>
 </head>
 <body class="<?= setting('struk_lebar', '80') === '58' ? 'struk-lebar-58' : '' ?>">

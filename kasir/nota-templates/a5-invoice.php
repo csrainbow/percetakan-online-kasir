@@ -1,5 +1,6 @@
 <?php
 $sisaAmount = (float)$ps['sisa'];
+$logoW = max(10, min(45, (float)setting('logo_nota_size', 24)));
 ?>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -42,7 +43,6 @@ $sisaAmount = (float)$ps['sisa'];
         <tr>
             <td class="invoice-head-left">
                 <?php $logoImg = $invoiceLogo ?? setting('logo_image', 'logo.png'); ?>
-                <?php $logoW = max(10, min(45, (float)setting('logo_nota_size', 24))); ?>
                 <?php if ($logoImg): ?>
                     <img class="logo-nota" src="<?= e($logoImg) ?>" alt="Logo">
                 <?php endif; ?>
