@@ -396,45 +396,30 @@ label { display: block; margin-bottom: 10px; font-weight: 500; font-size: 13px; 
 .qris-preview { max-width: 200px; display: block; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 8px; }
 
 .struk {
-    width: 80mm;
+    width: 48mm;
     margin: 0 auto;
     background: #fff;
-    padding: 12px;
-    font-size: 12px;
-}
-
-body.struk-lebar-58 .struk {
-    width: 58mm;
     padding: 8px;
     font-size: 11px;
 }
 
-body.struk-lebar-58 .struk h3 { font-size: 12px; }
-body.struk-lebar-58 .qris-struk { width: 48mm; }
-body.struk-lebar-58 .aksi-struk { max-width: 68mm; }
-
-.struk h3 { margin: 0 0 4px; font-size: 15px; }
+.struk h3 { margin: 0 0 4px; font-size: 12px; }
 .struk p { margin: 2px 0; }
 .struk table { margin-bottom: 4px; }
 .struk .items td { border: none; padding: 2px 4px; }
 .struk .meta td { border: none; padding: 2px 4px; }
 .struk .kanan { text-align: right; }
 
-.qris-struk { width: 70mm; margin: 8px auto; display: block; }
+.qris-struk { width: 30mm; margin: 8px auto; display: block; }
 
 .logo-struk {
     display: block;
     margin: 0 auto 4px;
     width: auto;
     height: auto;
-    max-width: 60%;
-    max-height: 16mm;
-    object-fit: contain;
-}
-
-body.struk-lebar-58 .logo-struk {
     max-width: 55%;
     max-height: 14mm;
+    object-fit: contain;
 }
 
 .logo-nota {
@@ -447,7 +432,7 @@ body.struk-lebar-58 .logo-struk {
 }
 
 .aksi-struk {
-    max-width: 90mm;
+    max-width: 68mm;
     margin: 14px auto;
     display: flex;
     flex-wrap: wrap;
@@ -456,17 +441,15 @@ body.struk-lebar-58 .logo-struk {
 }
 
 @media print {
-    @page { size: 80mm auto; margin: 0; }
-    @page struk58 { size: 48mm auto; margin: 0; }
+    @page { size: 48mm auto; margin: 0; }
     .no-print { display: none !important; }
     body { background: #fff; margin: 0 !important; padding: 0 !important; }
     .struk {
-        width: 72mm !important;
+        width: 48mm !important;
         margin: 0;
         padding: 0;
         border: none;
     }
-    body.struk-lebar-58 .struk { page: struk58; width: 48mm !important; padding: 0; }
     .qris-struk { max-width: 100% !important; }
     .struk { color: #000 !important; font-weight: 700 !important; }
     .struk .muted { color: #000 !important; font-weight: 700 !important; }

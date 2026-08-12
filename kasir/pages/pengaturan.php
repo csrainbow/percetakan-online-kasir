@@ -15,8 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_setting('url_publik', rtrim(trim($_POST['url_publik'] ?? ''), '/'));
             $nt = $_POST['nota_template'] ?? 'struk';
             set_setting('nota_template', in_array($nt, ['struk', 'a5']) ? $nt : 'struk');
-            $sl = $_POST['struk_lebar'] ?? '80';
-            set_setting('struk_lebar', in_array($sl, ['80', '58']) ? $sl : '80');
             flash_set('success', 'Pengaturan toko disimpan.');
         }
         header('Location: index.php?p=pengaturan');
@@ -235,17 +233,11 @@ require __DIR__ . '/../layout/header.php';
             </label>
             <label>Tipe Nota Bawaan
                 <select name="nota_template">
-                    <option value="struk" <?= setting('nota_template', 'struk') === 'struk' ? 'selected' : '' ?>>Struk 58/80mm</option>
+                    <option value="struk" <?= setting('nota_template', 'struk') === 'struk' ? 'selected' : '' ?>>Struk (48mm)</option>
                     <option value="a5" <?= setting('nota_template', 'struk') === 'a5' ? 'selected' : '' ?>>Invoice A5 (gaya percetakan-online)</option>
                 </select>
             </label>
-            <label>Lebar Struk (printer thermal)
-                <select name="struk_lebar">
-                    <option value="80" <?= setting('struk_lebar', '80') === '80' ? 'selected' : '' ?>>80mm</option>
-                    <option value="58" <?= setting('struk_lebar', '80') === '58' ? 'selected' : '' ?>>58mm</option>
-                </select>
-            </label>
-            <p class="muted kecil">Halaman Pesanan / Piutang / Kasir menyediakan pilihan cetak langsung; ini hanya default bila tidak ada pilihan.</p>
+            <p class="muted kecil">Struk dicetak di kertas thermal lebar 48mm. Halaman Pesanan / Piutang / Kasir menyediakan pilihan cetak langsung; ini hanya default bila tidak ada pilihan.</p>
             <button type="submit" class="btn" name="simpan_toko" value="1">Simpan</button>
         </form>
     </div>
@@ -280,7 +272,7 @@ require __DIR__ . '/../layout/header.php';
                 </form>
             </div>
             <div>
-                <p class="muted kecil"><b>Logo Struk (thermal 58/80mm)</b></p>
+                <p class="muted kecil"><b>Logo Struk (thermal 48mm)</b></p>
                 <?php if (setting('logo_struk')): ?>
                     <img class="qris-preview" src="<?= e(setting('logo_struk')) ?>" alt="Logo Struk">
                 <?php else: ?>
