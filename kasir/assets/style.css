@@ -110,6 +110,23 @@ h3 { margin: 0 0 12px; font-size: 16px; }
     align-items: start;
 }
 
+.grid-full { grid-column: 1 / -1; }
+
+.logo-duo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.logo-duo > div {
+    flex: 1 1 240px;
+    min-width: 0;
+}
+
+.logo-duo form { margin-top: 8px; }
+.logo-duo .qris-preview { width: 100%; max-width: 220px; }
+
 .grid-kasir {
     display: grid;
     grid-template-columns: 1fr 1.4fr;
@@ -404,6 +421,31 @@ body.struk-lebar-58 .aksi-struk { max-width: 68mm; }
 .struk .kanan { text-align: right; }
 
 .qris-struk { width: 70mm; margin: 8px auto; display: block; }
+
+.logo-struk {
+    display: block;
+    margin: 0 auto 5px;
+    width: 42mm;
+    max-width: 85%;
+    max-height: 32mm;
+    height: auto;
+    object-fit: contain;
+}
+
+body.struk-lebar-58 .logo-struk {
+    width: 32mm;
+    max-height: 28mm;
+}
+
+.logo-nota {
+    float: left;
+    width: 22mm;
+    max-width: 40%;
+    max-height: 20mm;
+    height: auto;
+    object-fit: contain;
+    margin: 0 8px 2px 0;
+}
 
 .aksi-struk {
     max-width: 90mm;

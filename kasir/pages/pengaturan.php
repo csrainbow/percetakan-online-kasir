@@ -255,10 +255,10 @@ require __DIR__ . '/../layout/header.php';
         <p class="muted kecil">PNG/JPG/WebP, maks 2 MB. QRIS statis dari bank/penyedia Anda.</p>
     </div>
 
-    <div class="panel">
+    <div class="panel grid-full">
         <h3>Logo Nota &amp; Struk</h3>
         <p class="muted">Logo tampil di struk thermal, nota A5, dan file PDF. Kosongkan dengan mengunggah logo baru; belum diunggah = memakai <code>logo.png</code> bawaan.</p>
-        <div class="form-row" style="align-items:flex-start;gap:16px;">
+        <div class="logo-duo">
             <div>
                 <p class="muted kecil"><b>Logo Nota (A5 / PDF)</b></p>
                 <?php if (setting('logo_image')): ?>
@@ -351,8 +351,8 @@ require __DIR__ . '/../layout/header.php';
         </form>
     </div>
 
-    <div class="panel">
-        <h3>User & Pembukuan</h3>
+    <div class="panel grid-full">
+        <h3>User &amp; Pembukuan</h3>
         <p class="muted">Tambah user kasir baru. Setiap kasir punya pembukuan terpisah (transaksi, pesanan, piutang, laporan). Stok & produk dipakai bersama.</p>
         <form method="post" class="form-row">
             <input type="text" name="username" placeholder="Username baru" required>

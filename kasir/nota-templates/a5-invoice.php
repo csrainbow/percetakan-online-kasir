@@ -41,12 +41,11 @@ $sisaAmount = (float)$ps['sisa'];
             <td class="invoice-head-left">
                 <?php $logoImg = $invoiceLogo ?? setting('logo_image', 'logo.png'); ?>
                 <?php if ($logoImg): ?>
-                    <img src="<?= e($logoImg) ?>" alt="Logo" style="float:left;width:90px;height:auto;margin:0 8px 4px 0;">
+                    <img class="logo-nota" src="<?= e($logoImg) ?>" alt="Logo">
                 <?php endif; ?>
                 <strong><?= e(setting('nama_toko')) ?></strong>
                 <p><?= nl2br(e(setting('alamat'))) ?></p>
                 <p>Telp: <?= e(setting('telp')) ?></p>
-                <div class="inv-no" style="margin-top:8px;">Invoice No : <?= e($ps['no_pesanan']) ?></div>
             </td>
             <td class="invoice-head-right">
                 <p><?= e(setting('kota')) ?>, <?= tgl_ind($ps['tgl']) ?></p>
