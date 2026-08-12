@@ -11,7 +11,7 @@ $sisaAmount = (float)$ps['sisa'];
 .invoice-head-right { text-align:right;font-size:8px;color:#555; }
 .invoice-head-right .inv-no { font-size:9px;font-weight:bold;color:#2c3e50;margin-top:2px; }
 .invoice-head-right p,.invoice-head-left p { font-size:8px!important;margin:0!important;line-height:1.2!important; }
-.logo-nota { float:left;width:auto;height:auto;max-width:30%;max-height:<?= $logoH ?>mm;object-fit:contain;margin:0 3mm 1mm 0; }
+.logo-nota { float:left;width:<?= $logoW ?>mm;height:auto;max-width:30%;object-fit:contain;margin:0 8px 4px 0; }
 .invoice-mid { width:100%;border-collapse:collapse;margin-bottom:6px;padding:4px 6px;background:#f8f9fa;border-radius:4px;font-size:8px; }
 .invoice-mid td { padding:4px; }
 .invoice-table { width:100%;border-collapse:collapse;margin-bottom:4px; }
@@ -42,7 +42,7 @@ $sisaAmount = (float)$ps['sisa'];
         <tr>
             <td class="invoice-head-left">
                 <?php $logoImg = $invoiceLogo ?? setting('logo_image', 'logo.png'); ?>
-                <?php $logoH = max(4, min(16, (float)setting('logo_nota_size', 10))); ?>
+                <?php $logoW = max(10, min(45, (float)setting('logo_nota_size', 24))); ?>
                 <?php if ($logoImg): ?>
                     <img class="logo-nota" src="<?= e($logoImg) ?>" alt="Logo">
                 <?php endif; ?>

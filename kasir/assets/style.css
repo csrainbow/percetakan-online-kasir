@@ -442,9 +442,8 @@ body.struk-lebar-58 .logo-struk {
     width: auto;
     height: auto;
     max-width: 30%;
-    max-height: 6mm;
     object-fit: contain;
-    margin: 0 3mm 1mm 0;
+    margin: 0 8px 4px 0;
 }
 
 .aksi-struk {
