@@ -320,14 +320,6 @@ foreach (DB::q('SELECT id, username FROM users') as $u) {
 $produkHitung = DB::q('SELECT p.id, p.nama, p.satuan, p.harga_jual, k.nama AS kategori
                        FROM produk p LEFT JOIN kategori k ON k.id = p.kategori_id
                        WHERE p.harga_jual > 0 ORDER BY p.nama');
-$produkM2 = [];
-foreach ($produkHitung as $ph) {
-    $sat = strtolower((string)$ph['satuan']);
-    $kat = strtolower((string)$ph['kategori']);
-    if ($sat === 'm2' || strpos($kat, 'banner') !== false || strpos($kat, 'spanduk') !== false) {
-        $produkM2[(int)$ph['id']] = true;
-    }
-}
 
 $judul = 'Pesanan';
 require __DIR__ . '/../layout/header.php';
@@ -506,29 +498,17 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                         <label>Deskripsi Pesanan
                             <textarea name="deskripsi" rows="2"><?= e($ps['deskripsi']) ?></textarea>
                         </label>
-<label>Produk yang Dipesan (bisa diubah)
+                        <label>Produk yang Dipesan (bisa diubah)
                             <table>
                                 <thead>
-                                    <tr><th style="text-align:left;">Nama</th><th style="width:60px;text-align:center;">Qty</th><th style="width:120px;text-align:center;">P &times; L (M2)</th><th style="width:100px;text-align:right;">Harga</th><th style="width:110px;text-align:right;">Subtotal</th><th style="width:30px;"></th></tr>
+                                    <tr><th style="text-align:left;">Nama</th><th style="width:70px;text-align:center;">Qty</th><th style="width:100px;text-align:right;">Harga</th><th style="width:110px;text-align:right;">Subtotal</th><th style="width:30px;"></th></tr>
                                 </thead>
                                 <tbody class="ej-tbody">
                                 <?php $itemsPesan = $itemsByPesanan[$ps['id']] ?? []; ?>
                                 <?php foreach ($itemsPesan as $it): ?>
-                                    <?php $itM2 = isset($produkM2[(int)($it['produk_id'] ?? 0)]); ?>
-                                    <tr class="ei-item<?= $itM2 ? ' ei-m2' : '' ?>" data-pid="<?= (int)($it['produk_id'] ?? 0) ?>">
+                                    <tr class="ei-item" data-pid="<?= (int)($it['produk_id'] ?? 0) ?>">
                                         <td><input type="text" class="ei-nama" value="<?= e($it['nama']) ?>"></td>
-                                        <td style="text-align:center;">
-                                            <input type="number" class="ei-qty" min="0" step="0.01" style="width:50px;" value="<?= $itM2 ? '1' : (float)$it['qty'] ?>">
-                                        </td>
-                                        <td style="text-align:center;">
-                                            <?php if ($itM2): ?>
-                                                <input type="number" class="ei-p" min="0" step="0.01" style="width:50px;" value="<?= (float)$it['qty'] ?>" title="Panjang (m)">
-                                                &times;
-                                                <input type="number" class="ei-l" min="0" step="0.01" style="width:50px;" value="1" title="Lebar (m)">
-                                            <?php else: ?>
-                                                <span class="muted kecil">-</span>
-                                            <?php endif; ?>
-                                        </td>
+                                        <td style="text-align:center;"><input type="number" class="ei-qty" min="0" step="0.01" style="width:60px;" value="<?= (float)$it['qty'] ?>"></td>
                                         <td style="text-align:right;"><input type="number" class="ei-harga" min="0" step="0.01" style="width:90px;" value="<?= (float)$it['harga'] ?>"></td>
                                         <td class="ei-st" style="text-align:right;"><?= rp((float)$it['qty'] * (float)$it['harga']) ?></td>
                                         <td><button type="button" class="btn kecil bahaya ei-hapus">x</button></td>
@@ -626,24 +606,13 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                 return '<option value="' + p.id + '">' + p.nama + (p.satuan ? ' (' + p.satuan + ')' : '') + ' (' + rpJs(p.harga) + ')' + '</option>';
             }).join('');
         }
-        function isM2p(p) {
-            var sat = String(p.satuan || '').toLowerCase();
-            var kat = String(p.kategori || '').toLowerCase();
-            return sat === 'm2' || kat.indexOf('banner') > -1 || kat.indexOf('spanduk') > -1;
-        }
         function syncJson() {
             var arr = [];
             tbody.querySelectorAll('.ei-item').forEach(function (tr) {
                 var nama = tr.querySelector('.ei-nama').value.trim();
                 if (!nama) return;
-                var m2 = tr.classList.contains('ei-m2');
                 var q = parseFloat(tr.querySelector('.ei-qty').value) || 0;
                 var h = parseFloat(tr.querySelector('.ei-harga').value) || 0;
-                if (m2) {
-                    var p2 = parseFloat(tr.querySelector('.ei-p').value) || 0;
-                    var l2 = parseFloat(tr.querySelector('.ei-l').value) || 0;
-                    q = q * p2 * l2;
-                }
                 arr.push({ produk_id: tr.dataset.pid || null, nama: nama, qty: q, harga: h });
             });
             jsonInput.value = JSON.stringify(arr);
@@ -652,14 +621,8 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
             tbody.querySelectorAll('.ei-placeholder').forEach(function (tr) { tr.remove(); });
             var sum = 0;
             tbody.querySelectorAll('.ei-item').forEach(function (tr) {
-                var m2 = tr.classList.contains('ei-m2');
                 var q = parseFloat(tr.querySelector('.ei-qty').value) || 0;
                 var h = parseFloat(tr.querySelector('.ei-harga').value) || 0;
-                if (m2) {
-                    var p2 = parseFloat(tr.querySelector('.ei-p').value) || 0;
-                    var l2 = parseFloat(tr.querySelector('.ei-l').value) || 0;
-                    q = q * p2 * l2;
-                }
                 var st = q * h;
                 tr.querySelector('.ei-st').textContent = rpJs(st);
                 sum += st;
@@ -667,9 +630,9 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
             if (totalInput && sum > 0) totalInput.value = sum;
             syncJson();
         }
-        function makeRow(nama, qty, harga, pid, m2) {
+        function makeRow(nama, qty, harga, pid) {
             var tr = document.createElement('tr');
-            tr.className = 'ei-item' + (m2 ? ' ei-m2' : '');
+            tr.className = 'ei-item';
             tr.dataset.pid = pid || '';
             var tdN = document.createElement('td');
             var inN = document.createElement('input');
@@ -678,21 +641,8 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
             var tdQ = document.createElement('td');
             tdQ.style.textAlign = 'center';
             var inQ = document.createElement('input');
-            inQ.type = 'number'; inQ.className = 'ei-qty'; inQ.min = '0'; inQ.step = '0.01'; inQ.style.width = '50px'; inQ.value = qty;
+            inQ.type = 'number'; inQ.className = 'ei-qty'; inQ.min = '0'; inQ.step = '0.01'; inQ.style.width = '60px'; inQ.value = qty;
             tdQ.appendChild(inQ);
-            var tdU = document.createElement('td');
-            tdU.style.textAlign = 'center';
-            if (m2) {
-                var inP = document.createElement('input');
-                inP.type = 'number'; inP.className = 'ei-p'; inP.min = '0'; inP.step = '0.01'; inP.style.width = '50px'; inP.value = 1; inP.title = 'Panjang (m)';
-                var inL = document.createElement('input');
-                inL.type = 'number'; inL.className = 'ei-l'; inL.min = '0'; inL.step = '0.01'; inL.style.width = '50px'; inL.value = 1; inL.title = 'Lebar (m)';
-                tdU.appendChild(inP);
-                tdU.appendChild(document.createTextNode(' \u00d7 '));
-                tdU.appendChild(inL);
-            } else {
-                tdU.appendChild(document.createTextNode('-'));
-            }
             var tdH = document.createElement('td');
             tdH.style.textAlign = 'right';
             var inH = document.createElement('input');
@@ -705,13 +655,9 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
             var btn = document.createElement('button');
             btn.type = 'button'; btn.className = 'btn kecil bahaya ei-hapus'; btn.textContent = 'x';
             tdD.appendChild(btn);
-            tr.appendChild(tdN); tr.appendChild(tdQ); tr.appendChild(tdU); tr.appendChild(tdH); tr.appendChild(tdS); tr.appendChild(tdD);
+            tr.appendChild(tdN); tr.appendChild(tdQ); tr.appendChild(tdH); tr.appendChild(tdS); tr.appendChild(tdD);
             inN.addEventListener('input', recalc);
             inQ.addEventListener('input', recalc);
-            if (m2) {
-                inP.addEventListener('input', recalc);
-                inL.addEventListener('input', recalc);
-            }
             inH.addEventListener('input', recalc);
             btn.addEventListener('click', function () { tr.remove(); recalc(); });
             return tr;
@@ -722,7 +668,7 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                 var p = null;
                 produk.forEach(function (x) { if (x.id === pid) p = x; });
                 if (!p) { window.alert('Pilih produk terlebih dahulu.'); return; }
-                tbody.appendChild(makeRow(p.nama, 1, p.harga, p.id, isM2p(p)));
+                tbody.appendChild(makeRow(p.nama, 1, p.harga, p.id));
                 recalc();
             });
         }

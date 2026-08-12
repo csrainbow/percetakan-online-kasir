@@ -50,7 +50,7 @@ $refNota = $ref ?? 'pesanan';
     <?php endif; ?>
     <?php else: ?>
     <a href="nota-pdf.php?ref=<?= e($ref) ?>&id=<?= (int)$id ?>&k=<?= e($k) ?>" class="print-btn">⬇️ Download PDF</a>
-    <?php if ($waHref): ?>
+    <?php if ($waHref && ($ps['status'] ?? '') !== 'Selesai'): ?>
         <a href="<?= e($waHref) ?>" target="_blank" class="print-btn wa">💬 Konfirmasi via WhatsApp</a>
     <?php endif; ?>
     <?php endif; ?>

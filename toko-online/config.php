@@ -38,7 +38,7 @@ define('SITE_NAME', 'Rainbow Printing');
 define('SITE_DESCRIPTION', 'Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, dan kebutuhan percetakan lainnya.');
 
 // 🔥 WhatsApp
-define('WHATSAPP_NUMBER', '6281234567890');
+define('WHATSAPP_NUMBER', '6285346022172');
 
 // 🔥 Admin Login
 define('ADMIN_USERNAME', 'admin');

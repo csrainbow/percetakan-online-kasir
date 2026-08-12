@@ -214,7 +214,7 @@ require __DIR__ . '/../layout/header.php';
                 <input type="text" name="footer_struk" value="<?= e(setting('footer_struk')) ?>">
             </label>
             <label>URL Publik Kasir (untuk QR di struk/nota)
-                <input type="text" name="url_publik" value="<?= e(setting('url_publik', 'https://percetakan-ikkyshare.web.id/kasir')) ?>" placeholder="https://percetakan-ikkyshare.web.id/kasir">
+                <input type="text" name="url_publik" value="<?= e(setting('url_publik', 'https://rainbowprinting.web.id/kasir')) ?>" placeholder="https://rainbowprinting.web.id/kasir">
             </label>
             <label>Tipe Nota Bawaan
                 <select name="nota_template">

@@ -11,14 +11,19 @@ PC, maupun Raspberry Pi.
 - **Pesanan / order percetakan** — pelanggan, deskripsi, **DP + cicilan/pelunasan**,
   status DP / Lunas / Selesai / Batal
 - **Multi-item** — 1 pesanan bisa berisi banyak produk (tabel `pesanan_item`)
+- **Input P × L (m²)** — produk bersatuan m² / kategori banner-spanduk otomatis
+  memakai input panjang × lebar saat edit pesanan
 - **Atribusi kasir** — setiap penjualan & pembayaran tercatat `user_id` pembuatnya;
   superadmin bisa memfilter data per kasir
 - **Piutang** — tagihan belum lunas, terima pembayaran langsung dari halaman piutang
 - **Stok produk** — kategori, satuan (pcs / m² / rim / lbr), peringatan stok menipis
 - **Laporan** — per hari, detail transaksi, produk terjual, pembayaran masuk, export CSV
 - **QRIS** — unggah gambar QRIS statis, tampil di halaman kasir & struk
-- **Nota publik** — URL nota bertanda tangan `NOTA_SECRET` (`nota-publik.php`),
-  bisa dibagikan ke pelanggan via WhatsApp
+- **Nota publik** — URL nota bertanda tangan `NOTA_SECRET` (`nota-publik.php`), bisa
+  dibagikan ke pelanggan via WhatsApp; mode **struk + QR verifikasi** untuk pesanan
+  yang belum selesai, nota A5 penuh hanya saat status Selesai
+- **PDF** — download nota/rekap sebagai PDF A5 (butuh library `dompdf-3.1.6` di
+  `kasir-lib/` di sisi server, lihat cara pasang di bawah)
 - **Notifikasi WhatsApp** (Fonnte / Wablas) — pesanan baru, pembayaran, dan kirim ulang ke pelanggan
 - **Backup database** — unduh file `.db` dari menu Pengaturan
 

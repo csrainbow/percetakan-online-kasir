@@ -25,6 +25,11 @@ if (!$data) {
 }
 [$ref, $ps, $viewItems, $pembayaran, $totalBayar] = $data;
 
+if ($publik && $ref === 'pesanan' && $ps['status'] !== 'Selesai') {
+    http_response_code(404);
+    exit('Nota tidak ditemukan.');
+}
+
 if (!$publik && scope_user_id() !== 0 && (int)$ps['user_id'] !== scope_user_id()) {
     flash_set('error', $ref === 'penjualan' ? 'Transaksi tidak ditemukan.' : 'Pesanan tidak ditemukan.');
     header('Location: index.php?p=' . ($ref === 'penjualan' ? 'penjualan' : 'pesanan'));
@@ -40,6 +45,12 @@ if (!is_file($autoload)) {
 }
 require_once $autoload;
 
+$logoFile = __DIR__ . '/logo.png';
+if (is_file($logoFile)) {
+    $invoiceLogo = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoFile));
+} else {
+    $invoiceLogo = rtrim(setting('url_publik', 'https://rainbowprinting.web.id/kasir'), '/') . '/logo.png';
+}
 ob_start();
 require __DIR__ . '/nota-templates/a5-invoice.php';
 $html = ob_get_clean();
@@ -55,3 +66,4 @@ header('Content-Type: application/pdf');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 header('Cache-Control: no-store');
 echo $dompdf->output();
+
