@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/config.php';
 require_login();
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -20,7 +20,7 @@ $user = DB::one('SELECT username FROM users WHERE id = ?', [$p['user_id']]);
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Struk <?= e($p['no_invoice']) ?></title>
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=<?= filemtime(__DIR__ . '/assets/style.css') ?>">
 <script src="assets/print.js"></script>
 </head>
 <body class="<?= setting('struk_lebar', '80') === '58' ? 'struk-lebar-58' : '' ?>">
