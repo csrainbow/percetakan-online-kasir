@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/style.css?v=<?= filemtime(__DIR__ . '/../assets/style.css') ?>">
 <script src="assets/print.js"></script>
 </head>
-<body>
+<body class="<?= setting('struk_lebar', '80') === '58' ? 'struk-lebar-58' : '' ?>">
 <div class="no-print aksi-struk">
     <a class="btn" href="index.php?p=<?= e($back_page) ?>">Kembali</a>
     <button class="btn" onclick="cetakNota()">Cetak Nota</button>

@@ -23,7 +23,7 @@ $user = DB::one('SELECT username FROM users WHERE id = ?', [$p['user_id']]);
 <link rel="stylesheet" href="assets/style.css?v=<?= filemtime(__DIR__ . '/assets/style.css') ?>">
 <script src="assets/print.js"></script>
 </head>
-<body>
+<body class="<?= setting('struk_lebar', '80') === '58' ? 'struk-lebar-58' : '' ?>">
 <div class="no-print aksi-struk">
     <a class="btn" href="index.php">Kembali</a>
     <a class="btn" href="nota.php?ref=penjualan&id=<?= $p['id'] ?>&t=a5">Cetak Nota A5</a>
@@ -86,7 +86,7 @@ if (location.search.includes('auto=1')) {
 </script>
 <style>
 @media print {
-    @page { size: 48mm auto; margin: 0; }
+    @page { size: <?= setting('struk_lebar', '80') === '58' ? '48mm' : '80mm' ?> auto; margin: 0; }
     body { margin: 0 !important; padding: 0 !important; }
     .struk { margin: 0 !important; padding: 0 !important; }
 }
