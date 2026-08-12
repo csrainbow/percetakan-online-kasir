@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!empty($_POST['simpan_logo'])) {
-        $ln = max(3, min(12, (float)($_POST['logo_nota_size'] ?? 6)));
+        $ln = max(4, min(16, (float)($_POST['logo_nota_size'] ?? 10)));
         set_setting('logo_nota_size', $ln);
         flash_set('success', 'Ukuran logo nota disimpan.');
         header('Location: index.php?p=pengaturan');
@@ -292,10 +292,10 @@ require __DIR__ . '/../layout/header.php';
                 </form>
             </div>
         </div>
-        <p class="muted kecil">PNG/JPG/WebP, maks 2 MB per gambar. Logo otomatis menyesuaikan orientasi (kotak/bulat/portrait/landscape) tanpa merubah rasio. Tinggi maksimal logo nota A5 dapat diatur di bawah (min 3 mm – maks 12 mm).</p>
+        <p class="muted kecil">PNG/JPG/WebP, maks 2 MB per gambar. Logo otomatis menyesuaikan orientasi (kotak/bulat/portrait/landscape) tanpa merubah rasio. Tinggi maksimal logo nota A5 dapat diatur di bawah (min 4 mm – maks 16 mm, disarankan 10 mm = seukuran tinggi nama percetakan sampai nomor telepon).</p>
         <form method="post" class="form-row">
-            <label>Ukuran Logo Nota A5 (tinggi)
-                <input type="number" name="logo_nota_size" min="3" max="12" step="1" required value="<?= e(setting('logo_nota_size', 6)) ?>" style="width:90px;"> mm
+            <label>Ukuran Logo Nota A5 (tinggi maks)
+                <input type="number" name="logo_nota_size" min="4" max="16" step="1" required value="<?= e(setting('logo_nota_size', 10)) ?>" style="width:90px;"> mm
             </label>
             <button type="submit" class="btn" name="simpan_logo" value="1">Simpan Ukuran</button>
         </form>

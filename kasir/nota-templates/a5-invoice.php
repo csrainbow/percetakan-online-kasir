@@ -42,7 +42,7 @@ $sisaAmount = (float)$ps['sisa'];
         <tr>
             <td class="invoice-head-left">
                 <?php $logoImg = $invoiceLogo ?? setting('logo_image', 'logo.png'); ?>
-                <?php $logoH = max(3, min(12, (float)setting('logo_nota_size', 6))); ?>
+                <?php $logoH = max(4, min(16, (float)setting('logo_nota_size', 10))); ?>
                 <?php if ($logoImg): ?>
                     <img class="logo-nota" src="<?= e($logoImg) ?>" alt="Logo">
                 <?php endif; ?>
