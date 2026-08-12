@@ -425,24 +425,24 @@ body.struk-lebar-58 .aksi-struk { max-width: 68mm; }
 .logo-struk {
     display: block;
     margin: 0 auto 4px;
-    width: 24mm;
+    width: auto;
+    height: auto;
     max-width: 60%;
     max-height: 16mm;
-    height: auto;
     object-fit: contain;
 }
 
 body.struk-lebar-58 .logo-struk {
-    width: 18mm;
+    max-width: 55%;
     max-height: 14mm;
 }
 
 .logo-nota {
     float: left;
-    height: 7mm;
-    max-height: 7mm;
     width: auto;
-    max-width: 25%;
+    height: auto;
+    max-width: 30%;
+    max-height: 6mm;
     object-fit: contain;
     margin: 0 3mm 1mm 0;
 }

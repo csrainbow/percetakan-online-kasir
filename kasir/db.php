@@ -212,6 +212,7 @@ class DB {
             'qris_image' => '',
             'logo_image' => '',
             'logo_struk' => '',
+            'logo_nota_size' => '6',
             'nota_template' => 'struk',
             'struk_lebar' => '80',
             'url_publik' => 'https://rainbowprinting.web.id/kasir',
