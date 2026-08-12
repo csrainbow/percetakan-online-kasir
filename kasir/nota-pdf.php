@@ -45,9 +45,13 @@ if (!is_file($autoload)) {
 }
 require_once $autoload;
 
-$logoFile = __DIR__ . '/logo.png';
+$logoSetting = setting('logo_image');
+$logoFile = ($logoSetting && is_file(__DIR__ . '/../' . $logoSetting))
+    ? __DIR__ . '/../' . $logoSetting
+    : __DIR__ . '/logo.png';
 if (is_file($logoFile)) {
-    $invoiceLogo = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoFile));
+    $mime = function_exists('mime_content_type') ? mime_content_type($logoFile) : 'image/png';
+    $invoiceLogo = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoFile));
 } else {
     $invoiceLogo = rtrim(setting('url_publik', 'https://rainbowprinting.web.id/kasir'), '/') . '/logo.png';
 }

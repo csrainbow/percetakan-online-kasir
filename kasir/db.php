@@ -210,6 +210,8 @@ class DB {
             'kota' => 'Kota Anda',
             'footer_struk' => 'Terima kasih atas kunjungan Anda',
             'qris_image' => '',
+            'logo_image' => '',
+            'logo_struk' => '',
             'nota_template' => 'struk',
             'struk_lebar' => '80',
             'url_publik' => 'https://rainbowprinting.web.id/kasir',

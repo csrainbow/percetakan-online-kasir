@@ -15,8 +15,8 @@
 </div>
 
 <div class="struk">
-    <?php if (setting('logo_struk', 'assets/logo-struk.jpeg')): ?>
-        <img class="logo-struk" src="<?= e(setting('logo_struk', 'assets/logo-struk.jpeg')) ?>" alt="Logo" style="display:block;margin:0 auto 4px;max-width:80%;width:150px;height:auto;">
+    <?php if (setting('logo_struk', 'logo.png')): ?>
+        <img class="logo-struk" src="<?= e(setting('logo_struk', 'logo.png')) ?>" alt="Logo" style="display:block;margin:0 auto 4px;max-width:80%;width:150px;height:auto;">
     <?php endif; ?>
     <div class="center">
         <h3><?= e(setting('nama_toko')) ?></h3>

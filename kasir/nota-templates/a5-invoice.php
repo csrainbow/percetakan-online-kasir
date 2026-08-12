@@ -39,7 +39,7 @@ $sisaAmount = (float)$ps['sisa'];
     <table class="invoice-head">
         <tr>
             <td class="invoice-head-left">
-                <?php $logoImg = $invoiceLogo ?? setting('logo_image', 'assets/logo-ikky.jpeg'); ?>
+                <?php $logoImg = $invoiceLogo ?? setting('logo_image', 'logo.png'); ?>
                 <?php if ($logoImg): ?>
                     <img src="<?= e($logoImg) ?>" alt="Logo" style="float:left;width:90px;height:auto;margin:0 8px 4px 0;">
                 <?php endif; ?>
