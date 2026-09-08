@@ -6,21 +6,26 @@
     <title><?= htmlspecialchars($pageTitle ?? 'Rainbow Printing - Percetakan Online Samarinda') ?></title>
     
     <!-- 🔥 Meta Tags SEO -->
-    <meta name="description" content="Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, spanduk, dan kebutuhan percetakan lainnya. Harga terjangkau, kualitas terbaik.">
+    <meta name="description" content="Percetakan & digital printing Samarinda: cetak spanduk, banner, stiker, kartu nama, brosur, undangan & lainnya. Cepat, murah, berkualitas, free konsultasi desain.">
     <meta name="keywords" content="percetakan online samarinda, percetakan murah samarinda, cetak undangan samarinda, cetak stiker samarinda, cetak banner samarinda, cetak spanduk samarinda, cetak kartu nama samarinda, cetak brosur samarinda, cetak kalender samarinda, digital printing samarinda, percetakan terpercaya samarinda, rainbow printing samarinda, cetak foto samarinda, cetak flyer samarinda, percetakan offset samarinda, sablon samarinda, uv printer samarinda, percetakan terdekat samarinda">
-    <meta name="robots" content="index, follow">
+    <?php
+    $noindexPages = ['login.php','register.php','cart.php','cek-pesanan.php','upload-design.php','checkout.php','confirm.php','dashboard.php','finish.php','invoice.php','orders.php','order-success.php','pesanan-saya.php','logout.php'];
+    $currentScript = basename($_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF'] ?? '');
+    $seoRobots = in_array($currentScript, $noindexPages, true) ? 'noindex, follow' : 'index, follow';
+    ?>
+    <meta name="robots" content="<?= $seoRobots ?>">
     <meta name="author" content="Rainbow Printing">
     <meta name="theme-color" content="#2c3e50">
     
     <!-- 🔥 Open Graph / Social Media -->
     <meta property="og:title" content="<?= htmlspecialchars($pageTitle ?? 'Rainbow Printing') ?>">
-    <meta property="og:description" content="Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, dan kebutuhan percetakan lainnya.">
+    <meta property="og:description" content="Percetakan & digital printing Samarinda: cetak spanduk, banner, stiker, kartu nama, brosur, undangan & lainnya. Cepat, murah, berkualitas, free konsultasi desain.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rainbowprinting.web.id">
     <meta property="og:image" content="https://rainbowprinting.web.id/og-image.jpg">
     
     <!-- 🔥 Favicon -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
     <!-- 🔥 CSS Utama -->
@@ -42,6 +47,8 @@
            CSS DASAR UNTUK HEADER
            ============================================ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        .ads-slot { width: 100%; max-width: 100%; overflow: hidden; display: block; box-sizing: border-box; }
+        .ads-slot-global { margin: 0; }
         
         body { 
             font-family: 'Poppins', sans-serif; 
@@ -309,8 +316,50 @@
         .status-verified { background: #27ae60; color: #fff; }
         .status-rejected { background: #e74c3c; color: #fff; }
     </style>
+    <?php if (getSetting('google_analytics_id')): ?>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?= htmlspecialchars(getSetting('google_analytics_id')) ?>"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '<?= htmlspecialchars(getSetting('google_analytics_id')) ?>');
+    </script>
+    <?php endif; ?>
+    <?php
+    $seoCanonical = $canonicalUrl ?? ('https://rainbowprinting.web.id' . (parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/'));
+    $seoPhone = trim(getSetting('store_phone') ?: getSetting('whatsapp_number') ?: '6282252569185');
+    $seoAddress = trim(getSetting('store_address') ?: 'Jl. Gerilya Gg. Masjid Blok B. Nomor 38c');
+    $seoName = trim(getSetting('store_name') ?: 'Rainbow Printing');
+    ?>
+    <?php if ($seoRobots === 'index, follow'): ?>
+    <link rel="canonical" href="<?= htmlspecialchars($seoCanonical) ?>">
+    <?php endif; ?>
+    <!-- SEO Schema LocalBusiness -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "<?= htmlspecialchars($seoName) ?>",
+      "description": "Percetakan Rainbow Printing adalah jasa percetakan dan digital printing terpercaya di Samarinda, Kalimantan Timur. Kami melayani cetak spanduk, banner, stiker outdoor (Ritrama & Bontax), kartu nama, brosur, pamflet, undangan pernikahan, buku menu, kalender, hingga cetak foto. Didukung mesin modern dan bahan berkualitas, hasil cetak tajam dengan warna akurat dan harga terjangkau untuk UMKM, sekolah, instansi, dan perorangan. Kami juga menyediakan jasa desain grafis untuk logo, banner, dan kebutuhan promosi. Proses cepat 1-3 hari kerja, free konsultasi, dan pemesanan mudah via WhatsApp atau langsung ke workshop kami di Jl. Gerilya Gg. Masjid Blok B No. 38c, Samarinda.",
+      "url": "https://rainbowprinting.web.id",
+      "telephone": "+<?= htmlspecialchars(preg_replace('/^0/', '62', $seoPhone)) ?>",
+      "image": "https://rainbowprinting.web.id/favicon.svg",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "<?= htmlspecialchars($seoAddress) ?>",
+        "addressLocality": "Samarinda",
+        "addressRegion": "Kalimantan Timur",
+        "addressCountry": "ID"
+      },
+      "priceRange": "Rp"
+    }
+    </script>
 </head>
 <body>
+<?php if (getSetting('ads_global_aktif') === '1' && trim((string)getSetting('ads_global')) !== ''): ?>
+<div class="ads-slot ads-slot-global"><?= getSetting('ads_global') ?></div>
+<?php endif; ?>
 
 <!-- 🔥 NAVBAR -->
 <nav class="navbar" role="navigation" aria-label="Menu Utama">

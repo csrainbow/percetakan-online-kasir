@@ -94,8 +94,9 @@ if (empty($orderItems)) {
     exit;
 }
 
-// 🔥 KONFIGURASI MIDTRANS
-$isSandbox = strpos($serverKey, 'SB-') === 0;
+// 🔥 KONFIGURASI MIDTRANS (selaras pola kasir: pakai flag midtrans_is_production)
+$isProduction = (int) getSetting('midtrans_is_production') === 1;
+$isSandbox = !$isProduction;
 $baseUrl = $isSandbox ? 'https://app.sandbox.midtrans.com' : 'https://app.midtrans.com';
 
 // 🔥 SPLIT NAMA CUSTOMER

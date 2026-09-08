@@ -14,6 +14,11 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 - **Pembayaran Midtrans gambungan lama** dipertahankan: `midtrans-snap.php`, `midtrans-webhook.php`, `receive.php` (endpoint Menerima hasil / notifikasi).
 - **Pembayaran via Midtrans (Snap)** sudah terpasang di kasir — tombol "Bayar via Midtrans" di halaman pesanan membuat Snap token & memuat `snap.pay()`. Berjalan di mode **sandbox** sekarang; saat production siap, cukup isi server/client key production di Pengaturan.
 
+### Toko Online (folder `toko-online/`) — sinkronisasi server → repo
+- **Midtrans aktif & diselaraskan dengan pola kasir**: `payment/create.php` kini memakai setting **`midtrans_is_production`** (bukan deteksi prefix `SB-`); `includes/functions.php` + `admin/settings.php` mendapat field **Mode Midtrans** (Sandbox/Production). Key sandbox terisi & teruji end-to-end via `/snap/v1/transactions` → `redirect_url` sandbox valid, `orders.midtrans_token` tersimpan, opsi "Midtrans" muncul di checkout.
+- **Router perbaikan**: `router.php` menambah redirect 301 untuk `/kasir`, `/admin`, `/uploads` (tanpa trailing slash) agar redirect relatif tidak nyasar.
+- **Halaman statis SEO baru** ditambahkan: `faq.php`, `privacy-policy.php`, `terms-of-service.php`, `robots.txt`, `sitemap.xml`, `favicon.svg`.
+
 ### Diperbaiki
 - **Tampilan nota struk berantakan**: tambah `<base href>` di `nota-templates/struk.php` sehingga CSS/JS (`assets/style.css`, `assets/print.js`) ter-resolve benar (sebelumnya 404 → tampilan acak).
 - **Tombol "Kembali" untuk customer → "Keluar"** di `nota-templates/struk.php`: pengunjung publik melihat tombol **Keluar** (menutup tab), admin tetap melihat **Kembali** + **Cetak Nota**.

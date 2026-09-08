@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /database.sqlite
+Disallow: /cart.php
+Disallow: /checkout.php
+Disallow: /cek-pesanan.php
+Disallow: /upload-design.php
+Disallow: /login.php
+Disallow: /register.php
+Disallow: /dashboard.php
+Disallow: /pesanan-saya.php
+Disallow: /orders.php
+Disallow: /invoice.php
+Disallow: /finish.php
+Disallow: /confirm.php
+Disallow: /order-success.php
+Disallow: /notification.php
+Disallow: /customer/
+
+Sitemap: https://rainbowprinting.web.id/sitemap.xml

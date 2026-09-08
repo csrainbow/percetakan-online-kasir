@@ -488,6 +488,7 @@ function seedSettings($db) {
         ['key' => 'bank3_name_holder', 'value' => 'Rainbow Printing'],
         ['key' => 'midtrans_server_key', 'value' => ''],
         ['key' => 'midtrans_client_key', 'value' => ''],
+        ['key' => 'midtrans_is_production', 'value' => '0'],
         ['key' => 'store_name', 'value' => 'Rainbow Printing'],
         ['key' => 'store_address', 'value' => 'Jl. Contoh No. 123, Samarinda'],
         ['key' => 'store_phone', 'value' => '081234567890'],

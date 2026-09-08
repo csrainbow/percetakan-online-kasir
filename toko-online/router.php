@@ -16,4 +16,13 @@ foreach ($protected as $p) {
     }
 }
 
+// Redirect direktori tanpa trailing slash (agar redirect relatif tidak nyasar)
+foreach (['/kasir', '/admin', '/uploads'] as $dirOnly) {
+    if ($uri === $dirOnly) {
+        http_response_code(301);
+        header('Location: ' . $dirOnly . '/');
+        return true;
+    }
+}
+
 return false;

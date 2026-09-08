@@ -25,6 +25,7 @@ if (!$product) {
 }
 
 $pageTitle = htmlspecialchars($product['name']) . ' - Rainbow Printing';
+$canonicalUrl = 'https://rainbowprinting.web.id/product.php?slug=' . urlencode($slug);
 
 // 🔥 AMBIL PRODUK TERKAIT
 $related = $db->prepare("SELECT * FROM products WHERE category = ? AND id != ? LIMIT 4");

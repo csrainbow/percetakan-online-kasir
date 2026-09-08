@@ -7,6 +7,24 @@ $error = '';
 
 // 🔥 🔥 PROSES POST 🔥 🔥
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // 🔥 PROSES POST ADS SLOT (simpan / hapus)
+    if (isset($_POST['simpan_ads']) || isset($_POST['hapus_ads'])) {
+        $adsPos = in_array(($_POST['ads_pos'] ?? ''), ['atas', 'bawah', 'global'], true) ? $_POST['ads_pos'] : 'atas';
+        try {
+            $stmt = $db->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)");
+            if (isset($_POST['hapus_ads'])) {
+                $stmt->execute(['ads_' . $adsPos, '']);
+                $stmt->execute(['ads_' . $adsPos . '_aktif', '0']);
+                $message = '✅ ADS ' . ($adsPos === 'atas' ? 'Atas' : 'Bawah') . ' dihapus & dinonaktifkan!';
+            } else {
+                $stmt->execute(['ads_' . $adsPos, $_POST['ads_' . $adsPos . '_kode'] ?? '']);
+                $stmt->execute(['ads_' . $adsPos . '_aktif', isset($_POST['ads_' . $adsPos . '_aktif']) ? '1' : '0']);
+                $message = '✅ ADS ' . ($adsPos === 'atas' ? 'Atas' : 'Bawah') . ' disimpan!';
+            }
+        } catch (Exception $e) {
+            $error = '❌ Gagal menyimpan ADS: ' . $e->getMessage();
+        }
+    } else {
     $allowedKeys = [
         'store_name', 'store_address', 'store_phone', 'admin_email',
         'sendgrid_api_key',
@@ -14,9 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'bank2_name', 'bank2_account', 'bank2_name_holder',
         'bank3_name', 'bank3_account', 'bank3_name_holder',
         'qris_name', 'qris_merchant_id',
-        'midtrans_server_key', 'midtrans_client_key',
+        'midtrans_server_key', 'midtrans_client_key', 'midtrans_is_production',
         'invoice_template', 'invoice_footer', 'printer_options',
-        'whatsapp_number', 'footer_text',
+        'whatsapp_number', 'footer_text', 'google_analytics_id',
         'wa_enabled', 'wa_provider', 'wa_token'
     ];
     
@@ -62,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } catch (Exception $e) {
         $error = "❌ Gagal menyimpan: " . $e->getMessage();
+    }
     }
 }
 
@@ -361,6 +380,11 @@ include '../includes/header.php';
                         <input type="text" name="footer_text" value="<?= htmlspecialchars($settings['footer_text'] ?? '') ?>" placeholder="Teks footer website">
                         <div class="helper-text">Teks yang muncul di bagian bawah setiap halaman</div>
                     </div>
+                    <div class="form-group">
+                        <label>Google Analytics Measurement ID</label>
+                        <input type="text" name="google_analytics_id" value="<?= htmlspecialchars($settings['google_analytics_id'] ?? '') ?>" placeholder="G-XXXXXXXXXX">
+                        <div class="helper-text">ID pengukuran GA4 (format G-XXXXXXX). Kosongkan untuk menonaktifkan Google Analytics.</div>
+                    </div>
                 </div>
             </div>
 
@@ -470,6 +494,14 @@ include '../includes/header.php';
                         <div class="helper-text">Dapatkan dari dashboard Midtrans</div>
                     </div>
                     <div class="form-group">
+                        <label>Mode Midtrans</label>
+                        <select name="midtrans_is_production">
+                            <option value="0" <?= (int)($settings['midtrans_is_production'] ?? 0) === 0 ? 'selected' : '' ?>>Sandbox (percobaan)</option>
+                            <option value="1" <?= (int)($settings['midtrans_is_production'] ?? 0) === 1 ? 'selected' : '' ?>>Production (live)</option>
+                        </select>
+                        <div class="helper-text">Gunakan Sandbox untuk uji coba, Production saat toko live</div>
+                    </div>
+                    <div class="form-group">
                         <label>SendGrid API Key <span class="badge" style="font-size:10px;">Opsional</span></label>
                         <input type="password" name="sendgrid_api_key" value="<?= htmlspecialchars($settings['sendgrid_api_key'] ?? '') ?>" placeholder="SG.xxxx">
                         <div class="helper-text">Untuk kirim email notifikasi via SendGrid. Daftar di <a href="https://sendgrid.com" target="_blank">sendgrid.com</a></div>
@@ -516,6 +548,33 @@ include '../includes/header.php';
                 </button>
             </div>
         </form>
+
+        <!-- 🔥 IKLAN / ADS BERANDA -->
+        <div class="settings-section" style="margin-top:30px;">
+            <h2>📢 Iklan / ADS Beranda</h2>
+            <p class="helper-text" style="margin-bottom:16px;">Tempel kode/script iklan (HTML/JS) untuk tampil di atas &amp; bawah tulisan "Selamat Datang" pada halaman beranda. Ukuran kolom otomatis menyesuaikan script.</p>
+            <?php foreach (['global' => 'ADS Global Atas (paling atas, tampil di SEMUA halaman)', 'atas' => 'ADS Atas (di atas tulisan Selamat Datang)', 'bawah' => 'ADS Bawah (di bawah tulisan Selamat Datang)'] as $adsPosKey => $adsLabelTxt): ?>
+            <form method="POST" style="border:1px solid #e3e3e3;border-radius:8px;padding:14px;margin-bottom:14px;">
+                <h3 style="margin:0 0 10px;"><?= $adsLabelTxt ?></h3>
+                <div class="form-group">
+                    <label>Kode / Script Iklan</label>
+                    <textarea name="ads_<?= $adsPosKey ?>_kode" rows="4" placeholder="&lt;script&gt;...&lt;/script&gt; atau &lt;div&gt;...&lt;/div&gt;"><?= htmlspecialchars(getSetting('ads_' . $adsPosKey) ?? '') ?></textarea>
+                </div>
+                <div class="form-row" style="align-items:center;gap:14px;flex-wrap:wrap;">
+                    <label style="display:flex;align-items:center;gap:6px;font-weight:600;cursor:pointer;">
+                        <input type="checkbox" name="ads_<?= $adsPosKey ?>_aktif" <?= getSetting('ads_' . $adsPosKey . '_aktif') === '1' ? 'checked' : '' ?>> Tampilkan / Aktif
+                    </label>
+                    <input type="hidden" name="ads_pos" value="<?= $adsPosKey ?>">
+                    <button type="submit" name="simpan_ads" value="1" class="btn btn-primary" style="padding:8px 16px;">
+                        <i class="fas fa-save"></i> Simpan ADS
+                    </button>
+                    <button type="submit" name="hapus_ads" value="1" class="btn" style="background:#e74c3c;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;" onclick="return confirm('Hapus kode ADS <?= $adsPosKey ?>?');">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                </div>
+            </form>
+            <?php endforeach; ?>
+        </div>
     </main>
 </div>
 

@@ -344,16 +344,27 @@ include 'includes/header.php';
         grid-template-columns: repeat(2, 1fr);
     }
 }
+.ads-slot { width: 100%; max-width: 100%; overflow: hidden; display: block; box-sizing: border-box; }
+.ads-slot-atas { margin: 0 0 20px; }
+.ads-slot-bawah { margin: 20px 0 0; }
 </style>
+
+<?php if (getSetting('ads_atas_aktif') === '1' && trim((string)getSetting('ads_atas')) !== ''): ?>
+<div class="ads-slot ads-slot-atas"><?= getSetting('ads_atas') ?></div>
+<?php endif; ?>
 
 <!-- 🔥 HERO SECTION -->
 <section class="hero">
     <h1>Selamat Datang di <span><?= SITE_NAME ?></span></h1>
-    <p>Solusi cetak cepat, murah, dan berkualitas untuk kebutuhanmu.</p>
+    <p>Percetakan online Samarinda — cetak spanduk, stiker, kartu nama, brosur, undangan &amp; lainnya. Cepat, murah, berkualitas. Free konsultasi desain!</p>
     <a href="products.php" class="btn">
         <i class="fas fa-shopping-bag"></i> Lihat Produk
     </a>
 </section>
+
+<?php if (getSetting('ads_bawah_aktif') === '1' && trim((string)getSetting('ads_bawah')) !== ''): ?>
+<div class="ads-slot ads-slot-bawah"><?= getSetting('ads_bawah') ?></div>
+<?php endif; ?>
 
 <!-- 🔥 STATISTIK -->
 <section class="home-stats">

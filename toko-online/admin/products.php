@@ -37,9 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // 🔥 Generate slug
             if (!$id) {
-                $slug = strtolower(trim(preg_replace('/[^a-z0-9-]/', '-', str_replace(' ', '-', $name)), '-')) . '-' . uniqid();
+                $slug = trim(preg_replace('/[^a-z0-9]+/u', '-', strtolower($name)), '-') . '-' . uniqid();
             } else {
-                $slug = strtolower(trim(preg_replace('/[^a-z0-9-]/', '-', str_replace(' ', '-', $name)), '-'));
+                $slug = trim(preg_replace('/[^a-z0-9]+/u', '-', strtolower($name)), '-');
             }
             
             try {
