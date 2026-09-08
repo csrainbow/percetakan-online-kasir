@@ -1,10 +1,10 @@
 <?php
 session_start();
-date_default_timezone_set('Asia/Makassar');
+date_default_timezone_set('Asia/Jakarta');
 
 define('APP_NAME', 'Kasir Percetakan');
 define('DB_PATH', __DIR__ . '/data/kasir.db');
-define('NOTA_SECRET', 'kasir-percetakan-rainbow-2026');
+define('NOTA_SECRET', '0f6a1a3d4c34c8fceb18b655f21fb5a6');
 
 function nota_token($ref, $id) {
     return substr(hash('sha256', $ref . ':' . $id . ':' . NOTA_SECRET), 0, 12);
@@ -114,6 +114,28 @@ function next_number($prefix, $table) {
     return $prefix . '-' . date('ymd') . '-' . str_pad($row['m'], 4, '0', STR_PAD_LEFT);
 }
 
+function midtrans_is_production() {
+    return setting('midtrans_is_production') === '1';
+}
+function midtrans_server_key() {
+    return midtrans_is_production()
+        ? setting('midtrans_server_key_production')
+        : setting('midtrans_server_key_sandbox');
+}
+function midtrans_client_key() {
+    return midtrans_is_production()
+        ? setting('midtrans_client_key_production')
+        : setting('midtrans_client_key_sandbox');
+}
+function midtrans_base_url() {
+    return midtrans_is_production()
+        ? 'https://api.midtrans.com'
+        : 'https://api.sandbox.midtrans.com';
+}
+function midtrans_is_ready() {
+    return !empty(midtrans_server_key());
+}
+
 function wa_href($phone, $text) {
     $p = preg_replace('/\D+/', '', (string)$phone);
     if ($p === '') {
@@ -134,10 +156,13 @@ function is_telat($ps) {
 }
 
 function wa_send($to, $message, $imageUrl = '') {
-    if (!setting('wa_enabled') || !setting('wa_token')) {
+    if (!setting('wa_enabled')) {
         return false;
     }
     $provider = setting('wa_provider', 'fonnte');
+    if (($provider === 'meta' && !setting('wa_meta_token')) || ($provider !== 'meta' && !setting('wa_token'))) {
+        return false;
+    }
     $to = preg_replace('/\D+/', '', (string)$to);
     if ($to === '') {
         return false;
@@ -149,6 +174,29 @@ function wa_send($to, $message, $imageUrl = '') {
         }
         $payload = json_encode(['phone' => $to, 'message' => $message, 'token' => setting('wa_token')]);
         $headers = ['Content-Type: application/json'];
+    } elseif ($provider === 'meta') {
+        $phoneId = setting('wa_meta_phone_id', '');
+        $metaToken = setting('wa_meta_token', '');
+        if ($phoneId === '' || $metaToken === '') {
+            return false;
+        }
+        if (substr($to, 0, 1) === '0') {
+            $to = '62' . substr($to, 1);
+        }
+        $templateName = setting('wa_meta_template', 'kasir_notifikasi');
+        $components = [['type' => 'body', 'parameters' => [['type' => 'text', 'text' => (string)$message]]]];
+        $payload = json_encode([
+            'messaging_product' => 'whatsapp',
+            'to' => $to,
+            'type' => 'template',
+            'template' => [
+                'name' => $templateName,
+                'language' => ['code' => setting('wa_meta_lang', 'id')],
+                'components' => $components,
+            ],
+        ]);
+        $url = 'https://graph.facebook.com/v21.0/' . $phoneId . '/messages';
+        $headers = ['Content-Type: application/json', 'Authorization: Bearer ' . $metaToken];
     } else {
         $url = 'https://api.fonnte.com/send';
         $body = ['target' => $to, 'message' => $message, 'countryCode' => '62'];
@@ -174,7 +222,12 @@ function wa_send($to, $message, $imageUrl = '') {
     if ($err === '' && is_string($res) && $res !== '') {
         $j = json_decode($res, true);
         if (is_array($j)) {
-            $ok = $j['status'] === true || $j['status'] === 'true' || $j['status'] === 1 || $j['status'] === '1';
+            if ($provider === 'meta') {
+                $ok = isset($j['messages'][0]['id'])
+                    || (isset($j['contacts'][0]['wa_id']) && $code < 300);
+            } else {
+                $ok = $j['status'] === true || $j['status'] === 'true' || $j['status'] === 1 || $j['status'] === '1';
+            }
         }
     }
     if ($code !== 200 || !$ok) {
@@ -191,34 +244,48 @@ function barcode_src($data) {
 function nota_publik_url($ref, $id, $t = 'a5') {
     $k = nota_token($ref, $id);
     return rtrim(setting('url_publik', 'https://rainbowprinting.web.id/kasir'), '/')
-        . '/nota-publik.php?ref=' . $ref . '&id=' . $id . '&t=' . $t . '&k=' . $k;
+        . '/n.php/' . rawurlencode($ref) . '/' . $id . '/' . rawurlencode($t) . '/' . $k;
+}
+
+function wa_pelanggan_msg($ps, $event, $extra = '') {
+    $name = $ps['pelanggan'] ?? '';
+    $code = $ps['no_pesanan'] ?? '';
+    $total = (float)($ps['total'] ?? 0);
+    $dpVal = (float)($ps['dp'] ?? 0);
+    $sisaVal = (float)($ps['sisa'] ?? ($total - $dpVal));
+    $link = nota_link('pesanan', (int)$ps['id'], 'struk');
+    $linkNota = nota_link('pesanan', (int)$ps['id']);
+    $waAdmin = setting('wa_admin_number', '') !== '' ? setting('wa_admin_number') : setting('telp');
+    $bankNama = setting('bank_nama', 'Bank Central Asia');
+    $bankRek = setting('bank_rekening', '7935405254');
+    $bankPemilik = setting('bank_pemilik', 'Nur Ismani');
+    $msgs = [
+        'baru'   => "🖨️ *PESANAN DITERIMA*\n\nHalo $name, pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nStatus pesanan Anda: *BELUM LUNAS* — silakan segera melakukan pembayaran via *Transfer Bank*:\n\n🏦 Nama Bank: $bankNama\n💳 No. Rekening: $bankRek\n👤 Atas Nama: $bankPemilik\n\nSetelah transfer, mohon kirimkan *screenshot bukti bayar* ke nomor ini: $waAdmin\n\n📄 *Struk:* $link\n*Keterangan:* Belum lunas — silakan bayar\n\nTerima kasih 🙏",
+        'dp'     => "💰 *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sebesar " . rp($dpVal) . " sudah kami terima.\n\nSisa tagihan: " . rp($sisaVal) . " — mohon segera dilunasi.\n\nPesanan akan segera kami proses.\n\nStatus pesanan bisa dicek di: $link\n\nTerima kasih 🙏",
+        'lunas'  => "✅ *PEMBAYARAN LUNAS*\n\nHalo $name, pembayaran pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nPesanan akan segera kami proses.\n\n📄 *Struk:* $link\n\nTerima kasih 🙏",
+        'selesai' => "🎉 *PESANAN SELESAI*\n\nHalo $name, pesanan *$code* sudah selesai dan siap untuk diambil / dikirim.\n\nBerikut struk dengan *barcode nota A5* untuk diunduh:\n$link\n\nTerima kasih sudah mempercayakan kami 🙏",
+        'batal'  => "ℹ️ *PESANAN DIBATALKAN*\n\nHalo $name, pesanan *$code* telah dibatalkan. Jika ada kendala, silakan hubungi kami kembali.\n\nTerima kasih 🙏",
+    ];
+    $message = $msgs[$event] ?? '';
+    if ($message === '') {
+        return '';
+    }
+    if ($extra !== '') {
+        $message .= "\n\n" . $extra;
+    }
+    $message .= "\n\n— " . setting('nama_toko', 'Percetakan Ikky Share');
+    return $message;
 }
 
 function wa_pelanggan($ps, $event, $extra = '') {
     if (empty($ps['telepon'])) {
         return false;
     }
-    $name = $ps['pelanggan'] ?? '';
-    $code = $ps['no_pesanan'] ?? '';
-    $total = (float)($ps['total'] ?? 0);
-    $link = nota_publik_url('pesanan', (int)$ps['id'], 'struk');
-    $linkNota = nota_publik_url('pesanan', (int)$ps['id']);
-    $waAdmin = setting('wa_admin_number', '') !== '' ? setting('wa_admin_number') : setting('telp');
-    $msgs = [
-        'baru'   => "🖨️ *PESANAN DITERIMA*\n\nHalo $name, pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nStatus pesanan Anda: *BELUM LUNAS* — mohon segera melakukan pembayaran.\n\nSetelah transfer, mohon konfirmasi dengan mengirimkan *bukti transfer* ke WhatsApp admin: $waAdmin\n\n📄 *Struk:* $link\n*Keterangan:* Belum lunas — silakan bayar\n\nTerima kasih 🙏",
-        'dp'     => "💰 *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sudah kami terima.\n\nStatus pesanan bisa dicek di: $link\n\nTerima kasih 🙏",
-        'lunas'  => "✅ *PEMBAYARAN LUNAS*\n\nHalo $name, pembayaran pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nPesanan Anda akan segera kami kerjakan.\n\n📄 *Struk:* $link\n\nTerima kasih 🙏",
-        'selesai' => "🎉 *PESANAN SELESAI*\n\nHalo $name, pesanan *$code* sudah selesai dan siap untuk diambil / dikirim.\n\nBerikut struk dengan *barcode nota A5* untuk diunduh:\n$link\n\nTerima kasih sudah mempercayakan kami 🙏",
-        'batal'  => "ℹ️ *PESANAN DIBATALKAN*\n\nHalo $name, pesanan *$code* telah dibatalkan. Jika ada kendala, silakan hubungi kami kembali.\n\nTerima kasih 🙏",
-    ];
-    $message = $msgs[$event] ?? '';
+    $message = wa_pelanggan_msg($ps, $event, $extra);
     if ($message === '') {
         return false;
     }
-    if ($extra !== '') {
-        $message .= "\n\n" . $extra;
-    }
-    $message .= "\n\n— " . setting('nama_toko', 'PERCETAKAN RAINBOW');
+    $linkNota = nota_link('pesanan', (int)$ps['id']);
     $imageUrl = '';
     if ($event === 'selesai') {
         $imageUrl = 'https://barcode.tec-it.com/barcode.ashx?data=' . rawurlencode($linkNota)
@@ -226,3 +293,5 @@ function wa_pelanggan($ps, $event, $extra = '') {
     }
     return wa_send($ps['telepon'], $message, $imageUrl);
 }
+
+require_once __DIR__ . '/link_short.php';

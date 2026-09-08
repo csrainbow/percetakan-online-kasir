@@ -23,16 +23,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    if (!empty($_POST['test_wa'])) {
+        if (!is_superadmin()) {
+            flash_set('error', 'Hanya super admin yang bisa menguji notifikasi.');
+        } else {
+            $tujuan = trim($_POST['test_wa_tujuan'] ?? '');
+            if ($tujuan === '') {
+                $tujuan = setting('wa_admin_number', '');
+            }
+            if ($tujuan === '') {
+                flash_set('error', 'Isi nomor tujuan test terlebih dahulu.');
+            } else {
+                $pesan = "🔔 *TEST NOTIFIKASI WA KASIR*\n\nJika Anda menerima pesan ini berarti notifikasi WhatsApp berfungsi. Waktu test: " . date('d/m/Y H:i:s');
+                $ok = wa_send($tujuan, $pesan);
+                flash_set($ok ? 'success' : 'error', $ok
+                    ? 'Pesan test terkirim ke ' . $tujuan . '.'
+                    : 'Pesan test GAGAL terkirim. Cek log aktivitas (provider: ' . setting('wa_provider', 'fonnte') . ').');
+            }
+        }
+        header('Location: index.php?p=pengaturan');
+        exit;
+    }
+
+    if (!empty($_POST['simpan_bank'])) {
+        if (!is_superadmin()) {
+            flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
+        } else {
+            set_setting('bank_nama', trim($_POST['bank_nama'] ?? ''));
+            set_setting('bank_rekening', trim($_POST['bank_rekening'] ?? ''));
+            set_setting('bank_pemilik', trim($_POST['bank_pemilik'] ?? ''));
+            flash_set('success', 'Pengaturan bank disimpan.');
+        }
+        header('Location: index.php?p=pengaturan');
+        exit;
+    }
+
     if (!empty($_POST['simpan_wa'])) {
         if (!is_superadmin()) {
             flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
         } else {
             set_setting('wa_enabled', !empty($_POST['wa_enabled']) ? '1' : '');
-            set_setting('wa_provider', ($_POST['wa_provider'] ?? '') === 'wablas' ? 'wablas' : 'fonnte');
+            $wp = $_POST['wa_provider'] ?? 'fonnte';
+            set_setting('wa_provider', in_array($wp, ['fonnte', 'wablas', 'meta']) ? $wp : 'fonnte');
             set_setting('wa_token', trim($_POST['wa_token'] ?? ''));
+            set_setting('wa_meta_token', trim($_POST['wa_meta_token'] ?? ''));
+            set_setting('wa_meta_phone_id', trim($_POST['wa_meta_phone_id'] ?? ''));
+            set_setting('wa_meta_template', trim($_POST['wa_meta_template'] ?? '') !== '' ? trim($_POST['wa_meta_template']) : 'kasir_notifikasi');
+            set_setting('wa_meta_lang', trim($_POST['wa_meta_lang'] ?? '') !== '' ? trim($_POST['wa_meta_lang']) : 'id');
             set_setting('wa_admin_number', trim($_POST['wa_admin_number'] ?? ''));
             set_setting('wa_notif_pembayaran', !empty($_POST['wa_notif_pembayaran']) ? '1' : '');
             flash_set('success', 'Pengaturan notifikasi disimpan.');
+        }
+        header('Location: index.php?p=pengaturan');
+        exit;
+    }
+
+    if (!empty($_POST['simpan_midtrans'])) {
+        if (!is_superadmin()) {
+            flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
+        } else {
+            set_setting('midtrans_is_production', !empty($_POST['midtrans_is_production']) ? '1' : '0');
+            set_setting('midtrans_server_key_sandbox', trim($_POST['midtrans_server_key_sandbox'] ?? ''));
+            set_setting('midtrans_server_key_production', trim($_POST['midtrans_server_key_production'] ?? ''));
+            set_setting('midtrans_client_key_sandbox', trim($_POST['midtrans_client_key_sandbox'] ?? ''));
+            set_setting('midtrans_client_key_production', trim($_POST['midtrans_client_key_production'] ?? ''));
+            flash_set('success', 'Pengaturan Midtrans disimpan.');
         }
         header('Location: index.php?p=pengaturan');
         exit;
@@ -59,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash_set('error', 'Ukuran ' . $upCfg['label'] . ' maksimal 2 MB.');
             } else {
                 $dest = __DIR__ . '/../assets/' . $upCfg['base'] . '.' . $ext;
+                @unlink($dest);
                 if (move_uploaded_file($file['tmp_name'], $dest)) {
                     if (setting($upCfg['key']) && setting($upCfg['key']) !== 'assets/' . $upCfg['base'] . '.' . $ext) {
                         @unlink(__DIR__ . '/../' . setting($upCfg['key']));
@@ -270,9 +326,10 @@ require __DIR__ . '/../layout/header.php';
             <div>
                 <p class="muted kecil"><b>Logo Nota (A5 / PDF)</b></p>
                 <?php if (setting('logo_image')): ?>
-                    <img class="qris-preview" src="<?= e(setting('logo_image')) ?>" alt="Logo Nota">
+                    <?php $li = setting('logo_image'); $liv = is_file(__DIR__ . '/../' . $li) ? @filemtime(__DIR__ . '/../' . $li) : 0; ?>
+                    <img class="qris-preview" src="<?= e($li) ?>?v=<?= $liv ?>" alt="Logo Nota">
                 <?php else: ?>
-                    <img class="qris-preview" src="logo.png" alt="Logo Nota (bawaan)">
+                    <img class="qris-preview" src="assets/logo.png" alt="Logo Nota (bawaan)">
                 <?php endif; ?>
                 <form method="post" enctype="multipart/form-data" class="form-row">
                     <input type="file" name="logo_nota" accept=".png,.jpg,.jpeg,.webp" required>
@@ -282,9 +339,10 @@ require __DIR__ . '/../layout/header.php';
             <div>
                 <p class="muted kecil"><b>Logo Struk (thermal 58/80mm)</b></p>
                 <?php if (setting('logo_struk')): ?>
-                    <img class="qris-preview" src="<?= e(setting('logo_struk')) ?>" alt="Logo Struk">
+                    <?php $ls = setting('logo_struk'); $lsv = is_file(__DIR__ . '/../' . $ls) ? @filemtime(__DIR__ . '/../' . $ls) : 0; ?>
+                    <img class="qris-preview" src="<?= e($ls) ?>?v=<?= $lsv ?>" alt="Logo Struk">
                 <?php else: ?>
-                    <img class="qris-preview" src="logo.png" alt="Logo Struk (bawaan)">
+                    <img class="qris-preview" src="assets/logo.png" alt="Logo Struk (bawaan)">
                 <?php endif; ?>
                 <form method="post" enctype="multipart/form-data" class="form-row">
                     <input type="file" name="logo_struk" accept=".png,.jpg,.jpeg,.webp" required>
@@ -302,6 +360,23 @@ require __DIR__ . '/../layout/header.php';
     </div>
 
     <div class="panel">
+        <h3>Data Pembayaran Transfer Bank</h3>
+        <form method="post">
+            <label>Nama Bank
+                <input type="text" name="bank_nama" value="<?= e(setting('bank_nama')) ?>" placeholder="Bank Central Asia">
+            </label>
+            <label>No. Rekening
+                <input type="text" name="bank_rekening" value="<?= e(setting('bank_rekening')) ?>" placeholder="7935405254">
+            </label>
+            <label>Atas Nama
+                <input type="text" name="bank_pemilik" value="<?= e(setting('bank_pemilik')) ?>" placeholder="Nur Ismani">
+            </label>
+            <p class="muted kecil">Informasi ini otomatis ditampilkan pada template notifikasi WA "Pesanan Diterima" agar pelanggan tahu cara membayar.</p>
+            <button type="submit" class="btn" name="simpan_bank" value="1">Simpan Data Bank</button>
+        </form>
+    </div>
+
+    <div class="panel">
         <h3>Notifikasi WhatsApp (Pesanan Baru)</h3>
         <form method="post">
             <label class="chk">
@@ -311,11 +386,24 @@ require __DIR__ . '/../layout/header.php';
             <label>Penyedia Gateway
                 <select name="wa_provider">
                     <option value="fonnte" <?= setting('wa_provider', 'fonnte') === 'fonnte' ? 'selected' : '' ?>>Fonnte (api.fonnte.com)</option>
-                    <option value="wablas" <?= setting('wa_provider', 'fonnte') === 'wablas' ? 'selected' : '' ?>>Wablas (patp.wablas.com)</option>
+                    <option value="wablas" <?= setting('wa_provider') === 'wablas' ? 'selected' : '' ?>>Wablas (patp.wablas.com)</option>
+                    <option value="meta" <?= setting('wa_provider') === 'meta' ? 'selected' : '' ?>>WhatsApp Business Cloud API (Meta, resmi)</option>
                 </select>
             </label>
             <label>API Token
                 <input type="password" name="wa_token" value="<?= e(setting('wa_token')) ?>" placeholder="Token dari Fonnte/Wablas">
+            </label>
+            <label>Meta — Access Token (Permanent)
+                <input type="password" name="wa_meta_token" value="<?= e(setting('wa_meta_token')) ?>" placeholder="Token dari Meta for Developers">
+            </label>
+            <label>Meta — Phone Number ID
+                <input type="text" name="wa_meta_phone_id" value="<?= e(setting('wa_meta_phone_id')) ?>" placeholder="cth: 123456789012345">
+            </label>
+            <label>Meta — Nama Template
+                <input type="text" name="wa_meta_template" value="<?= e(setting('wa_meta_template')) ?>" placeholder="kasir_notifikasi">
+            </label>
+            <label>Meta — Kode Bahasa Template
+                <input type="text" name="wa_meta_lang" value="<?= e(setting('wa_meta_lang', 'id')) ?>" placeholder="id">
             </label>
             <label>Nomor Admin Tujuan Notifikasi
                 <input type="text" name="wa_admin_number" value="<?= e(setting('wa_admin_number')) ?>" placeholder="08xxxxxxxxxx">
@@ -324,10 +412,44 @@ require __DIR__ . '/../layout/header.php';
                 <input type="checkbox" name="wa_notif_pembayaran" value="1" <?= setting('wa_notif_pembayaran') ? 'checked' : '' ?>>
                 Juga kirim notif saat pembayaran pesanan diterima
             </label>
-            <p class="muted kecil">Cara: daftar gratis di <b>fonnte.com</b> (atau wablas.com), salin API token dari dashboard, tempel di atas, isi nomor admin, centang aktifkan, simpan. Setiap pesanan baru otomatis terkirim ke WhatsApp nomor tersebut.</p>
+            <p class="muted kecil">Kelola template pesan lewat menu <b>Pesanan</b> → tombol <b>Template WA</b>. Uji koneksi di bawah ini:</p>
+            <div class="form-row" style="margin-bottom:10px;">
+                <input type="text" name="test_wa_tujuan" value="<?= e(setting('wa_admin_number')) ?>" placeholder="Nomor tujuan test (08xx...)">
+                <button type="submit" class="btn kecil" name="test_wa" value="1">Test Kirim</button>
+            </div>
+            <p class="muted kecil"><b>Fonnte/Wablas:</b> daftar di fonnte.com / wablas.com, salin API token, tempel di "API Token". <b>Gunakan sumber siluman/device — berisiko kena pembatasan WhatsApp.</b><br>
+            <b>Meta (resmi, direkomendasikan):</b> buka developers.facebook.com → Create App → Business → WhatsApp → dapatkan <i>Access Token</i> & <i>Phone Number ID</i> dari dashboard. Buat <i>Message Template</i> bernama <code>kasir_notifikasi</code> kategori <b>Utility</b>, bahasa <code>id</code>, body: <code>{{1}}</code> (isi = pesan notifikasi). Semua notifikasi kasir akan dikirim lewat template ini.<br>
+            Nomor admin tujuan diisi dengan nomor admin (tanpa izin nomor baru apapun).</p>
             <button type="submit" class="btn" name="simpan_wa" value="1">Simpan Notifikasi</button>
         </form>
     </div>
+
+    <div class="panel">
+        <h3>Payment Gateway — Midtrans</h3>
+        <form method="post">
+            <label>Mode
+                <select name="midtrans_is_production">
+                    <option value="0" <?= setting('midtrans_is_production', '0') === '0' ? 'selected' : '' ?>>Sandbox (Uji Coba)</option>
+                    <option value="1" <?= setting('midtrans_is_production') === '1' ? 'selected' : '' ?>>Production</option>
+                </select>
+            </label>
+            <label>Server Key (Sandbox)
+                <input type="password" name="midtrans_server_key_sandbox" value="<?= e(setting('midtrans_server_key_sandbox')) ?>" placeholder="SB-Mid-server-..." required>
+            </label>
+            <label>Server Key (Production)
+                <input type="password" name="midtrans_server_key_production" value="<?= e(setting('midtrans_server_key_production')) ?>" placeholder="Mid-server-..." required>
+            </label>
+            <label>Client Key (Sandbox)
+                <input type="password" name="midtrans_client_key_sandbox" value="<?= e(setting('midtrans_client_key_sandbox')) ?>" placeholder="SB-Mid-client-..." required>
+            </label>
+            <label>Client Key (Production)
+                <input type="password" name="midtrans_client_key_production" value="<?= e(setting('midtrans_client_key_production')) ?>" placeholder="Mid-client-..." required>
+            </label>
+            <button type="submit" class="btn" name="simpan_midtrans" value="1">Simpan Midtrans</button>
+        </form>
+        <p class="muted kecil">Daftar di <b>midtrans.com</b>. Masukkan Server Key & Client Key dari dashboard Merchant. Mode Sandbox untuk uji coba (transaksi tidak diproses benar). URL notifikasi: <code><?= e(setting('url_publik', 'https://rainbowprinting.web.id/kasir')) ?>/midtrans-webhook.php</code></p>
+    </div>
+
     <?php endif; ?>
 
     <div class="panel">

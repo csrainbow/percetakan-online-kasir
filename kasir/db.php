@@ -141,6 +141,7 @@ class DB {
         }
         if (!$hasEstimasi) {
             self::run("ALTER TABLE pesanan ADD COLUMN estimasi TEXT DEFAULT ''");
+        }
 
         $cols = self::q('PRAGMA table_info(pesanan)');
         $hasDeleted = false;
@@ -152,8 +153,6 @@ class DB {
         }
         if (!$hasDeleted) {
             self::run("ALTER TABLE pesanan ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0");
-        }
-
         }
 
         $cols = self::q('PRAGMA table_info(penjualan)');
@@ -178,6 +177,7 @@ class DB {
         }
         if (!$hasStatusB) {
             self::run("ALTER TABLE pembayaran ADD COLUMN status TEXT NOT NULL DEFAULT 'Lunas'");
+        }
 
         $cols = self::q('PRAGMA table_info(pembayaran)');
         $hasUserIdP = false;
@@ -191,6 +191,16 @@ class DB {
             self::run("ALTER TABLE pembayaran ADD COLUMN user_id INTEGER DEFAULT 0");
         }
 
+        $cols = self::q('PRAGMA table_info(pembayaran)');
+        $hasToken = false;
+        foreach ($cols as $c) {
+            if ($c['name'] === 'token') {
+                $hasToken = true;
+                break;
+            }
+        }
+        if (!$hasToken) {
+            self::run("ALTER TABLE pembayaran ADD COLUMN token TEXT DEFAULT ''");
         }
 
         $u = self::one('SELECT COUNT(*) c FROM users');

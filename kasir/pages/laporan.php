@@ -26,7 +26,7 @@ $scP = scope_sql('p');
 $scPe = scope_sql('pe');
 $sumPenjualan = DB::one("SELECT COALESCE(SUM(p.total),0) total, COUNT(*) c FROM penjualan p WHERE date(p.tgl) BETWEEN ? AND ? AND $scP$extraP", [$from, $to]);
 $sumPesanan = DB::one("SELECT COALESCE(SUM(pe.total),0) total, COUNT(*) c FROM pesanan pe WHERE date(pe.tgl) BETWEEN ? AND ? AND pe.status != 'Batal' AND pe.deleted = 0 AND " . scope_sql('pe') . "$extraPe", [$from, $to]);
-$sumTerima = DB::one("SELECT COALESCE(SUM(pp.jumlah),0) total, COUNT(*) c FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id WHERE pp.ref_type = 'pesanan' AND pe.deleted = 0 AND pe.status != 'Batal' AND date(pp.tgl) BETWEEN ? AND ? AND $scPay$extraPay", [$from, $to]);
+$sumTerima = DB::one("SELECT COALESCE(SUM(pp.jumlah),0) total, COUNT(*) c FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) BETWEEN ? AND ? AND $scPay$extraPay", [$from, $to]);
 $piutangBerjalan = DB::one("SELECT COALESCE(SUM(sisa),0) total, COUNT(*) c FROM pesanan WHERE status = 'DP' AND deleted = 0 AND " . scope_sql('pesanan'));
 $perHari = DB::q("SELECT date(p.tgl) d, COUNT(*) c, COALESCE(SUM(p.total),0) t FROM penjualan p WHERE date(p.tgl) BETWEEN ? AND ? AND $scP$extraP GROUP BY date(p.tgl) ORDER BY d", [$from, $to]);
 $perHariPe = DB::q("SELECT date(pe.tgl) d, COUNT(*) c, COALESCE(SUM(pe.total),0) t FROM pesanan pe WHERE date(pe.tgl) BETWEEN ? AND ? AND pe.status != 'Batal' AND pe.deleted = 0 AND " . scope_sql('pe') . "$extraPe GROUP BY date(pe.tgl)", [$from, $to]);
@@ -71,7 +71,7 @@ uasort($perProdukMap, function ($a, $b) {
 });
 $terimaDetail = DB::q("SELECT pp.tgl, pp.jumlah, pp.metode, pe.no_pesanan, pe.pelanggan
                        FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
-                       WHERE pp.ref_type = 'pesanan' AND pe.deleted = 0 AND pe.status != 'Batal' AND date(pp.tgl) BETWEEN ? AND ? AND $scPay$extraPay ORDER BY pp.id DESC", [$from, $to]);
+                       WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) BETWEEN ? AND ? AND $scPay$extraPay ORDER BY pp.id DESC", [$from, $to]);
 $pendapatan = (float)$sumPenjualan['total'] + (float)$sumPesanan['total'];
 $hppKasir = DB::one("SELECT COALESCE(SUM(pr.harga_beli * i.qty),0) h
                 FROM penjualan_item i

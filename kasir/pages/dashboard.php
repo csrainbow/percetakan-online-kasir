@@ -120,7 +120,7 @@ if (is_superadmin() && scope_user_id() === 0) {
         (SELECT COALESCE(SUM(p.total),0) FROM penjualan p WHERE p.user_id = u.id) total_penjualan,
         (SELECT COUNT(*) FROM pesanan pe WHERE pe.user_id = u.id AND pe.status IN ('DP','Lunas')) pesanan_aktif,
         (SELECT COALESCE(SUM(pp.jumlah),0) FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
-         WHERE pp.user_id = u.id AND pp.ref_type = 'pesanan' AND pe.deleted = 0 AND pe.status != 'Batal'
+         WHERE pp.user_id = u.id AND pp.ref_type = 'pesanan'
          AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%')) terima_pesanan
         FROM users u");
 usort($perKasir, function ($a, $b) {

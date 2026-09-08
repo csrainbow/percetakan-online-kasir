@@ -4,19 +4,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="https://rainbowprinting.web.id/kasir/">
 <title>Nota <?= e($ps['no_pesanan']) ?></title>
 <link rel="stylesheet" href="assets/style.css?v=<?= filemtime(__DIR__ . '/../assets/style.css') ?>">
 <script src="assets/print.js"></script>
 </head>
 <body class="<?= setting('struk_lebar', '80') === '58' ? 'struk-lebar-58' : '' ?>">
 <div class="no-print aksi-struk">
-    <a class="btn" href="index.php?p=<?= e($back_page) ?>">Kembali</a>
-    <button class="btn" onclick="cetakNota()">Cetak Nota</button>
+    <?php if (!empty($publik)): ?>
+        <button class="btn" onclick="keluarNota()">Keluar</button>
+        <button class="btn" onclick="cetakNota()">Cetak Nota</button>
+    <?php else: ?>
+        <a class="btn" href="index.php?p=<?= e($back_page) ?>">Kembali</a>
+        <button class="btn" onclick="cetakNota()">Cetak Nota</button>
+    <?php endif; ?>
 </div>
 
 <div class="struk">
-    <?php if (setting('logo_struk', 'logo.png')): ?>
-        <img class="logo-struk" src="<?= e(setting('logo_struk', 'logo.png')) ?>" alt="Logo">
+    <?php if (setting('logo_struk', 'assets/logo.png')): ?>
+        <?php $ls = setting('logo_struk', 'assets/logo.png'); $lv = is_file(__DIR__ . '/../' . $ls) ? @filemtime(__DIR__ . '/../' . $ls) : 0; ?>
+        <img class="logo-struk" src="<?= e($ls) ?>?v=<?= $lv ?>" alt="Logo">
     <?php endif; ?>
     <div class="center">
         <h3><?= e(setting('nama_toko')) ?></h3>
@@ -67,7 +74,7 @@
     <?php elseif ($ps['status'] === 'Selesai'): ?>
         <p class="center muted kecil">Pesanan sudah selesai dan diambil.</p>
     <?php endif; ?>
-    <?php if (setting('qris_image')): ?>
+    <?php if (setting('qris_image') && in_array($ps['pembayaran_status'] ?? '', ['Belum Bayar', 'DP'])): ?>
         <div class="center">
             <p class="muted kecil">Scan untuk pembayaran QRIS</p>
             <img class="qris-struk" src="<?= e(setting('qris_image')) ?>" alt="QRIS">
@@ -85,6 +92,13 @@
 </div>
 
 <script>
+function keluarNota() {
+    if (history.length > 1) {
+        history.back();
+    } else {
+        window.close();
+    }
+}
 if (location.search.includes('auto=1')) {
     setTimeout(function () { window.print(); }, 400);
 }

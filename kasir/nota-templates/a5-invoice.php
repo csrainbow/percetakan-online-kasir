@@ -42,7 +42,7 @@ $logoW = max(10, min(45, (float)setting('logo_nota_size', 24)));
     <table class="invoice-head">
         <tr>
             <td class="invoice-head-left">
-                <?php $logoImg = $invoiceLogo ?? setting('logo_image', 'logo.png'); ?>
+                <?php $logoImg = $invoiceLogo ?? setting('logo_image', 'assets/logo.png'); if ($logoImg && strpos($logoImg, 'data:') !== 0 && strpos($logoImg, 'http') !== 0) { $lv_ = is_file(__DIR__ . '/../' . $logoImg) ? @filemtime(__DIR__ . '/../' . $logoImg) : 0; $logoImg = $logoImg . '?v=' . $lv_; } ?>
                 <?php if ($logoImg): ?>
                     <img class="logo-nota" src="<?= e($logoImg) ?>" alt="Logo">
                 <?php endif; ?>

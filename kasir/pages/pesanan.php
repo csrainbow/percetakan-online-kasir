@@ -70,6 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ], $eventBaru);
             }
             flash_set('success', "Pesanan {$no} dibuat untuk {$pelanggan}.");
+            header('Location: index.php?p=pesanan&template=' . $pid);
+            exit;
         }
         header('Location: index.php?p=pesanan');
         exit;
@@ -96,10 +98,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ], $ev);
             }
             flash_set('success', 'Pembayaran QRIS dikonfirmasi.');
+            header('Location: index.php?p=pesanan&template=' . (int)$pm['ref_id']);
         } else {
             flash_set('error', 'Pembayaran tidak ditemukan.');
+            header('Location: index.php?p=pesanan');
         }
-        header('Location: index.php?p=pesanan');
         exit;
     }
 
@@ -137,6 +140,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'status' => $status,
             ], $sisaBaru <= 0 ? 'lunas' : 'dp');
             flash_set('success', 'Pembayaran diterima.');
+            header('Location: index.php?p=pesanan&template=' . $id);
+            exit;
         }
         header('Location: index.php?p=pesanan');
         exit;
@@ -158,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ], 'selesai');
         }
         flash_set('success', 'Pesanan ditandai selesai / diambil.');
-        header('Location: index.php?p=pesanan');
+        header('Location: index.php?p=pesanan&template=' . $id);
         exit;
     }
 
@@ -183,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ], 'batal');
         }
         flash_set('success', 'Pesanan dibatalkan.');
-        header('Location: index.php?p=pesanan');
+        header('Location: index.php?p=pesanan&template=' . $id);
         exit;
     }
 
@@ -312,6 +317,29 @@ if ($pesanan) {
     }
 }
 
+$waTplByPesanan = [];
+foreach ($pesanan as $ps) {
+    if (empty($ps['telepon'])) {
+        continue;
+    }
+    $st = $ps['status'];
+    if ($st === 'Selesai') {
+        $ev = 'selesai';
+    } elseif ($st === 'Batal') {
+        $ev = 'batal';
+    } elseif ($st === 'Lunas' || (float)$ps['sisa'] <= 0) {
+        $ev = 'lunas';
+    } elseif ($st === 'DP') {
+        $ev = 'dp';
+    } else {
+        $ev = 'baru';
+    }
+    $msg = wa_pelanggan_msg($ps, $ev);
+    if ($msg !== '') {
+        $waTplByPesanan[(int)$ps['id']] = $msg;
+    }
+}
+
 $usersMap = [];
 foreach (DB::q('SELECT id, username FROM users') as $u) {
     $usersMap[(int)$u['id']] = $u['username'];
@@ -320,6 +348,14 @@ foreach (DB::q('SELECT id, username FROM users') as $u) {
 $produkHitung = DB::q('SELECT p.id, p.nama, p.satuan, p.harga_jual, k.nama AS kategori
                        FROM produk p LEFT JOIN kategori k ON k.id = p.kategori_id
                        WHERE p.harga_jual > 0 ORDER BY p.nama');
+$produkM2 = [];
+foreach ($produkHitung as $ph) {
+    $sat = strtolower((string)$ph['satuan']);
+    $kat = strtolower((string)$ph['kategori']);
+    if ($sat === 'm2' || strpos($kat, 'banner') !== false || strpos($kat, 'spanduk') !== false) {
+        $produkM2[(int)$ph['id']] = true;
+    }
+}
 
 $judul = 'Pesanan';
 require __DIR__ . '/../layout/header.php';
@@ -329,6 +365,11 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
     return ['id' => (int)$p['id'], 'nama' => $p['nama'], 'satuan' => $p['satuan'],
         'harga' => (float)$p['harga_jual'], 'kategori' => $p['kategori'] ?? ''];
 }, $produkHitung)) ?>;
+window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
+    return ['id' => (int)$m['id'], 'tpl' => $waTplByPesanan[(int)$m['id']] ?? '', 'no' => $m['no_pesanan'], 'telp' => $m['telepon'] ?? ''];
+}, array_values(array_filter($pesanan, function ($m) use ($waTplByPesanan) {
+    return !empty($m['telepon']) && !empty($waTplByPesanan[(int)$m['id']]);
+})))) ?>;
 </script>
 <h2>Pesanan / Order Percetakan</h2>
 
@@ -389,6 +430,7 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                         <option>Tunai</option>
                         <option>QRIS</option>
                         <option>Transfer</option>
+                        <option>Midtrans</option>
                     </select>
                 </label>
             </div>
@@ -436,6 +478,19 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
 </div>
 <?php endif; ?>
 
+<div id="modalTplWa" class="modal hidden">
+    <div class="modal-box">
+        <h3>Template Notif WhatsApp</h3>
+        <p id="tplWaPesan" class="muted kecil" style="margin-bottom:8px"></p>
+        <pre id="tplWaIsi" style="white-space:pre-wrap;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;padding:10px;font-family:inherit;font-size:13px;max-height:340px;overflow:auto;margin:0 0 10px;"></pre>
+        <div class="form-row">
+            <button type="button" class="btn ok" id="btnTplWaSalin">Salin </button>
+            <button type="button" class="btn abu" id="btnTplWaTutup">Tutup</button>
+        </div>
+        <p class="muted kecil">Tempel pesan di atas lalu kirim manual ke pelanggan via WhatsApp. Auto-notif belum aktif.</p>
+    </div>
+</div>
+
 <div class="panel">
     <h3>Daftar Pesanan (<?= count($pesanan) ?>)</h3>
     <?php if (!$pesanan): ?>
@@ -443,6 +498,7 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
     <?php endif; ?>
     <?php foreach ($pesanan as $ps): ?>
         <?php $pmQris = DB::one("SELECT * FROM pembayaran WHERE ref_type = 'pesanan' AND ref_id = ? AND status = 'Menunggu QRIS' ORDER BY id DESC LIMIT 1", [$ps['id']]); ?>
+        <?php $pmMidtrans = DB::one("SELECT * FROM pembayaran WHERE ref_type = 'pesanan' AND ref_id = ? AND status = 'Menunggu Midtrans' ORDER BY id DESC LIMIT 1", [$ps['id']]); ?>
         <?php $statusLabel = in_array($ps['status'], ['Selesai', 'Batal']) ? $ps['status'] : pembayaran_status_label($ps['total'] - $ps['sisa'], $ps['total'], $ps['status']); ?>
         <div class="order-card">
             <div class="order-head">
@@ -454,6 +510,9 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                     <?php endif; ?>
                     <?php if ($pmQris): ?>
                         <span class="badge warn">QRIS Menunggu</span>
+                    <?php endif; ?>
+                    <?php if ($pmMidtrans): ?>
+                        <span class="badge warn">Midtrans Menunggu</span>
                     <?php endif; ?>
                     <?php if (is_telat($ps)): ?>
                         <span class="badge bahaya">TELAT</span>
@@ -483,6 +542,9 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                         <button type="submit" class="btn kecil ok">Konfirmasi Dana QRIS Masuk</button>
                     </form>
                 <?php endif; ?>
+                <?php if ($pmMidtrans): ?>
+                    <button type="button" class="btn kecil" onclick="bayarMidtrans(<?= (int)$ps['id'] ?>, <?= (float)($ps['sisa']) ?>)">Bayar via Midtrans</button>
+                <?php endif; ?>
                 <?php if (is_superadmin()): ?>
                 <details class="bayar-inline">
                     <summary class="btn kecil">Edit Pesanan</summary>
@@ -498,17 +560,29 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                         <label>Deskripsi Pesanan
                             <textarea name="deskripsi" rows="2"><?= e($ps['deskripsi']) ?></textarea>
                         </label>
-                        <label>Produk yang Dipesan (bisa diubah)
+<label>Produk yang Dipesan (bisa diubah)
                             <table>
                                 <thead>
-                                    <tr><th style="text-align:left;">Nama</th><th style="width:70px;text-align:center;">Qty</th><th style="width:100px;text-align:right;">Harga</th><th style="width:110px;text-align:right;">Subtotal</th><th style="width:30px;"></th></tr>
+                                    <tr><th style="text-align:left;">Nama</th><th style="width:60px;text-align:center;">Qty</th><th style="width:120px;text-align:center;">P &times; L (M2)</th><th style="width:100px;text-align:right;">Harga</th><th style="width:110px;text-align:right;">Subtotal</th><th style="width:30px;"></th></tr>
                                 </thead>
                                 <tbody class="ej-tbody">
                                 <?php $itemsPesan = $itemsByPesanan[$ps['id']] ?? []; ?>
                                 <?php foreach ($itemsPesan as $it): ?>
-                                    <tr class="ei-item" data-pid="<?= (int)($it['produk_id'] ?? 0) ?>">
+                                    <?php $itM2 = isset($produkM2[(int)($it['produk_id'] ?? 0)]); ?>
+                                    <tr class="ei-item<?= $itM2 ? ' ei-m2' : '' ?>" data-pid="<?= (int)($it['produk_id'] ?? 0) ?>">
                                         <td><input type="text" class="ei-nama" value="<?= e($it['nama']) ?>"></td>
-                                        <td style="text-align:center;"><input type="number" class="ei-qty" min="0" step="0.01" style="width:60px;" value="<?= (float)$it['qty'] ?>"></td>
+                                        <td style="text-align:center;">
+                                            <input type="number" class="ei-qty" min="0" step="0.01" style="width:50px;" value="<?= $itM2 ? '1' : (float)$it['qty'] ?>">
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <?php if ($itM2): ?>
+                                                <input type="number" class="ei-p" min="0" step="0.01" style="width:50px;" value="<?= (float)$it['qty'] ?>" title="Panjang (m)">
+                                                &times;
+                                                <input type="number" class="ei-l" min="0" step="0.01" style="width:50px;" value="1" title="Lebar (m)">
+                                            <?php else: ?>
+                                                <span class="muted kecil">-</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td style="text-align:right;"><input type="number" class="ei-harga" min="0" step="0.01" style="width:90px;" value="<?= (float)$it['harga'] ?>"></td>
                                         <td class="ei-st" style="text-align:right;"><?= rp((float)$it['qty'] * (float)$it['harga']) ?></td>
                                         <td><button type="button" class="btn kecil bahaya ei-hapus">x</button></td>
@@ -537,6 +611,7 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                                     <option>Tunai</option>
                                     <option>QRIS</option>
                                     <option>Transfer</option>
+                                    <option>Midtrans</option>
                                 </select>
                             </label>
                         </div>
@@ -550,6 +625,10 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                 <?php endif; ?>
                 <a class="btn kecil" href="nota.php?id=<?= $ps['id'] ?>&t=struk">Cetak Struk</a>
                 <a class="btn kecil" href="nota.php?id=<?= $ps['id'] ?>&t=a5">Cetak Nota</a>
+                <?php if (!empty($ps['telepon']) && !empty($waTplByPesanan[(int)$ps['id']])): ?>
+                    <button type="button" class="btn kecil tpl-wa-btn" data-id="<?= (int)$ps['id'] ?>">Template WA</button>
+                    <button type="button" class="btn kecil ok kirim-wa-btn" data-id="<?= (int)$ps['id'] ?>" data-telp="<?= e(preg_replace('/[^0-9]/', '', $ps['telepon'])) ?>">Kirim WA</button>
+                <?php endif; ?>
                 <?php if ($ps['status'] === 'DP' || ($ps['status'] === 'Lunas' && $ps['sisa'] > 0)): ?>
                     <details class="bayar-inline">
                         <summary class="btn kecil">Terima Pembayaran</summary>
@@ -560,6 +639,7 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                                 <option>Tunai</option>
                                 <option>QRIS</option>
                                 <option>Transfer</option>
+                                <option>Midtrans</option>
                             </select>
                             <button type="submit" class="btn kecil">Bayar</button>
                         </form>
@@ -606,13 +686,24 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                 return '<option value="' + p.id + '">' + p.nama + (p.satuan ? ' (' + p.satuan + ')' : '') + ' (' + rpJs(p.harga) + ')' + '</option>';
             }).join('');
         }
+        function isM2p(p) {
+            var sat = String(p.satuan || '').toLowerCase();
+            var kat = String(p.kategori || '').toLowerCase();
+            return sat === 'm2' || kat.indexOf('banner') > -1 || kat.indexOf('spanduk') > -1;
+        }
         function syncJson() {
             var arr = [];
             tbody.querySelectorAll('.ei-item').forEach(function (tr) {
                 var nama = tr.querySelector('.ei-nama').value.trim();
                 if (!nama) return;
+                var m2 = tr.classList.contains('ei-m2');
                 var q = parseFloat(tr.querySelector('.ei-qty').value) || 0;
                 var h = parseFloat(tr.querySelector('.ei-harga').value) || 0;
+                if (m2) {
+                    var p2 = parseFloat(tr.querySelector('.ei-p').value) || 0;
+                    var l2 = parseFloat(tr.querySelector('.ei-l').value) || 0;
+                    q = q * p2 * l2;
+                }
                 arr.push({ produk_id: tr.dataset.pid || null, nama: nama, qty: q, harga: h });
             });
             jsonInput.value = JSON.stringify(arr);
@@ -621,8 +712,14 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
             tbody.querySelectorAll('.ei-placeholder').forEach(function (tr) { tr.remove(); });
             var sum = 0;
             tbody.querySelectorAll('.ei-item').forEach(function (tr) {
+                var m2 = tr.classList.contains('ei-m2');
                 var q = parseFloat(tr.querySelector('.ei-qty').value) || 0;
                 var h = parseFloat(tr.querySelector('.ei-harga').value) || 0;
+                if (m2) {
+                    var p2 = parseFloat(tr.querySelector('.ei-p').value) || 0;
+                    var l2 = parseFloat(tr.querySelector('.ei-l').value) || 0;
+                    q = q * p2 * l2;
+                }
                 var st = q * h;
                 tr.querySelector('.ei-st').textContent = rpJs(st);
                 sum += st;
@@ -630,9 +727,9 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
             if (totalInput && sum > 0) totalInput.value = sum;
             syncJson();
         }
-        function makeRow(nama, qty, harga, pid) {
+        function makeRow(nama, qty, harga, pid, m2) {
             var tr = document.createElement('tr');
-            tr.className = 'ei-item';
+            tr.className = 'ei-item' + (m2 ? ' ei-m2' : '');
             tr.dataset.pid = pid || '';
             var tdN = document.createElement('td');
             var inN = document.createElement('input');
@@ -641,8 +738,21 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
             var tdQ = document.createElement('td');
             tdQ.style.textAlign = 'center';
             var inQ = document.createElement('input');
-            inQ.type = 'number'; inQ.className = 'ei-qty'; inQ.min = '0'; inQ.step = '0.01'; inQ.style.width = '60px'; inQ.value = qty;
+            inQ.type = 'number'; inQ.className = 'ei-qty'; inQ.min = '0'; inQ.step = '0.01'; inQ.style.width = '50px'; inQ.value = qty;
             tdQ.appendChild(inQ);
+            var tdU = document.createElement('td');
+            tdU.style.textAlign = 'center';
+            if (m2) {
+                var inP = document.createElement('input');
+                inP.type = 'number'; inP.className = 'ei-p'; inP.min = '0'; inP.step = '0.01'; inP.style.width = '50px'; inP.value = 1; inP.title = 'Panjang (m)';
+                var inL = document.createElement('input');
+                inL.type = 'number'; inL.className = 'ei-l'; inL.min = '0'; inL.step = '0.01'; inL.style.width = '50px'; inL.value = 1; inL.title = 'Lebar (m)';
+                tdU.appendChild(inP);
+                tdU.appendChild(document.createTextNode(' \u00d7 '));
+                tdU.appendChild(inL);
+            } else {
+                tdU.appendChild(document.createTextNode('-'));
+            }
             var tdH = document.createElement('td');
             tdH.style.textAlign = 'right';
             var inH = document.createElement('input');
@@ -655,9 +765,13 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
             var btn = document.createElement('button');
             btn.type = 'button'; btn.className = 'btn kecil bahaya ei-hapus'; btn.textContent = 'x';
             tdD.appendChild(btn);
-            tr.appendChild(tdN); tr.appendChild(tdQ); tr.appendChild(tdH); tr.appendChild(tdS); tr.appendChild(tdD);
+            tr.appendChild(tdN); tr.appendChild(tdQ); tr.appendChild(tdU); tr.appendChild(tdH); tr.appendChild(tdS); tr.appendChild(tdD);
             inN.addEventListener('input', recalc);
             inQ.addEventListener('input', recalc);
+            if (m2) {
+                inP.addEventListener('input', recalc);
+                inL.addEventListener('input', recalc);
+            }
             inH.addEventListener('input', recalc);
             btn.addEventListener('click', function () { tr.remove(); recalc(); });
             return tr;
@@ -668,7 +782,7 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
                 var p = null;
                 produk.forEach(function (x) { if (x.id === pid) p = x; });
                 if (!p) { window.alert('Pilih produk terlebih dahulu.'); return; }
-                tbody.appendChild(makeRow(p.nama, 1, p.harga, p.id));
+                tbody.appendChild(makeRow(p.nama, 1, p.harga, p.id, isM2p(p)));
                 recalc();
             });
         }
@@ -676,6 +790,103 @@ window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
         recalc();
     });
 })();
+</script>
+<?php if (midtrans_is_ready()): ?>
+<script src="https://app.midtrans.com/snap/snap.js" data-client-key="<?= e(midtrans_client_key()) ?>"></script>
+<?php endif; ?>
+<script>
+function bayarMidtrans(id, sisa) {
+    if (!confirm('Bayar Rp ' + sisa.toLocaleString('id-ID', {maximumFractionDigits:0}) + ' via Midtrans?')) return;
+    fetch('midtrans-snap.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({pesanan_id: id, jumlah: sisa})
+    }).then(r => r.json()).then(data => {
+        if (data.error) { alert('Gagal: ' + (data.error)); return; }
+        if (typeof snap.pay === 'function') {
+            snap.pay(data.snap_token, {
+                onSuccess: function() { alert('Pembayaran berhasil! Menunggu konfirmasi.'); },
+                onPending: function() { alert('Pembayaran menunggu.'); },
+                onError: function() { alert('Terjadi kesalahan.'); },
+                onClose: function() {}
+            });
+        } else {
+            alert('Snap.js belum dimuat.');
+        }
+    }).catch(function() { alert('Gagal menghubungi server.'); });
+}
+
+(function () {
+    var modal = document.getElementById('modalTplWa');
+    var isi = document.getElementById('tplWaIsi');
+    var pesan = document.getElementById('tplWaPesan');
+    var tombolSalin = document.getElementById('btnTplWaSalin');
+    var tombolTutup = document.getElementById('btnTplWaTutup');
+    if (!modal || !isi) return;
+    var data = window.TPL_WA || [];
+    function buka(id) {
+        var item = null;
+        data.forEach(function (d) { if (d.id === id) item = d; });
+        if (!item || !item.tpl) return;
+        isi.textContent = item.tpl;
+        pesan.textContent = item.no + ' — ' + (item.telp || '');
+        modal.classList.remove('hidden');
+        tombolSalin.textContent = 'Salin';
+    }
+    document.querySelectorAll('.tpl-wa-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { buka(parseInt(btn.dataset.id, 10)); });
+    });
+    document.querySelectorAll('.kirim-wa-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var id = parseInt(btn.dataset.id, 10);
+            var telp = btn.dataset.telp || '';
+            var item = null;
+            data.forEach(function (d) { if (d.id === id) item = d; });
+            if (!item || !item.tpl) return;
+            if (telp.indexOf('0') === 0) telp = '62' + telp.substring(1);
+            var url = 'https://wa.me/' + telp + '?text=' + encodeURIComponent(item.tpl);
+            if (window.AndroidOpen && window.AndroidOpen.open) {
+                window.AndroidOpen.open(url);
+            } else {
+                window.open(url, '_blank');
+            }
+        });
+    });
+    if (tombolSalin) {
+        tombolSalin.addEventListener('click', function () {
+            var teks = isi.textContent;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(teks).then(function () {
+                    tombolSalin.textContent = 'Tersalin!';
+                    setTimeout(function () { tombolSalin.textContent = 'Salin'; }, 1500);
+                });
+            } else {
+                bukaPopupSalin(teks, tombolSalin);
+            }
+        });
+    }
+    if (tombolTutup) {
+        tombolTutup.addEventListener('click', function () { modal.classList.add('hidden'); });
+    }
+    modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.add('hidden'); });
+    if (window.location.search.indexOf('template=') !== -1) {
+        var otp = parseInt((window.location.search.match(/template=(\d+)/) || [])[1], 10);
+        if (otp) {
+            buka(otp);
+            window.history.replaceState({}, '', window.location.pathname + window.location.search.replace(/[?&]template=\d+/, ''));
+        }
+    }
+})();
+function bukaPopupSalin(teks, btn) {
+    var ta = document.createElement('textarea');
+    ta.value = teks;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); btn.textContent = 'Tersalin!'; setTimeout(function () { btn.textContent = 'Salin'; }, 1500); } catch (e) {}
+    document.body.removeChild(ta);
+}
 </script>
 <?php require __DIR__ . '/../layout/footer.php'; ?>
 
