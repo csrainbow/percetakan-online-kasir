@@ -29,25 +29,35 @@ $total_bayar = (float)DB::one("SELECT COALESCE(SUM(jumlah),0) t FROM pembayaran 
 $sisa = $ps['total'] - $total_bayar;
 if ($jumlah > $sisa) $jumlah = $sisa;
 if ($jumlah <= 0) {
-    echo json_encode(['error' => 'Jumlah tidak valid']);
+    echo json_encode(['error' => 'Pembayaran sudah lunas']);
     exit;
 }
+
+// order_id harus unik agar tidak collide jika retry / repeat payment
+$order_id = $ps['no_pesanan'] . '-' . date('His');
 
 $now = date('Y-m-d H:i:s');
 DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id, token) VALUES (?,?,?,?,?,?,?,?,?)',
     ['pesanan', $pesanan_id, $now, $jumlah, 'Midtrans', 'Pembayaran via Midtrans', 'Menunggu Midtrans', $_SESSION['user_id'], '']);
 $pm_id = DB::lastId();
 
-$base_url = midtrans_base_url();
-$order_id = $ps['no_pesanan'];
+// order_id disimpan di keterangan utk dipetakan webhook
+DB::run("UPDATE pembayaran SET keterangan=? WHERE id=?", ['Midtrans order: ' . $order_id, $pm_id]);
+
+$is_prod = midtrans_is_production();
+$snap_url = $is_prod
+    ? 'https://app.midtrans.com/snap/v1/transactions'
+    : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+
 $payload = json_encode([
     'transaction_details' => ['order_id' => $order_id, 'gross_amount' => (int)round($jumlah)],
     'customer_details' => ['first_name' => $ps['pelanggan'], 'phone' => $ps['telepon']],
     'enabled_payments' => ['snap'],
-    'expiry' => ['unit' => 'minute', 'duration' => 10]
+    'expiry' => ['unit' => 'minute', 'duration' => 10],
+    'credit_card' => ['secure' => true],
 ]);
 
-$ch = curl_init($base_url . '/v2/transactions');
+$ch = curl_init($snap_url);
 curl_setopt_array($ch, [
     CURLOPT_POST => true, CURLOPT_POSTFIELDS => $payload,
     CURLOPT_RETURNTRANSFER => true,
@@ -56,7 +66,14 @@ curl_setopt_array($ch, [
 ]);
 $response = curl_exec($ch);
 $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$err = curl_error($ch);
 curl_close($ch);
+
+if ($err) {
+    DB::run("UPDATE pembayaran SET status='Gagal', keterangan='Midtrans curl: '||? WHERE id=?", [$err, $pm_id]);
+    echo json_encode(['error' => 'Gagal terhubung ke Midtrans']);
+    exit;
+}
 
 if (!in_array($httpcode, [200, 201])) {
     DB::run("UPDATE pembayaran SET status='Gagal', keterangan='Midtrans HTTP $httpcode' WHERE id=?", [$pm_id]);
@@ -71,5 +88,6 @@ if (!$data || !isset($data['token'])) {
     exit;
 }
 
+// token (snap token) kembali disimpan
 DB::run("UPDATE pembayaran SET token=? WHERE id=?", [$data['token'], $pm_id]);
 echo json_encode(['snap_token' => $data['token'], 'order_id' => $order_id, 'jumlah' => $jumlah]);

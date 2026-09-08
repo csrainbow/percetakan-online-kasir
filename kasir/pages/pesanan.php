@@ -792,7 +792,7 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
 })();
 </script>
 <?php if (midtrans_is_ready()): ?>
-<script src="https://app.midtrans.com/snap/snap.js" data-client-key="<?= e(midtrans_client_key()) ?>"></script>
+<script src="https://<?= midtrans_is_production() ? 'app.midtrans.com' : 'app.sandbox.midtrans.com' ?>/snap/snap.js" data-client-key="<?= e(midtrans_client_key()) ?>"></script>
 <?php endif; ?>
 <script>
 function bayarMidtrans(id, sisa) {
