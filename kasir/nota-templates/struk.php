@@ -125,6 +125,13 @@
     <?php endif; ?>
 </div>
 
+<div id="modalQris" class="modal hidden">
+    <div class="modal-box">
+        <h3>QRIS Pembayaran</h3>
+        <div id="qrisBox"><p class="muted">Menyiapkan QRIS...</p></div>
+        <button type="button" class="btn" id="btnTutupQris">Tutup</button>
+    </div>
+</div>
 <script>
 function keluarNota() {
     if (history.length > 1) {
@@ -135,6 +142,35 @@ function keluarNota() {
 }
 if (location.search.includes('auto=1')) {
     setTimeout(function () { window.print(); }, 400);
+}
+function tampilQris(id, cek) {
+    var modal = document.getElementById('modalQris');
+    var box = document.getElementById('qrisBox');
+    if (!modal || !box) return;
+    modal.classList.remove('hidden');
+    box.innerHTML = '<p class="muted">Mengambil QRIS...</p>';
+    document.getElementById('btnTutupQris').onclick = function() { modal.classList.add('hidden'); };
+    var url = '/qris-check.php?k=penjualan&id=' + encodeURIComponent(id);
+    if (cek === 1) url += '&cek=1';
+    fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.ok) { box.innerHTML = '<p class="bahaya">' + String(d.error || 'Gagal').replace(/</g,'&lt;') + '</p>'; return; }
+            var html = '';
+            if (d.qris_image) html += '<img class="qris-dinamis" src="' + d.qris_image + '" alt="QRIS">';
+            html += '<p class="muted">' + String(d.status_teks || '') + '</p>';
+            if (d.nmid) html += '<p class="muted kecil">NMID: <b>' + String(d.nmid) + '</b></p>';
+            if (d.invid) html += '<p class="muted kecil">INV: ' + String(d.invid) + '</p>';
+            if (d.expiry) html += '<p class="muted kecil">Berlaku s/d <b>' + String(d.expiry) + '</b></p>';
+            if (d.paid) {
+                html += '<p class="badge ok">' + String(d.status_teks) + '</p>';
+                html += '<p><a href="/nota-publik.php?p=penjualan&id=' + d.id + '" class="btn btn-success">🧾 Lihat Nota</a></p>';
+            } else if (!d.expired && d.status !== 'paid') {
+                html += '<p><button type="button" class="btn" onclick="tampilQris(' + d.id + ',1)">🔄 Periksa Lagi</button></p>';
+            }
+            box.innerHTML = html;
+        })
+        .catch(function() { box.innerHTML = '<p class="bahaya">Gagal menghubungi server.</p>'; });
 }
 </script>
 </body>
