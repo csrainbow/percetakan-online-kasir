@@ -17,23 +17,33 @@ $ip = trim($_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR']
 $ip = explode(',', $ip)[0];
 $ipOk = in_array(trim($ip), ['52.74.250.133'], true);
 
+$event = $_SERVER['HTTP_X_DIGIFLAZZ_EVENT'] ?? '';
+$ua    = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
 // --- Verifikasi signature bila secret diset ---
+// Catatan: event ping dari Digiflazz TIDAK membawa header X-Hub-Signature,
+// sehingga ping cukup diverifikasi via whitelist IP (payload ping tidak berisi
+// data transaksi). Payload transaksi (create/update) wajib signature valid.
 $sig = $_SERVER['HTTP_X_HUB_SIGNATURE'] ?? '';
+$isPing = $event === 'ping' || strpos($raw, 'hook_id') !== false || strpos($raw, '"sed"') !== false;
 $sigOk = false;
-if (DGF_WEBHOOK_SECRET !== '') {
+$expected = '';
+if ($isPing) {
+    $sigOk = true;
+} elseif (DGF_WEBHOOK_SECRET !== '') {
     $expected = 'sha1=' . hash_hmac('sha1', $raw, DGF_WEBHOOK_SECRET);
-    $sigOk = hash_equals($expected, $sig);
+    $sigOk = $sig !== '' && hash_equals($expected, $sig);
 } else {
     $sigOk = $ipOk; // tanpa secret, wajib IP Digiflazz
 }
 
 if (!$sigOk || !$ipOk) {
-    error_log("DGF callback DITOLAK: ip=$ip sig=" . ($sigOk ? 'OK' : 'BAD') . " secret=" . (DGF_WEBHOOK_SECRET !== '' ? 'set' : 'empty'));
+    error_log("DGF callback DITOLAK: ip=$ip sig=" . ($sigOk ? 'OK' : 'BAD')
+        . " secret=" . (DGF_WEBHOOK_SECRET !== '' ? 'set' : 'empty')
+        . " event=$event ua=$ua"
+        . " got=[$sig] exp=[$expected] body=[" . substr($raw, 0, 400) . ']');
     j(['data' => ['rc' => '403', 'message' => 'forbidden']], 403);
 }
-
-$event = $_SERVER['HTTP_X_DIGIFLAZZ_EVENT'] ?? '';
-$ua    = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
 // Delta event ping (dikirim saat webhook didaftarkan/di-ping); tanpa data transaksi.
 if ($event === 'ping' || $raw === '' || strpos($raw, 'ref_id') === false) {
