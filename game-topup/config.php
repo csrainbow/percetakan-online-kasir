@@ -24,20 +24,21 @@ if (file_exists($__localCfg)) {
     $__mtClient = defined('MT_CLIENT_KEY') ? MT_CLIENT_KEY : $__mtClient;
 }
 
-define('DGF_USERNAME', $__dgfUser);
-define('DGF_APIKEY', $__dgfKey);
+if (!defined('DGF_USERNAME')) define('DGF_USERNAME', $__dgfUser);
+if (!defined('DGF_APIKEY'))   define('DGF_APIKEY', $__dgfKey);
 define('DGF_BASE', 'https://api.digiflazz.com/v1');
 
 // ==================== MIDTRANS (opsional, sandbox default) ====================
-define('MT_SERVER_KEY', $__mtServer);
-define('MT_CLIENT_KEY', $__mtClient);
-define('MIDTRANS_IS_PRODUCTION', filter_var(getenv('MIDTRANS_IS_PRODUCTION') ?: 'false', FILTER_VALIDATE_BOOLEAN));
+if (!defined('MT_SERVER_KEY')) define('MT_SERVER_KEY', $__mtServer);
+if (!defined('MT_CLIENT_KEY')) define('MT_CLIENT_KEY', $__mtClient);
+if (!defined('MIDTRANS_IS_PRODUCTION')) define('MIDTRANS_IS_PRODUCTION', filter_var(getenv('MIDTRANS_IS_PRODUCTION') ?: 'false', FILTER_VALIDATE_BOOLEAN));
 
 // ==================== DATABASE ====================
 define('DB_PATH', __DIR__ . '/data/topup.db');
 
 // ==================== APPLICATION ====================
-define('BASE_URL', 'http://localhost:8082');
+define('BASE_URL', 'https://cslink.web.id');
+define('BASE_PATH', '/top-up');
 define('SITE_NAME', 'TopUp Games');
 
 // Inisialisasi PDO SQLite

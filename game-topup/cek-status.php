@@ -15,42 +15,58 @@ if ($ref) {
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cek Status - <?= htmlspecialchars(SITE_NAME) ?></title>
-<style>
-body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0}
-.wrap{max-width:480px;margin:40px auto;padding:0 16px}
-.box{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:24px}
-input{width:100%;padding:11px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:#e2e8f0;font-size:15px}
-button{width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;background:#38bdf8;color:#0f172a;font-weight:800;cursor:pointer}
-.result{margin-top:18px;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px;font-size:14px}
-.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-weight:700;font-size:12px}
-.ok{background:#065f46;color:#6ee7b7}.wait{background:#78350f;color:#fcd34d}.fail{background:#7f1d1d;color:#fca5a5}
-a{color:#38bdf8}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/style.css">
 </head>
 <body>
-<div class="wrap">
-<div class="box">
-<a href="/" style="color:#38bdf8;text-decoration:none">&larr; Beranda</a>
-<h2>Cek Status Order</h2>
-<form method="post">
-  <input type="text" name="ref" required placeholder="Kode order, contoh: TOPUP-20260909120500-xxxx" value="<?= htmlspecialchars($ref) ?>">
-  <button type="submit">Cek</button>
-</form>
-<?php if ($queried): ?>
-  <?php if (!$order): ?>
-    <div class="result" style="color:#f87171">Pesanan tidak ditemukan.</div>
-  <?php else:
-      $cls = $order['order_status']==='success' ? 'ok' : ($order['order_status']==='failed' ? 'fail' : 'wait'); ?>
-    <div class="result">
-      <div><strong><?= htmlspecialchars($order['product_name']) ?></strong> (<?= htmlspecialchars($order['product_code']) ?>)</div>
-      <div style="color:#94a3b8;margin:4px 0"><?= htmlspecialchars($order['ref_id']) ?></div>
-      <div>Status Order: <span class="badge <?= $cls ?>"><?= paymentStatusText($order['order_status']) ?></span></div>
-      <div>Pembayaran: <span class="badge wait"><?= paymentStatusText($order['payment_status']) ?></span></div>
-      <?php if ($order['sn']): ?><div style="margin-top:6px">SN: <strong><?= htmlspecialchars($order['sn']) ?></strong></div><?php endif; ?>
+<header class="site-header">
+  <div class="container header-in">
+    <a class="brand" href="<?= BASE_PATH ?>/"><span class="brand-badge">T</span>TopUp<span>Games</span></a>
+    <nav class="nav-links">
+      <a href="<?= BASE_PATH ?>/cek-status.php">Cek Status</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <div class="page-slim">
+    <div class="box">
+      <a class="back" href="<?= BASE_PATH ?>/">&larr; Beranda</a>
+      <h1 class="title">Cek Status Order</h1>
+      <p style="color:var(--muted);font-size:13.5px;margin:6px 0 20px">Masukkan kode order yang Anda terima setelah pembayaran.</p>
+      <form method="post">
+        <div class="field" style="margin-bottom:14px">
+          <input class="input mono" type="text" name="ref" required placeholder="TOPUP-2026090912xxxx-xxxx" value="<?= htmlspecialchars($ref) ?>">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Cek Status</button>
+      </form>
+
+      <?php if ($queried): ?>
+        <?php if (!$order): ?>
+          <div class="msg err" style="margin-top:20px">Pesanan tidak ditemukan. Periksa kembali kode order Anda.</div>
+        <?php else:
+            $cls = $order['order_status']==='success' ? 'ok' : ($order['order_status']==='failed' ? 'fail' : 'wait'); ?>
+          <div class="rowlist" style="margin-top:20px">
+            <div class="row"><span class="k">Produk</span><span class="v"><?= htmlspecialchars($order['product_name']) ?></span></div>
+            <div class="row"><span class="k">Kode Order</span><span class="v mono"><?= htmlspecialchars($order['ref_id']) ?></span></div>
+            <div class="row"><span class="k">Status Order</span><span class="v"><span class="badge <?= $cls ?>"><?= paymentStatusText($order['order_status']) ?></span></span></div>
+            <div class="row"><span class="k">Pembayaran</span><span class="v"><span class="badge <?= $order['payment_status']==='paid'?'paid':($order['payment_status']==='expired'?'expired':'wait') ?>"><?= paymentStatusText($order['payment_status']) ?></span></span></div>
+            <?php if ($order['sn']): ?>
+              <div class="row"><span class="k">SN</span><span class="v"><span class="sn-box" style="margin:0"><?= htmlspecialchars($order['sn']) ?></span></span></div>
+            <?php endif; ?>
+          </div>
+        <?php endif; ?>
+      <?php endif; ?>
     </div>
-  <?php endif; ?>
-<?php endif; ?>
+  </div>
 </div>
-</div>
+
+<footer class="site-footer">
+  <div class="container footer-in">
+    <div>&copy; <?= date('Y') ?> <b><?= htmlspecialchars(SITE_NAME) ?></b></div>
+    <div class="footer-links"><a href="<?= BASE_PATH ?>/">Katalog</a></div>
+  </div>
+</footer>
 </body>
 </html>

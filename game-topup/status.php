@@ -14,39 +14,54 @@ if ($ref) {
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Status Pesanan - <?= htmlspecialchars(SITE_NAME) ?></title>
-<style>
-body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0}
-.wrap{max-width:560px;margin:40px auto;padding:0 16px}
-.box{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:24px}
-table{width:100%;border-collapse:collapse;margin-top:12px}
-td{padding:8px 6px;border-bottom:1px solid #334155;font-size:14px}
-td:first-child{color:#94a3b8;width:40%}
-.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-weight:700;font-size:13px}
-.ok{background:#065f46;color:#6ee7b7}.wait{background:#78350f;color:#fcd34d}.fail{background:#7f1d1d;color:#fca5a5}
-a{color:#38bdf8}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/style.css">
 </head>
 <body>
-<div class="wrap">
-<div class="box">
-<a href="/" style="color:#38bdf8;text-decoration:none">&larr; Kembali</a>
-<h2>Status Pesanan</h2>
-<?php if (!$order): ?>
-  <p style="color:#f87171">Pesanan tidak ditemukan. Masukkan kode order di <a href="/cek-status.php">Cek Status</a>.</p>
-<?php else:
-  $cls = $order['order_status']==='success' ? 'ok' : ($order['order_status']==='failed' ? 'fail' : 'wait'); ?>
-  <table>
-    <tr><td>Kode Order</td><td><?= htmlspecialchars($order['ref_id']) ?></td></tr>
-    <tr><td>Produk</td><td><?= htmlspecialchars($order['product_name']) ?> (<?= htmlspecialchars($order['product_code']) ?>)</td></tr>
-    <tr><td>ID Game</td><td><?= htmlspecialchars($order['player_id']) ?><?= $order['zone_id'] ? ' • '.htmlspecialchars($order['zone_id']) : '' ?></td></tr>
-    <tr><td>Jumlah Bayar</td><td>Rp <?= number_format((int)$order['amount'],0,',','.') ?></td></tr>
-    <tr><td>Status Pembayaran</td><td><span class="badge wait"><?= paymentStatusText($order['payment_status']) ?></span></td></tr>
-    <tr><td>Status Order</td><td><span class="badge <?= $cls ?>"><?= paymentStatusText($order['order_status']) ?></span></td></tr>
-    <?php if ($order['sn']): ?><tr><td>SN / Voucher</td><td><?= htmlspecialchars($order['sn']) ?></td></tr><?php endif; ?>
-  </table>
-  <?php if ($order['order_status']==='pending'): ?><p style="color:#fcd34d;font-size:13px">Order sedang diproses. Halaman ini bisa di-refresh; atau cek lagi nanti.</p><?php endif; ?>
-<?php endif; ?>
+<header class="site-header">
+  <div class="container header-in">
+    <a class="brand" href="<?= BASE_PATH ?>/"><span class="brand-badge">T</span>TopUp<span>Games</span></a>
+    <nav class="nav-links">
+      <a href="<?= BASE_PATH ?>/cek-status.php">Cek Status</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <div class="page-slim">
+    <div class="box">
+      <a class="back" href="<?= BASE_PATH ?>/">&larr; Beranda</a>
+      <h1 class="title">Status Pesanan</h1>
+      <?php if (!$order): ?>
+        <p class="notfound" style="margin-top:12px">Pesanan tidak ditemukan.</p>
+        <a class="btn btn-ghost" href="<?= BASE_PATH ?>/cek-status.php" style="margin-top:16px">Cek Status Lain</a>
+      <?php else:
+        $cls = $order['order_status']==='success' ? 'ok' : ($order['order_status']==='failed' ? 'fail' : 'wait'); ?>
+        <div class="rowlist">
+          <div class="row"><span class="k">Kode Order</span><span class="v mono"><?= htmlspecialchars($order['ref_id']) ?></span></div>
+          <div class="row"><span class="k">Produk</span><span class="v"><?= htmlspecialchars($order['product_name']) ?> <span class="mono">(<?= htmlspecialchars($order['product_code']) ?>)</span></span></div>
+          <div class="row"><span class="k">ID Game</span><span class="v"><?= htmlspecialchars($order['player_id']) ?><?= $order['zone_id'] ? ' - '.htmlspecialchars($order['zone_id']) : '' ?></span></div>
+          <div class="row"><span class="k">Jumlah Bayar</span><span class="v">Rp <?= number_format((int)$order['amount'],0,',','.') ?></span></div>
+          <div class="row"><span class="k">Pembayaran</span><span class="v"><span class="badge <?= $order['payment_status']==='paid'?'paid':($order['payment_status']==='expired'?'expired':'wait') ?>"><?= paymentStatusText($order['payment_status']) ?></span></span></div>
+          <div class="row"><span class="k">Status Order</span><span class="v"><span class="badge <?= $cls ?>"><?= paymentStatusText($order['order_status']) ?></span></span></div>
+          <?php if ($order['sn']): ?>
+            <div class="row"><span class="k">SN / Voucher</span><span class="v"><span class="sn-box" style="margin:0"><?= htmlspecialchars($order['sn']) ?></span></span></div>
+          <?php endif; ?>
+        </div>
+        <?php if ($order['order_status']==='pending'): ?>
+          <p class="note">Order sedang diproses. Silakan refresh halaman ini sesaat lagi.</p>
+        <?php endif; ?>
+      <?php endif; ?>
+    </div>
+  </div>
 </div>
-</div>
+
+<footer class="site-footer">
+  <div class="container footer-in">
+    <div>&copy; <?= date('Y') ?> <b><?= htmlspecialchars(SITE_NAME) ?></b></div>
+    <div class="footer-links"><a href="<?= BASE_PATH ?>/cek-status.php">Cek Status</a></div>
+  </div>
+</footer>
 </body>
 </html>

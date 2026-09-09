@@ -4,6 +4,14 @@ Semua perubahan penting untuk aplikasi **Kasir Rainbow** (folder `kasir/`).
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 
+## [Unreleased] — 2026-09-09
+
+### Game Top-Up (folder `game-topup/`) — akses via cslink.web.id
+- **Website kini diakses di `https://cslink.web.id/top-up/`**: routing via nginx internal `127.0.0.1:4040` (prefix `/top-up` di-strip sebelum diteruskan ke `php -S :8090`, sisanya tetap shortener CSLINK `:4000`). `config.php`: `BASE_URL=https://cslink.web.id`, `BASE_PATH=/top-up`; semua tautan & fetch JS memakai `BASE_PATH`.
+- **Tambahan sistemd**: service `game-topup.service` menjalankan `php -S 127.0.0.1:8090` dengan `router.php`.
+- **Redesign UI modern** (`assets/style.css` bersama): tema gelap gradien cyan-violet, glassmorphism, font Plus Jakarta Sans, hero section, pencarian live + filter kategori, kartu produk hover-lift, header sticky, footer; `order.php`, `status.php`, `cek-status.php`, `admin/index.php` disamakan.
+- **`config.php` di-hardening**: `define()` kini ber-guard `defined()` agar tidak konflik dengan `config.local.php` (server punya kredensial lokal).
+
 ## [Unreleased] — 2026-09-08
 
 ### Ditambahkan
