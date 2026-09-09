@@ -186,6 +186,8 @@ function brand_logo_url(string $brand): string {
     $slug = strtolower(preg_replace('/[^A-Z0-9]/', '', $brand));
     if ($slug === '') return '';
     $file = __DIR__ . '/../assets/brands/' . $slug . '.png';
-    if (!is_file($file) || filesize($file) <= 2000) return '';
+    if (!is_file($file)) return '';
+    $info = @getimagesize($file);
+    if ($info === false || $info[0] < 64 || $info[1] < 64) return '';
     return BASE_PATH . '/assets/brands/' . $slug . '.png';
 }
