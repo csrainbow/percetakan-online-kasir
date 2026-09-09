@@ -370,15 +370,68 @@ function initKasir() {
 }
 
 function initQris() {
-    var btn = qs('#btnQris');
     var modal = qs('#modalQris');
-    if (!btn || !modal) return;
-    btn.addEventListener('click', function () { modal.classList.remove('hidden'); });
-    qs('#btnTutupQris').addEventListener('click', function () { modal.classList.add('hidden'); });
+    if (modal) {
+        modal.addEventListener('click', function (ev) {
+            if (ev.target === modal) modal.classList.add('hidden');
+        });
+        var tutup = qs('#btnTutupQris');
+        if (tutup) tutup.addEventListener('click', function () { modal.classList.add('hidden'); });
+    }
+    var btn = qs('#btnQris');
+    if (btn && modal) {
+        btn.addEventListener('click', function () { modal.classList.remove('hidden'); });
+    }
+}
+
+function getQrisModal() {
+    var modal = qs('#modalQris');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'modalQris';
+    modal.className = 'modal hidden';
+    modal.innerHTML =
+        '<div class="modal-box">' +
+        '<h3>QRIS Pembayaran</h3>' +
+        '<div id="qrisBox"></div>' +
+        '<button type="button" class="btn" id="btnTutupQris">Tutup</button>' +
+        '</div>';
+    document.body.appendChild(modal);
     modal.addEventListener('click', function (ev) {
         if (ev.target === modal) modal.classList.add('hidden');
     });
+    qs('#btnTutupQris').addEventListener('click', function () { modal.classList.add('hidden'); });
+    return modal;
 }
+
+window.tampilQris = function (id, jenis, cek) {
+    var modal = getQrisModal();
+    var box = qs('#qrisBox');
+    box.innerHTML = '<p class="muted">Menyiapkan QRIS...</p>';
+    modal.classList.remove('hidden');
+    var url = 'qris-check.php?k=' + encodeURIComponent(jenis) + '&id=' + encodeURIComponent(id);
+    if (cek) url += '&cek=1';
+    fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d.ok) {
+                box.innerHTML = '<p class="bahaya">' + String(d.error || 'Gagal').replace(/</g, '&lt;') + '</p>';
+                return;
+            }
+            var img = d.qris_image ? '<img class="qris-dinamis" src="' + d.qris_image + '" alt="QRIS">' : '';
+            var nmid = d.nmid ? '<p class="muted kecil">NMID: <b>' + d.nmid + '</b></p>' : '';
+            var inv = d.invid ? '<p class="muted kecil">Invoice ID: ' + d.invid + '</p>' : '';
+            var exp = d.expiry ? '<p class="muted kecil">Berlaku s/d <b>' + d.expiry + '</b></p>' : '';
+            var st = d.status_teks ? '<p class="muted kecil">' + d.status_teks + '</p>' : '';
+            var cekBtn = d.status !== 'paid'
+                ? '<p><button type="button" class="btn" onclick="tampilQris(' + id + ',' + JSON.stringify(jenis) + ',1)">Periksa Status Pembayaran</button></p>'
+                : '';
+            box.innerHTML = img + st + nmid + inv + exp + (d.status === 'paid' ? '<p class="badge ok">' + d.status_teks + '</p>' : '') + cekBtn;
+        })
+        .catch(function () {
+            box.innerHTML = '<p class="bahaya">Gagal menghubungi server. Coba lagi.</p>';
+        });
+};
 
 function initPesanan() {
     var sel = qs('#produkHitung');

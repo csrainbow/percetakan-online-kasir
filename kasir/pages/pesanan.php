@@ -27,6 +27,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($dp > 0) {
                 DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
                     ['pesanan', $pid, date('Y-m-d H:i:s'), $dp, $metode, 'Pembayaran awal / DP', $metode === 'QRIS' ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
+                if ($metode === 'QRIS') {
+                    $pmPid = DB::lastId();
+                    $qr = qris_create_invoice('PB' . $pmPid, (int)round($dp));
+                    if ($qr['ok']) {
+                        $qexp = date('Y-m-d H:i:s', strtotime($qr['data']['qris_request_date']) + QRIS_TTL);
+                        DB::run('UPDATE pembayaran SET qris_content = ?, qris_invid = ?, qris_nmid = ?, qris_request_date = ?, qris_expiry = ? WHERE id = ?',
+                            [$qr['data']['qris_content'], (string)$qr['data']['qris_invoiceid'], (string)$qr['data']['qris_nmid'], $qr['data']['qris_request_date'], $qexp, $pmPid]);
+                    } else {
+                        log_aktivitas('QRIS gagal', $no . ' | ' . $qr['error']);
+                    }
+                }
             }
             log_aktivitas('Pesanan baru', "{$no} | {$pelanggan} | total {$total} | dp {$dp}");
                         if ($itemsJson !== '') {
@@ -123,6 +134,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
                 ['pesanan', $id, date('Y-m-d H:i:s'), $jumlah, $metode, 'Pembayaran pesanan', $metode === 'QRIS' ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
+            if ($metode === 'QRIS') {
+                $pmPid = DB::lastId();
+                $qr = qris_create_invoice('PB' . $pmPid, (int)round($jumlah));
+                if ($qr['ok']) {
+                    $qexp = date('Y-m-d H:i:s', strtotime($qr['data']['qris_request_date']) + QRIS_TTL);
+                    DB::run('UPDATE pembayaran SET qris_content = ?, qris_invid = ?, qris_nmid = ?, qris_request_date = ?, qris_expiry = ? WHERE id = ?',
+                        [$qr['data']['qris_content'], (string)$qr['data']['qris_invoiceid'], (string)$qr['data']['qris_nmid'], $qr['data']['qris_request_date'], $qexp, $pmPid]);
+                } else {
+                    log_aktivitas('QRIS gagal', $ps['no_pesanan'] . ' | ' . $qr['error']);
+                }
+            }
             $baru = $totalDibayar + $jumlah;
             $sisaBaru = $ps['total'] - $baru;
             $status = $sisaBaru <= 0 ? 'Lunas' : 'DP';
@@ -236,6 +258,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($delta > 0) {
                 DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
                     ['pesanan', $id, date('Y-m-d H:i:s'), $delta, $metode, 'Perubahan DP / tambah uang muka (edit)', $metode === 'QRIS' ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
+                if ($metode === 'QRIS') {
+                    $pmPid = DB::lastId();
+                    $qr = qris_create_invoice('PB' . $pmPid, (int)round($delta));
+                    if ($qr['ok']) {
+                        $qexp = date('Y-m-d H:i:s', strtotime($qr['data']['qris_request_date']) + QRIS_TTL);
+                        DB::run('UPDATE pembayaran SET qris_content = ?, qris_invid = ?, qris_nmid = ?, qris_request_date = ?, qris_expiry = ? WHERE id = ?',
+                            [$qr['data']['qris_content'], (string)$qr['data']['qris_invoiceid'], (string)$qr['data']['qris_nmid'], $qr['data']['qris_request_date'], $qexp, $pmPid]);
+                    } else {
+                        log_aktivitas('QRIS gagal', $ps['no_pesanan'] . ' | ' . $qr['error']);
+                    }
+                }
                 $sudahBayar += $delta;
             }
             $sisa = max(0, $total - $sudahBayar);
@@ -472,7 +505,9 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
 <div id="modalQris" class="modal hidden">
     <div class="modal-box">
         <h3>QRIS Pembayaran</h3>
-        <img src="<?= e(setting('qris_image')) ?>" alt="QRIS">
+        <div id="qrisBox">
+            <img class="qris-dinamis" src="<?= e(setting('qris_image')) ?>" alt="QRIS">
+        </div>
         <button type="button" class="btn" id="btnTutupQris">Tutup</button>
     </div>
 </div>
@@ -541,6 +576,7 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
                         <input type="hidden" name="konfirmasi_pembayaran" value="<?= $pmQris['id'] ?>">
                         <button type="submit" class="btn kecil ok">Konfirmasi Dana QRIS Masuk</button>
                     </form>
+                    <button type="button" class="btn kecil" onclick="tampilQris(<?= (int)$pmQris['id'] ?>, 'pembayaran')">Tampilkan QRIS</button>
                 <?php endif; ?>
                 <?php if ($pmMidtrans): ?>
                     <button type="button" class="btn kecil" onclick="bayarMidtrans(<?= (int)$ps['id'] ?>, <?= (float)($ps['sisa']) ?>)">Bayar via Midtrans</button>

@@ -68,7 +68,21 @@ $user = DB::one('SELECT username FROM users WHERE id = ?', [$p['user_id']]);
         <tr><td>Kembalian</td><td class="kanan"><?= rp($p['kembalian']) ?></td></tr>
     </table>
     <hr>
-    <?php if (setting('qris_image')): ?>
+    <?php if (($p['status'] ?? '') === 'Menunggu QRIS'): ?>
+        <div class="center">
+            <p class="muted kecil">Scan untuk pembayaran QRIS (berlaku 30 menit)</p>
+            <?php $qrs = !empty($p['qris_content']) ? qris_png_datauri($p['qris_content']) : setting('qris_image'); ?>
+            <?php if ($qrs): ?>
+                <img class="qris-struk" src="<?= e($qrs) ?>" alt="QRIS">
+            <?php endif; ?>
+            <?php if (qris_nmid($p)): ?>
+                <p class="muted kecil">NMID: <?= e(qris_nmid($p)) ?></p>
+            <?php endif; ?>
+            <?php if (!empty($p['qris_invid'])): ?>
+                <p class="muted kecil">INV: <?= e($p['qris_invid']) ?></p>
+            <?php endif; ?>
+        </div>
+    <?php elseif (setting('qris_image')): ?>
         <div class="center">
             <p class="muted kecil">Scan untuk pembayaran QRIS</p>
             <img class="qris-struk" src="<?= e(setting('qris_image')) ?>" alt="QRIS">

@@ -294,4 +294,5 @@ function wa_pelanggan($ps, $event, $extra = '') {
     return wa_send($ps['telepon'], $message, $imageUrl);
 }
 
+require_once __DIR__ . '/qris.php';
 require_once __DIR__ . '/link_short.php';

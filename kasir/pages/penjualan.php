@@ -192,6 +192,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['simpan'])) {
     DB::run('INSERT INTO penjualan (no_invoice, tgl, total, bayar, kembalian, metode, user_id, keterangan, status) VALUES (?,?,?,?,?,?,?,?,?)',
         [$no, date('Y-m-d H:i:s'), $total, $bayar, $bayar - $total, $metode, $_SESSION['user_id'], $ket, $statusBayar]);
     $pid = DB::lastId();
+
+    if ($metode === 'QRIS') {
+        $qr = qris_create_invoice($no, (int)round($total));
+        if ($qr['ok']) {
+            $qexp = date('Y-m-d H:i:s', strtotime($qr['data']['qris_request_date']) + QRIS_TTL);
+            DB::run('UPDATE penjualan SET qris_content = ?, qris_invid = ?, qris_nmid = ?, qris_request_date = ?, qris_expiry = ? WHERE id = ?',
+                [$qr['data']['qris_content'], (string)$qr['data']['qris_invoiceid'], (string)$qr['data']['qris_nmid'], $qr['data']['qris_request_date'], $qexp, $pid]);
+        } else {
+            log_aktivitas('QRIS gagal', $no . ' | ' . $qr['error']);
+        }
+    }
+
     log_aktivitas('Transaksi baru', $no . ' | total ' . $total . ($statusBayar === 'Menunggu QRIS' ? ' | MENUNGGU KONFIRMASI QRIS' : ''));
     foreach ($lines as $l) {
         DB::run('INSERT INTO penjualan_item (penjualan_id, produk_id, nama, harga, qty, subtotal) VALUES (?,?,?,?,?,?)',
@@ -313,7 +325,13 @@ window.PRODUK = <?= json_encode(array_map(function ($p) {
 <div id="modalQris" class="modal hidden">
     <div class="modal-box">
         <h3>QRIS Pembayaran</h3>
-        <img src="<?= e($qris) ?>" alt="QRIS">
+        <div id="qrisBox">
+            <?php if ($qris): ?>
+                <img class="qris-dinamis" src="<?= e($qris) ?>" alt="QRIS">
+            <?php else: ?>
+                <p class="muted">QRIS statis belum diunggah.</p>
+            <?php endif; ?>
+        </div>
         <button type="button" class="btn" id="btnTutupQris">Tutup</button>
     </div>
 </div>
@@ -354,6 +372,7 @@ window.PRODUK = <?= json_encode(array_map(function ($p) {
                                 <input type="hidden" name="konfirmasi_penjualan" value="<?= $tr['id'] ?>">
                                 <button type="submit" class="btn kecil ok">Konfirmasi Dana Masuk</button>
                             </form>
+                            <button type="button" class="btn kecil" onclick="tampilQris(<?= (int)$tr['id'] ?>, 'penjualan')">Tampilkan QRIS</button>
                         <?php endif; ?>
                         <a class="btn kecil" href="struk.php?id=<?= $tr['id'] ?>">Cetak Struk</a>
                         <a class="btn kecil" href="nota.php?ref=penjualan&id=<?= $tr['id'] ?>&t=a5">Cetak Nota</a>

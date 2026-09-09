@@ -422,6 +422,8 @@ body.struk-lebar-58 .aksi-struk { max-width: 68mm; }
 
 .qris-struk { width: 70mm; margin: 8px auto; display: block; }
 
+.qris-dinamis { max-width: 260px; width: 100%; display: block; margin: 0 auto 8px; }
+
 .logo-struk {
     display: block;
     margin: 0 auto 4px;

@@ -33,6 +33,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['bayar_piutang'])) {
         }
         DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
             ['pesanan', $id, date('Y-m-d H:i:s'), $jumlah, $metode, 'Pelunasan piutang', $metode === 'QRIS' ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
+        if ($metode === 'QRIS') {
+            $pmPid = DB::lastId();
+            $qr = qris_create_invoice('PB' . $pmPid, (int)round($jumlah));
+            if ($qr['ok']) {
+                $qexp = date('Y-m-d H:i:s', strtotime($qr['data']['qris_request_date']) + QRIS_TTL);
+                DB::run('UPDATE pembayaran SET qris_content = ?, qris_invid = ?, qris_nmid = ?, qris_request_date = ?, qris_expiry = ? WHERE id = ?',
+                    [$qr['data']['qris_content'], (string)$qr['data']['qris_invoiceid'], (string)$qr['data']['qris_nmid'], $qr['data']['qris_request_date'], $qexp, $pmPid]);
+            } else {
+                log_aktivitas('QRIS gagal', $ps['no_pesanan'] . ' | ' . $qr['error']);
+            }
+        }
         $sisaBaru = $sisa - $jumlah;
         $status = $sisaBaru <= 0 ? 'Lunas' : 'DP';
         DB::run('UPDATE pesanan SET sisa = ?, status = ? WHERE id = ?', [$sisaBaru, $status, $id]);
@@ -95,7 +106,9 @@ require __DIR__ . '/../layout/header.php';
 <div id="modalQris" class="modal hidden">
     <div class="modal-box">
         <h3>QRIS Pembayaran</h3>
-        <img src="<?= e(setting('qris_image')) ?>" alt="QRIS">
+        <div id="qrisBox">
+            <img class="qris-dinamis" src="<?= e(setting('qris_image')) ?>" alt="QRIS">
+        </div>
         <button type="button" class="btn" id="btnTutupQris">Tutup</button>
     </div>
 </div>
@@ -135,6 +148,7 @@ require __DIR__ . '/../layout/header.php';
                         <input type="hidden" name="konfirmasi_pembayaran" value="<?= $pmQris['id'] ?>">
                         <button type="submit" class="btn kecil ok">Konfirmasi Dana QRIS Masuk</button>
                     </form>
+                    <button type="button" class="btn kecil" onclick="tampilQris(<?= (int)$pmQris['id'] ?>, 'pembayaran')">Tampilkan QRIS</button>
                 <?php endif; ?>
                 <a class="btn kecil" href="nota.php?id=<?= $ps['id'] ?>&t=struk">Cetak Struk</a>
                 <a class="btn kecil" href="nota.php?id=<?= $ps['id'] ?>&t=a5">Cetak Nota</a>

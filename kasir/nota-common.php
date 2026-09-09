@@ -29,9 +29,13 @@ function nota_data($ref, $id) {
             'total' => (float)$row['total'],
             'dp' => (float)$row['total'],
             'sisa' => 0.0,
-            'status' => 'Lunas',
+            'status' => $row['status'] ?? 'Lunas',
             'pembayaran_status' => 'Lunas',
             'user_id' => $row['user_id'],
+            'qris_content' => $row['qris_content'] ?? '',
+            'qris_invid' => $row['qris_invid'] ?? '',
+            'qris_nmid' => $row['qris_nmid'] ?? '',
+            'qris_request_date' => $row['qris_request_date'] ?? '',
         ];
         $totalBayar = (float)$row['total'];
     } else {

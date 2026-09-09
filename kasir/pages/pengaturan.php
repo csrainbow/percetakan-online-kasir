@@ -93,6 +93,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    if (!empty($_POST['simpan_qris_api'])) {
+        if (!is_superadmin()) {
+            flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
+        } else {
+            set_setting('qris_api_apikey', trim($_POST['qris_api_apikey'] ?? ''));
+            set_setting('qris_api_mid', trim($_POST['qris_api_mid'] ?? ''));
+            set_setting('qris_api_nmid', trim($_POST['qris_api_nmid'] ?? ''));
+            flash_set('success', 'Pengaturan QRIS Dinamis disimpan.');
+        }
+        header('Location: index.php?p=pengaturan');
+        exit;
+    }
+
     $uploads = [
         'qris'       => ['key' => 'qris_image',   'base' => 'qris',       'label' => 'QRIS'],
         'logo_nota'  => ['key' => 'logo_image',   'base' => 'logo-nota',  'label' => 'Logo Nota'],
@@ -316,7 +329,29 @@ require __DIR__ . '/../layout/header.php';
             <input type="file" name="qris" accept=".png,.jpg,.jpeg,.webp" required>
             <button type="submit" class="btn">Unggah QRIS</button>
         </form>
-        <p class="muted kecil">PNG/JPG/WebP, maks 2 MB. QRIS statis dari bank/penyedia Anda.</p>
+        <p class="muted kecil">PNG/JPG/WebP, maks 2 MB. Dipakai sebagai cadangan bila QRIS Dinamis belum aktif.</p>
+    </div>
+
+    <div class="panel">
+        <h3>QRIS Dinamis - InterActive</h3>
+        <?php if (qris_api_ready()): ?>
+            <p class="badge ok">API AKTIF - QRIS dinamis dipakai otomatis untuk transaksi QRIS baru.</p>
+        <?php else: ?>
+            <p class="badge warn">API BELUM AKTIF - isi APIKEY di bawah. Sampai saat itu, transaksi QRIS memakai QRIS statis / konfirmasi manual.</p>
+        <?php endif; ?>
+        <form method="post">
+            <label>mID
+                <input type="text" name="qris_api_mid" value="<?= e(setting('qris_api_mid')) ?>" placeholder="cth: 127683506" required>
+            </label>
+            <label>NMID (ditampilkan di bawah QR)
+                <input type="text" name="qris_api_nmid" value="<?= e(setting('qris_api_nmid')) ?>" placeholder="cth: ID1026589862154">
+            </label>
+            <label>APIKEY
+                <input type="password" name="qris_api_apikey" value="<?= e(setting('qris_api_apikey')) ?>" placeholder="APIKEY dari email aktivasi">
+            </label>
+            <button type="submit" class="btn" name="simpan_qris_api" value="1">Simpan API QRIS</button>
+        </form>
+        <p class="muted kecil">InterActive QRIS (PT. InterAktif Internasional). API <b>live/produksi</b> - nominal benar-benar didebit dari e-wallet pembeli. QRIS berlaku 30 menit. Status pembayaran dicek otomatis lewat cron 1 menit (maks 30x) + tombol "Periksa Status" manual. Dokumentasi: <a href="https://qris.online/api-doc/" target="_blank" rel="noopener">qris.online/api-doc</a></p>
     </div>
 
     <div class="panel grid-full">

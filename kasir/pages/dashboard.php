@@ -272,6 +272,7 @@ require __DIR__ . '/../layout/header.php';
                                     <input type="hidden" name="konfirmasi_penjualan" value="<?= $tr['id'] ?>">
                                     <button type="submit" class="btn kecil ok">Konfirmasi Dana Masuk</button>
                                 </form>
+                                <button type="button" class="btn kecil" onclick="tampilQris(<?= (int)$tr['id'] ?>, 'penjualan')">Tampilkan QRIS</button>
                             <?php endif; ?>
                             <a class="btn kecil" href="struk.php?id=<?= $tr['id'] ?>">Cetak Struk</a>
                             <a class="btn kecil" href="nota.php?ref=penjualan&id=<?= $tr['id'] ?>&t=a5">Cetak Nota</a>

@@ -67,14 +67,48 @@
         <hr>
     <?php endif; ?>
     <?php if ($ref === 'penjualan' && ($ps['status'] ?? '') === 'Menunggu QRIS'): ?>
-        <p class="center muted kecil">Menunggu konfirmasi QRIS ??? transaksi sah setelah dana masuk.</p>
+        <p class="center muted kecil">Menunggu konfirmasi QRIS - transaksi sah setelah dana masuk.</p>
     <?php endif; ?>
     <?php if ($ps['pembayaran_status'] === 'Belum Bayar' || $ps['pembayaran_status'] === 'DP'): ?>
         <p class="center muted kecil">Barang akan dikirim/diambil setelah pelunasan.</p>
     <?php elseif ($ps['status'] === 'Selesai'): ?>
         <p class="center muted kecil">Pesanan sudah selesai dan diambil.</p>
     <?php endif; ?>
-    <?php if (setting('qris_image') && in_array($ps['pembayaran_status'] ?? '', ['Belum Bayar', 'DP'])): ?>
+    <?php
+    $qrisRow = null;
+    if ($ref === 'penjualan') {
+        if (($ps['status'] ?? '') === 'Menunggu QRIS') {
+            $qrisRow = [
+                'qris_content' => $ps['qris_content'] ?? '',
+                'qris_invid' => $ps['qris_invid'] ?? '',
+                'qris_nmid' => $ps['qris_nmid'] ?? '',
+                'qris_request_date' => $ps['qris_request_date'] ?? '',
+            ];
+        }
+    } else {
+        foreach ($pembayaran as $pb) {
+            if (($pb['status'] ?? '') === 'Menunggu QRIS') {
+                $qrisRow = $pb;
+                break;
+            }
+        }
+    }
+    ?>
+    <?php if ($qrisRow): ?>
+        <div class="center">
+            <p class="muted kecil">Scan untuk pembayaran QRIS (berlaku 30 menit)</p>
+            <?php $qrs = !empty($qrisRow['qris_content']) ? qris_png_datauri($qrisRow['qris_content']) : setting('qris_image'); ?>
+            <?php if ($qrs): ?>
+                <img class="qris-struk" src="<?= e($qrs) ?>" alt="QRIS">
+            <?php endif; ?>
+            <?php if (qris_nmid($qrisRow)): ?>
+                <p class="muted kecil">NMID: <?= e(qris_nmid($qrisRow)) ?></p>
+            <?php endif; ?>
+            <?php if (!empty($qrisRow['qris_invid'])): ?>
+                <p class="muted kecil">INV: <?= e($qrisRow['qris_invid']) ?></p>
+            <?php endif; ?>
+        </div>
+    <?php elseif (setting('qris_image') && in_array($ps['pembayaran_status'] ?? '', ['Belum Bayar', 'DP'])): ?>
         <div class="center">
             <p class="muted kecil">Scan untuk pembayaran QRIS</p>
             <img class="qris-struk" src="<?= e(setting('qris_image')) ?>" alt="QRIS">

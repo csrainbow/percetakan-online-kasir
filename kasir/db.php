@@ -203,6 +203,28 @@ class DB {
             self::run("ALTER TABLE pembayaran ADD COLUMN token TEXT DEFAULT ''");
         }
 
+        foreach (['penjualan' => 'status', 'pembayaran' => 'status'] as $tbl => $colDep) {
+            $cols = self::q("PRAGMA table_info($tbl)");
+            $existing = [];
+            foreach ($cols as $c) {
+                $existing[] = $c['name'];
+            }
+            $colDefs = [
+                'qris_content'      => "ALTER TABLE $tbl ADD COLUMN qris_content TEXT DEFAULT ''",
+                'qris_invid'        => "ALTER TABLE $tbl ADD COLUMN qris_invid TEXT DEFAULT ''",
+                'qris_nmid'         => "ALTER TABLE $tbl ADD COLUMN qris_nmid TEXT DEFAULT ''",
+                'qris_request_date' => "ALTER TABLE $tbl ADD COLUMN qris_request_date TEXT DEFAULT ''",
+                'qris_expiry'       => "ALTER TABLE $tbl ADD COLUMN qris_expiry TEXT DEFAULT ''",
+                'qris_last_check'   => "ALTER TABLE $tbl ADD COLUMN qris_last_check TEXT DEFAULT ''",
+                'qris_check_count'  => "ALTER TABLE $tbl ADD COLUMN qris_check_count INTEGER NOT NULL DEFAULT 0",
+            ];
+            foreach ($colDefs as $col => $sql) {
+                if (!in_array($col, $existing, true)) {
+                    self::run($sql);
+                }
+            }
+        }
+
         $u = self::one('SELECT COUNT(*) c FROM users');
         if ($u['c'] == 0) {
             self::run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', ['admin', password_hash('admin123', PASSWORD_DEFAULT), 'superadmin']);
@@ -226,6 +248,9 @@ class DB {
             'nota_template' => 'struk',
             'struk_lebar' => '80',
             'url_publik' => 'https://rainbowprinting.web.id/kasir',
+            'qris_api_mid' => '127683506',
+            'qris_api_nmid' => 'ID1026589862154',
+            'qris_api_apikey' => '',
         ];
         foreach ($defaults as $k => $v) {
             self::run('INSERT OR IGNORE INTO pengaturan (key, value) VALUES (?, ?)', [$k, $v]);
