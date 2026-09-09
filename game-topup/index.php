@@ -15,32 +15,9 @@ if (!$products) {
 }
 
 $getCat = function ($name) {
-    $n = strtolower($name ?? '');
-    $games = [
-        ['mobile legend', 'Mobile Legends'], ['free fire', 'Free Fire'], ['pubg', 'PUBG'],
-        ['genshin', 'Genshin Impact'], ['honkai', 'Honkai'], ['roblox', 'Roblox'],
-        ['minecraft', 'Minecraft'], ['valorant', 'Valorant'], ['call of duty', 'CoD'],
-        ['cod', 'CoD'], ['hok', 'Honor of Kings'], ['lol', 'League of Legends'],
-        ['ff diamond', 'Free Fire'], ['ml diamond', 'Mobile Legends'], ['diamond', 'Mobile Legends'],
-    ];
-    foreach ($games as $g) {
-        if (strpos($n, $g[0]) !== false) return $g[1];
-    }
-    $toks = preg_split('/[\s\-]+/', $n);
-    if (array_intersect($toks, ['data', 'xl', 'axis', 'three', 'tri', 'indosat', 'ims', 'smartfren', 'telkomsel', 'tsel', 'byu', 'sbyu', 'unlimited', 'kuota'])) {
-        return 'Paket Data';
-    }
-    return 'Voucher';
+    return product_category($name ?? '');
 };
 
-$grads = [
-    'linear-gradient(135deg,#22d3ee,#3b82f6)',
-    'linear-gradient(135deg,#8b5cf6,#d946ef)',
-    'linear-gradient(135deg,#f472b6,#f59e0b)',
-    'linear-gradient(135deg,#34d399,#22d3ee)',
-    'linear-gradient(135deg,#f87171,#f59e0b)',
-    'linear-gradient(135deg,#60a5fa,#8b5cf6)',
-];
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -103,13 +80,12 @@ $grads = [
           $name = $p['name'] ?? $p['product_name'] ?? $code;
           $price = (int)($p['price'] ?? $p['product_seller'] ?? 0);
           $cat = $getCat($name);
-          $g = $grads[abs(crc32($name)) % count($grads)];
-          $initial = strtoupper(trim($name))[0] ?? '?'; ?>
+          $thumb = product_thumb_datauri($name, $cat);
+          $logo = $p['brand'] ? brand_logo_url($p['brand']) : ''; ?>
         <div class="card" data-cat="<?= htmlspecialchars($cat) ?>" data-q="<?= htmlspecialchars(strtolower($name . ' ' . $code . ' ' . $cat)) ?>">
-          <div class="card-top">
-            <div class="card-icon" style="background:<?= $g ?>"><?= htmlspecialchars($initial) ?></div>
-            <span class="card-cat"><?= htmlspecialchars($cat) ?></span>
-          </div>
+          <span class="card-cat"><?= htmlspecialchars($cat) ?></span>
+          <?php if ($logo !== ''): ?><img class="brand-logo" src="<?= htmlspecialchars($logo) ?>" alt="logo" loading="lazy"><?php endif; ?>
+          <img class="card-thumb" src="<?= $thumb ?>" alt="Thumbnail <?= htmlspecialchars($name) ?>" loading="lazy">
           <div class="card-name"><?= htmlspecialchars($name) ?></div>
           <div class="card-code"><?= htmlspecialchars($code) ?></div>
           <div class="card-foot">

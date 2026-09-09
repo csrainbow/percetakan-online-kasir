@@ -41,6 +41,11 @@ $price = (int)$product['price'];
   <div class="page-slim">
     <div class="box">
       <a class="back" href="<?= BASE_PATH ?>/">&larr; Katalog</a>
+      <?php $logo = ($product['brand'] ?? '') ? brand_logo_url($product['brand'] ?? '') : ''; ?>
+      <div class="prod-thumb-wrap">
+        <img class="prod-thumb" src="<?= product_thumb_datauri($product['name'], product_category($product['name'])) ?>" alt="Thumbnail <?= htmlspecialchars($product['name']) ?>">
+        <?php if ($logo !== ''): ?><img class="brand-logo brand-logo-lg" src="<?= htmlspecialchars($logo) ?>" alt="logo"><?php endif; ?>
+      </div>
       <h1 class="title"><?= htmlspecialchars($product['name']) ?></h1>
       <div class="card-code" style="margin-top:4px"><?= htmlspecialchars($product['code']) ?></div>
       <div class="price-big">Rp <?= number_format($price,0,',','.') ?></div>

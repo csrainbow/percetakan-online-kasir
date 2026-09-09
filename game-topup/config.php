@@ -77,6 +77,8 @@ function migrate(PDO $pdo): void {
         price INTEGER,               -- harga jual anda
         buy_price INTEGER DEFAULT 0,
         stock INTEGER DEFAULT 99999,
+        brand TEXT DEFAULT '',
+        category TEXT DEFAULT '',
         status INTEGER DEFAULT 1
     )");
     $pdo->exec("CREATE TABLE IF NOT EXISTS orders (
@@ -102,6 +104,10 @@ function migrate(PDO $pdo): void {
         key TEXT PRIMARY KEY,
         value TEXT
     )");
+
+    // Sesuaikan skema DB lama (jika kolom brand/category belum ada)
+    try { $pdo->exec("ALTER TABLE products ADD COLUMN brand TEXT DEFAULT ''"); } catch (\Throwable $e) {}
+    try { $pdo->exec("ALTER TABLE products ADD COLUMN category TEXT DEFAULT ''"); } catch (\Throwable $e) {}
 
     // Seed pricelist cache kosong (diisi oleh cron/manual sync)
     $pdo->exec("INSERT OR IGNORE INTO settings (key,value) VALUES ('pricelist_updated','')");
