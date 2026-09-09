@@ -9,3 +9,5 @@ logs/
 _debug/
 uploads/
 vendor/
+game-topup/config.local.php
+.env

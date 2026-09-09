@@ -30,6 +30,23 @@ percetakan-online-kasir/
     └── config.php    # konfigurasi (zona waktu, NOTA_SECRET, url publik)
 ```
 
+## Game Top-Up (`game-topup/`)
+
+Website **isi ulang / voucher game** (monorepo terpisah dalam repositori ini) — PHP vanilla + SQLite, terintegrasi **Digiflazz** (provider topup) & **Midtrans Snap** (pembayaran).
+
+Jalankan (dev):
+```
+php -S 0.0.0.0:8082 -t game-topup game-topup/router.php
+```
+- Katalog produk (sync dari Digiflazz): `index.php`
+- Order & bayar via Snap: `order.php` → `api/order.php` → Midtrans
+- Webhook pembayaran: `api/midtrans-callback.php` (trigger topup ke Digiflazz saat LUNAS)
+- Webhook provider: `api/digiflazz-callback.php` (update status + simpan SN)
+- Admin: `admin/index.php` (login `admin123`, sync pricelist, daftar order)
+- Sync pricelist manual / cron: `php cli/sync-pricelist.php`
+
+Kredensial Digiflazz & Midtrans di `game-topup/config.php`. Sandbox → set `MIDTRANS_IS_PRODUCTION=false`.
+
 ## Fitur Utama
 
 ### Kasir

@@ -19,6 +19,18 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 - **Router perbaikan**: `router.php` menambah redirect 301 untuk `/kasir`, `/admin`, `/uploads` (tanpa trailing slash) agar redirect relatif tidak nyasar.
 - **Halaman statis SEO baru** ditambahkan: `faq.php`, `privacy-policy.php`, `terms-of-service.php`, `robots.txt`, `sitemap.xml`, `favicon.svg`.
 
+### Game Top-Up (folder `game-topup/`) — baru
+- **Website isi ulang / voucher game** (monorepo baru) berbasis PHP vanilla + SQLite, terintegrasi **Digiflazz** (API topup) & **Midtrans Snap** (payment).
+- `config.php` — kredensial Digiflazz (`DGF_USERNAME`/`DGF_APIKEY`) & Midtrans (`MT_SERVER_KEY`/`MT_CLIENT_KEY`) + flag `MIDTRANS_IS_PRODUCTION`.
+- `includes/Digiflazz.php` — wrapper API Digiflazz: pricelist, topup, cek status, callback parser.
+- `includes/functions.php` — helper order (ref_id unik `TOPUP-...`), `midtransSnap()`, `cleanNumber()`, status text.
+- Halaman: `index.php` (katalog), `order.php` (form + Snap pay), `status.php`, `cek-status.php`, `admin/index.php` (login sederhana + sync pricelist + daftar order).
+- API: `api/order.php` (buat order → token Snap), `api/midtrans-callback.php` (webhook bayar → trigger topup ke Digiflazz), `api/digiflazz-callback.php` (callback status topup → update order + simpan SN).
+- `cli/sync-pricelist.php` — sync pricelist Digiflazz ke tabel products (via cron).
+- `router.php` — pengaman `php -S` (blokir `data/`, `cli/`, `config.php`, `includes/`).
+- **Teruji end-to-end di server** (sandbox): katalog 200, order tersimpan, Snap token valid (HTTP 201), `payment_status=pending → waiting`.
+- Catatan: akun Digiflazz **dev** kena rate-limit pricelist (`rc:83`) — perlu akun production + saldo untuk transaksi riil; alur sudah siap.
+
 ### Diperbaiki
 - **Tampilan nota struk berantakan**: tambah `<base href>` di `nota-templates/struk.php` sehingga CSS/JS (`assets/style.css`, `assets/print.js`) ter-resolve benar (sebelumnya 404 → tampilan acak).
 - **Tombol "Kembali" untuk customer → "Keluar"** di `nota-templates/struk.php`: pengunjung publik melihat tombol **Keluar** (menutup tab), admin tetap melihat **Kembali** + **Cetak Nota**.
