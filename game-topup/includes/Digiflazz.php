@@ -51,24 +51,32 @@ class Digiflazz {
         ]);
     }
 
-    /** Cek harga & stok produk per kategori (game) */
-    public function priceListV2(string $type = 'game'): array {
-        return $this->http('/price-list', [
+    /** Cek harga & stok produk per kategori */
+    public function priceListV2(string $type = 'prepaid'): array {
+        $body = [
+            'cmd' => 'prepaid',   // cmd: prepaid / pasca (bukan filter "type")
             'username' => $this->username,
             'sign' => $this->sign('pricelist'),
-            'type' => $type,
-        ]);
+        ];
+        if ($type === 'game') {
+            $body['type'] = 'game'; // filter opsional: hanya produk game
+        }
+        return $this->http('/price-list', $body);
     }
 
     /** Transaksi top-up / isi ulang */
     public function topup(string $refId, string $buyerSkuCode, string $customerNo): array {
-        return $this->http('/transaction', [
+        $body = [
             'username' => $this->username,
             'buyer_sku_code' => $buyerSkuCode,
             'customer_no' => $customerNo,
             'ref_id' => $refId,
             'sign' => $this->sign($refId),
-        ]);
+        ];
+        if (defined('DGF_TESTING') && DGF_TESTING) {
+            $body['testing'] = true;
+        }
+        return $this->http('/transaction', $body);
     }
 
     /** Cek status transaksi berdasarkan ref_id */
@@ -83,7 +91,8 @@ class Digiflazz {
     /** Webhook callback verifikasi (dipanggil Digiflazz ke server anda) */
     public function handleCallback(string $payload): array {
         $p = json_decode($payload, true);
-        $data = $p['data'][0] ?? [];
+        // Webhook mengirim "data" sebagai object; API list mengirim sebagai array.
+        $data = $p['data'][0] ?? $p['data'] ?? [];
         return [
             'ref_id' => $data['ref_id'] ?? '',
             'status' => $data['status'] ?? '',     // Sukses / Gagal / Pending

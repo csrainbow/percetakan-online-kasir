@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/functions.php';
 $db = db();
-$products = $db->query("SELECT * FROM products WHERE status=1 ORDER BY game_id, name LIMIT 200")->fetchAll();
+$products = $db->query("SELECT * FROM products WHERE status=1 ORDER BY game_id, name LIMIT 300")->fetchAll();
 if (!$products) {
     try {
         $dgf = new Digiflazz();

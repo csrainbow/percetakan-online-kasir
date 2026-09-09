@@ -14,6 +14,7 @@ $__dgfUser  = getenv('DGF_USERNAME') ?: '';
 $__dgfKey   = getenv('DGF_APIKEY')  ?: '';
 $__mtServer = getenv('MT_SERVER_KEY') ?: '';
 $__mtClient = getenv('MT_CLIENT_KEY') ?: '';
+$__dgfHook  = getenv('DGF_WEBHOOK_SECRET') ?: '';
 
 $__localCfg = __DIR__ . '/config.local.php';
 if (file_exists($__localCfg)) {
@@ -22,11 +23,17 @@ if (file_exists($__localCfg)) {
     $__dgfKey  = defined('DGF_APIKEY')   ? DGF_APIKEY   : $__dgfKey;
     $__mtServer = defined('MT_SERVER_KEY') ? MT_SERVER_KEY : $__mtServer;
     $__mtClient = defined('MT_CLIENT_KEY') ? MT_CLIENT_KEY : $__mtClient;
+    $__dgfHook  = defined('DGF_WEBHOOK_SECRET') ? DGF_WEBHOOK_SECRET : $__dgfHook;
 }
 
 if (!defined('DGF_USERNAME')) define('DGF_USERNAME', $__dgfUser);
 if (!defined('DGF_APIKEY'))   define('DGF_APIKEY', $__dgfKey);
 define('DGF_BASE', 'https://api.digiflazz.com/v1');
+if (!defined('DGF_TESTING')) define('DGF_TESTING', filter_var(getenv('DGF_TESTING') ?: 'false', FILTER_VALIDATE_BOOLEAN));
+// Secret untuk verifikasi webhook Digiflazz (header X-Hub-Signature: sha1=HMAC-SHA1(body, secret)).
+// Wajib diset di config.local.php (DGF_WEBHOOK_SECRET) agar endpoint callback aman.
+$__dgfHook = getenv('DGF_WEBHOOK_SECRET') ?: '';
+if (!defined('DGF_WEBHOOK_SECRET')) define('DGF_WEBHOOK_SECRET', $__dgfHook);
 
 // ==================== MIDTRANS (opsional, sandbox default) ====================
 if (!defined('MT_SERVER_KEY')) define('MT_SERVER_KEY', $__mtServer);
