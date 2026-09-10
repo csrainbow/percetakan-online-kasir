@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_setting('wa_gw_base', rtrim(trim($_POST['wa_gw_base'] ?? 'http://127.0.0.1:3001'), '/'));
         set_setting('wa_gw_key', trim($_POST['wa_gw_key'] ?? ''));
         set_setting('wa_gw_enabled', !empty($_POST['wa_gw_enabled']) ? '1' : '');
+        set_setting('wa_gw_cache', '');
         flash_set('success', 'Pengaturan gateway disimpan.');
         header('Location: index.php?p=wa-gateway');
         exit;
@@ -57,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $gwBase = setting('wa_gw_base', 'http://127.0.0.1:3001');
 $gwKey = setting('wa_gw_key', '');
 $gwEnabled = setting('wa_gw_enabled', '1') === '1';
-$gw = wa_gateway_status();
+// Halaman ini selalu butuh status fresh (untuk QR & tombol), bukan cache.
+$gw = wa_gateway_status_cached(true);
 $qrSrc = $gw['hasQr'] ? 'wa-gw-qr.php?t=' . time() : '';
 
 require __DIR__ . '/../layout/header.php';

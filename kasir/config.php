@@ -162,7 +162,7 @@ function is_telat($ps) {
         && strtotime($ps['estimasi']) < time();
 }
 
-function wa_gateway_status() {
+function wa_gateway_status($timeout = 5) {
     $base = rtrim(setting('wa_gw_base', 'http://127.0.0.1:3001'), '/');
     $st = ['ok' => false, 'status' => 'unconfigured', 'connected' => false, 'me' => null, 'hasQr' => false, 'base' => $base];
     if ($base === '') {
@@ -171,7 +171,7 @@ function wa_gateway_status() {
     $ch = curl_init($base . '/status');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 5,
+        CURLOPT_TIMEOUT => $timeout,
     ]);
     $res = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -188,6 +188,50 @@ function wa_gateway_status() {
         }
     }
     return $st;
+}
+
+// Status gateway yang di-cache 60 detik di DB agar cek di setiap halaman tidak
+// memperlambat kasir. Paksa refresh dengan $force=true.
+function wa_gateway_status_cached($force = false) {
+    $ttl = 60;
+    try {
+        $row = DB::one("SELECT value FROM pengaturan WHERE key = 'wa_gw_cache'");
+        $cache = $row ? json_decode($row['value'], true) : null;
+        if (!$force && is_array($cache) && !empty($cache['at']) && (time() - (int)$cache['at'] < $ttl) && isset($cache['st'])) {
+            return $cache['st'];
+        }
+    } catch (Throwable $e) {
+        $cache = null;
+    }
+    $st = wa_gateway_status(2);
+    try {
+        set_setting('wa_gw_cache', json_encode(['at' => time(), 'st' => $st]));
+    } catch (Throwable $e) {
+        // abaikan bila DB belum siap
+    }
+    return $st;
+}
+
+// Ingatkan admin via Fonnte (jalur cadangan) bila gateway putus.
+// Dibatas: maks 1x per 30 menit, hanya bila wa_enabled=1 dan ada nomor admin.
+function wa_gateway_alert_admin($status) {
+    if (!setting('wa_enabled')) {
+        return;
+    }
+    $admin = trim(setting('wa_admin_number', ''));
+    if ($admin === '') {
+        return;
+    }
+    $lastRow = DB::one("SELECT value FROM pengaturan WHERE key = 'wa_gw_alert_at'");
+    $last = $lastRow ? (int)$lastRow['value'] : 0;
+    if (time() - $last < 1800) {
+        return; // masih dalam masa tenang 30 menit
+    }
+    set_setting('wa_gw_alert_at', (string)time());
+    $msg = "⚠️ *WA GATEWAY PUTUS*\n\nGateway WhatsApp kasir status: *$status* pada " . date('d/m/Y H:i') . ".\n"
+        . "Notifikasi pelanggan sementara lewat jalur cadangan.\n\n"
+        . "Segera tautkan ulang: buka Kasir → *WA Gateway* → scan QR.\n\n— " . setting('nama_toko', 'PERCETAKAN RAINBOW');
+    wa_send_fonnte($admin, $msg);
 }
 
 function wa_gateway_send($to, $message, $imageUrl = '', $caption = null) {

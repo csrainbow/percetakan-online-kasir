@@ -51,3 +51,21 @@ $page = $page ?? '';
 <?php if ($f = flash_get()): ?>
     <div class="flash <?= e($f['type']) ?>"><?= e($f['msg']) ?></div>
 <?php endif; ?>
+<?php
+// Banner peringatan bila WA Gateway putus (cache 60 dtk, tidak memperlambat halaman).
+// Hanya tampil bila notifikasi WA aktif & gateway diaktifkan sebagai jalur utama.
+if (setting('wa_enabled') && setting('wa_gw_enabled', '1') === '1' && ($page ?? '') !== 'wa-gateway') {
+    $gwBanner = wa_gateway_status_cached();
+    if (!empty($gwBanner['ok']) && empty($gwBanner['connected'])) {
+        $gwSt = e($gwBanner['status'] ?? 'putus');
+        echo '<div class="flash error">⚠️ <b>WA Gateway putus</b> (status: ' . $gwSt . '). Notifikasi pelanggan sementara lewat jalur cadangan. '
+            . (is_superadmin()
+                ? '<a href="index.php?p=wa-gateway"><b>Segera tautkan ulang di sini →</b></a>'
+                : 'Hubungi admin untuk menautkan ulang di menu <b>WA Gateway</b>.')
+            . '</div>';
+        if (is_superadmin()) {
+            wa_gateway_alert_admin($gwBanner['status'] ?? 'putus');
+        }
+    }
+}
+?>
