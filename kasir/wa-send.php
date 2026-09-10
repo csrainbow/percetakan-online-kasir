@@ -40,13 +40,11 @@ $message = "📋 *NOTA " . ($ref === 'penjualan' ? 'PENJUALAN' : 'PESANAN') . "*
 
 $sent = wa_send($telepon, $message);
 if ($sent) {
-    log_aktivitas('WA terkirim ke pelanggan', $code . ' | ' . $telepon);
-    exit(json_encode(['ok' => true, 'msg' => 'WhatsApp terkirim ke pelanggan.']));
+    log_aktivitas('WA masuk antrean', $code . ' | ' . $telepon);
+    exit(json_encode(['ok' => true, 'msg' => 'WhatsApp masuk antrean — dikirim otomatis via WA Gateway.']));
 }
 
-$waFallback = wa_href($telepon, $message);
 exit(json_encode([
     'ok' => false,
-    'fallback' => $waFallback,
-    'msg' => 'Fonnte belum dikonfigurasi / gagal terkirim — membuka WhatsApp manual.',
+    'msg' => 'Gagal memasukkan pesan ke antrean WhatsApp. Cek menu WA Gateway atau hubungi admin.',
 ]));

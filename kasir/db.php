@@ -105,6 +105,18 @@ class DB {
             detail TEXT DEFAULT '',
             tgl TEXT NOT NULL DEFAULT (datetime('now','localtime'))
         )");
+        $s->exec("CREATE TABLE IF NOT EXISTS wa_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tujuan TEXT NOT NULL,
+            pesan TEXT NOT NULL,
+            image_url TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'tunggu',
+            percobaan INTEGER NOT NULL DEFAULT 0,
+            dibuat_pada TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            dikirim_pada TEXT DEFAULT '',
+            galat TEXT DEFAULT '',
+            sumber TEXT NOT NULL DEFAULT 'kasir'
+        )");
 
         $cols = self::q('PRAGMA table_info(users)');
         $hasRole = false;

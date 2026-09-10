@@ -212,7 +212,8 @@ function wa_gateway_status_cached($force = false) {
     return $st;
 }
 
-// Ingatkan admin via Fonnte (jalur cadangan) bila gateway putus.
+// Ingatkan admin via antrean WA (tetap jalan walau gateway sedang putus,
+// karena cron akan mengirimnya begitu gateway connect lagi).
 // Dibatas: maks 1x per 30 menit, hanya bila wa_enabled=1 dan ada nomor admin.
 function wa_gateway_alert_admin($status) {
     if (!setting('wa_enabled')) {
@@ -229,9 +230,9 @@ function wa_gateway_alert_admin($status) {
     }
     set_setting('wa_gw_alert_at', (string)time());
     $msg = "⚠️ *WA GATEWAY PUTUS*\n\nGateway WhatsApp kasir status: *$status* pada " . date('d/m/Y H:i') . ".\n"
-        . "Notifikasi pelanggan sementara lewat jalur cadangan.\n\n"
+        . "Pesan pelanggan MENGANTRE dan akan terkirim otomatis setelah gateway connect.\n\n"
         . "Segera tautkan ulang: buka Kasir → *WA Gateway* → scan QR.\n\n— " . setting('nama_toko', 'PERCETAKAN RAINBOW');
-    wa_send_fonnte($admin, $msg);
+    wa_send($admin, $msg);
 }
 
 function wa_gateway_send($to, $message, $imageUrl = '', $caption = null) {
@@ -274,107 +275,67 @@ function wa_gateway_send($to, $message, $imageUrl = '', $caption = null) {
     return [false, 'gateway HTTP ' . $code . ($err !== '' ? ' ' . $err : ' ' . mb_substr((string)$res, 0, 80))];
 }
 
-function wa_send_fonnte($to, $message, $imageUrl = '') {
-    if (!setting('wa_enabled')) {
-        return false;
+// Panjang maksimum 1 pesan WhatsApp (±4000 char). Pesan pelanggan kita
+// biasanya < 1000 char; fungsi ini hanya pengaman agar pesan raksasa
+// tidak ditolak / memicu flag spam.
+function wa_potongan_pesan($message, $maks = 3500) {
+    $message = (string)$message;
+    if (function_exists('mb_strlen') && mb_strlen($message, 'UTF-8') > $maks) {
+        return mb_substr($message, 0, $maks, 'UTF-8') . "\n…(dipotong)";
     }
-    $provider = setting('wa_provider', 'fonnte');
-    if (($provider === 'meta' && !setting('wa_meta_token')) || ($provider !== 'meta' && !setting('wa_token'))) {
-        return false;
+    if (strlen($message) > $maks) {
+        return substr($message, 0, $maks) . "\n...(dipotong)";
     }
-    $to = preg_replace('/\D+/', '', (string)$to);
-    if ($to === '') {
-        return false;
-    }
-    if ($provider === 'wablas') {
-        $url = 'https://patp.wablas.com/api/send-message';
-        if (substr($to, 0, 1) === '0') {
-            $to = '62' . substr($to, 1);
-        }
-        $payload = json_encode(['phone' => $to, 'message' => $message, 'token' => setting('wa_token')]);
-        $headers = ['Content-Type: application/json'];
-    } elseif ($provider === 'meta') {
-        $phoneId = setting('wa_meta_phone_id', '');
-        $metaToken = setting('wa_meta_token', '');
-        if ($phoneId === '' || $metaToken === '') {
-            return false;
-        }
-        if (substr($to, 0, 1) === '0') {
-            $to = '62' . substr($to, 1);
-        }
-        $templateName = setting('wa_meta_template', 'kasir_notifikasi');
-        $components = [['type' => 'body', 'parameters' => [['type' => 'text', 'text' => (string)$message]]]];
-        $payload = json_encode([
-            'messaging_product' => 'whatsapp',
-            'to' => $to,
-            'type' => 'template',
-            'template' => [
-                'name' => $templateName,
-                'language' => ['code' => setting('wa_meta_lang', 'id')],
-                'components' => $components,
-            ],
-        ]);
-        $url = 'https://graph.facebook.com/v21.0/' . $phoneId . '/messages';
-        $headers = ['Content-Type: application/json', 'Authorization: Bearer ' . $metaToken];
-    } else {
-        $url = 'https://api.fonnte.com/send';
-        $body = ['target' => $to, 'message' => $message, 'countryCode' => '62'];
-        if ($imageUrl !== '') {
-            $body['url'] = $imageUrl;
-        }
-        $payload = json_encode($body);
-        $headers = ['Content-Type: application/json', 'Authorization: ' . setting('wa_token')];
-    }
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => $payload,
-        CURLOPT_HTTPHEADER => $headers,
-        CURLOPT_TIMEOUT => 8,
-    ]);
-    $res = curl_exec($ch);
-    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $err = curl_error($ch);
-    curl_close($ch);
-    $ok = false;
-    if ($err === '' && is_string($res) && $res !== '') {
-        $j = json_decode($res, true);
-        if (is_array($j)) {
-            if ($provider === 'meta') {
-                $ok = isset($j['messages'][0]['id'])
-                    || (isset($j['contacts'][0]['wa_id']) && $code < 300);
-            } else {
-                $ok = $j['status'] === true || $j['status'] === 'true' || $j['status'] === 1 || $j['status'] === '1';
-            }
-        }
-    }
-    if ($code !== 200 || !$ok) {
-        log_aktivitas('WA notif gagal', $provider . ' | code ' . $code . ' | ' . ($err !== '' ? $err : mb_substr((string)$res, 0, 120)));
-    }
-    return $ok;
+    return $message;
 }
 
-// Jalur utama kirim WA: gateway Baileys self-hosted dulu, fallback ke Fonnte/wablas/meta.
-// Urutan: gateway (bila wa_gw_enabled=1 & connected) -> provider lama -> gagal.
+// Normalisasi nomor ke format 62... (tanpa +, spasi, strip).
+function wa_norm_nomor($to) {
+    $d = preg_replace('/\D+/', '', (string)$to);
+    if ($d === '') {
+        return '';
+    }
+    if (substr($d, 0, 1) === '0') {
+        $d = '62' . substr($d, 1);
+    } elseif (substr($d, 0, 1) === '8') {
+        $d = '62' . $d;
+    }
+    return $d;
+}
+
+// Antrean pesan WA (anti-ban): tanpa provider pihak ke-3.
+// wa_send() HANYA menulis ke tabel wa_queue; pengiriman fisik dilakukan
+// cron-wa.php 1x/menit, max 1 pesan / 20 detik + retry 3x + gagal permanen.
+// Mengembalikan true bila berhasil masuk antrean.
 function wa_send($to, $message, $imageUrl = '') {
     if (!setting('wa_enabled')) {
         return false;
     }
-    if (setting('wa_gw_enabled', '1') === '1') {
-        $gw = wa_gateway_status();
-        if (!empty($gw['connected'])) {
-            [$ok, $why] = wa_gateway_send($to, $message, $imageUrl);
-            if ($ok) {
-                return true;
-            }
-            log_aktivitas('WA gateway gagal, fallback provider', $why);
-        } elseif (!empty($gw['ok'])) {
-            log_aktivitas('WA gateway belum connect, fallback provider', 'status ' . ($gw['status'] ?? '?'));
-        }
-        // bila gateway mati total (ok=false), langsung fallback tanpa log berisik
+    $to = wa_norm_nomor($to);
+    if ($to === '') {
+        return false;
     }
-    return wa_send_fonnte($to, $message, $imageUrl);
+    $message = wa_potongan_pesan($message);
+    try {
+        DB::run(
+            "INSERT INTO wa_queue (tujuan, pesan, image_url, status, percobaan, dibuat_pada) VALUES (?, ?, ?, 'tunggu', 0, ?)",
+            [$to, $message, (string)$imageUrl, date('Y-m-d H:i:s')]
+        );
+        return true;
+    } catch (Throwable $e) {
+        log_aktivitas('WA antre gagal', $e->getMessage());
+        return false;
+    }
+}
+
+// Jumlah pesan menunggu di antrean (untuk badge/menu).
+function wa_queue_tunggu() {
+    try {
+        $r = DB::one("SELECT COUNT(*) c FROM wa_queue WHERE status = 'tunggu'");
+        return $r ? (int)$r['c'] : 0;
+    } catch (Throwable $e) {
+        return 0;
+    }
 }
 
 function barcode_src($data) {

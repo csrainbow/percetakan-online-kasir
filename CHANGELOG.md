@@ -5,6 +5,14 @@ Semua perubahan penting untuk aplikasi **Kasir Rainbow** (folder `kasir/`).
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 
 ## [Unreleased] — 2026-09-10
+### Kasir — WA Gateway Baileys jadi satu-satunya penyedia (Fonnte pensiun)
+- **Fonnte dihapus total** dari kode (`wa_send_fonnte()` dihapus): akun Fonnte kena ban WhatsApp 2x, tidak dipakai lagi.
+- **Antrean WA send-hosted**: `wa_send()` kini **hanya menulis ke tabel `wa_queue`** (db.php: tabel baru `wa_queue` dengan status/percobaan/galat). Tidak ada lagi kirim langsung ke provider pihak ke-3 — anti-ban.
+- **`cron-wa.php` baru** (jalankan tiap 1 menit via cron): mengambil pesan `tunggu` dari antrean (max 5/run), kirim via **WA Gateway Baileys** (`wa_gateway_send()`), rate-limit **jeda 20 detik antar pesan**, retry maks 3x lalu status `gagal` + alasan tersimpan. **Pengaman**: bila gateway belum connect, cron tidak menyentuh antrean (pesan mengantre tanpa membakar percobaan, terkirim otomatis begitu gateway connect).
+- `wa-send.php` (kirim ulang nota manual): fallback Fonnte dihapus; sukses = masuk antrean, gagal = pesan galat tanpa provider luar.
+- Helper baru: `wa_potongan_pesan()` (pengaman pesan raksasa), `wa_norm_nomor()` (normalisasi ke 62…), `wa_queue_tunggu()` (jumlah antrean untuk badge).
+
+
 
 ### Kasir — Struk & Payment Point dipisah (berdiri sendiri)
 - **Halaman Payment Point** (`n.php/{ref}/{id}/pay/{token}`, template `nota-templates/pay.php`) = **satu-satunya halaman pembayaran**: ringkasan pesanan + **daftar produk yang belum dibayarkan** + **pilihan QRIS statis & Transfer Bank** + nilai harus-bayar (**sisa + kode unik**) + tombol **Konfirmasi via WhatsApp**.
