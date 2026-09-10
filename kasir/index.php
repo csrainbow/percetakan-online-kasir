@@ -3,7 +3,7 @@ require_once __DIR__ . '/config.php';
 require_login();
 
 $page = $_GET['p'] ?? 'dashboard';
-$pages = ['dashboard', 'penjualan', 'produk', 'pesanan', 'histori', 'piutang', 'rekap', 'laporan', 'pengaturan', 'log'];
+$pages = ['dashboard', 'penjualan', 'produk', 'pesanan', 'histori', 'piutang', 'rekap', 'laporan', 'pengaturan', 'wa-gateway', 'log'];
 if (!in_array($page, $pages)) {
     $page = 'dashboard';
 }

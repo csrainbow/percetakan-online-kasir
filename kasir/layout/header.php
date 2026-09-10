@@ -24,6 +24,7 @@ $page = $page ?? '';
         <a href="index.php?p=rekap" class="<?= $page === 'rekap' ? 'act' : '' ?>">Rekap</a>
         <a href="index.php?p=laporan" class="<?= $page === 'laporan' ? 'act' : '' ?>">Laporan</a>
         <a href="index.php?p=pengaturan" class="<?= $page === 'pengaturan' ? 'act' : '' ?>">Pengaturan</a>
+        <a href="index.php?p=wa-gateway" class="<?= $page === 'wa-gateway' ? 'act' : '' ?>">WA Gateway</a>
         <?php if (is_superadmin()): ?>
             <a href="index.php?p=log" class="<?= $page === 'log' ? 'act' : '' ?>">Aktivitas</a>
         <?php endif; ?>

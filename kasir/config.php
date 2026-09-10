@@ -162,7 +162,75 @@ function is_telat($ps) {
         && strtotime($ps['estimasi']) < time();
 }
 
-function wa_send($to, $message, $imageUrl = '') {
+function wa_gateway_status() {
+    $base = rtrim(setting('wa_gw_base', 'http://127.0.0.1:3001'), '/');
+    $st = ['ok' => false, 'status' => 'unconfigured', 'connected' => false, 'me' => null, 'hasQr' => false, 'base' => $base];
+    if ($base === '') {
+        return $st;
+    }
+    $ch = curl_init($base . '/status');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 5,
+    ]);
+    $res = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($code === 200 && is_string($res) && $res !== '') {
+        $j = json_decode($res, true);
+        if (is_array($j)) {
+            $st['ok'] = true;
+            $st['status'] = (string)($j['status'] ?? 'unknown');
+            $st['connected'] = !empty($j['connected']);
+            $st['me'] = $j['me'] ?? null;
+            $st['hasQr'] = !empty($j['hasQr']);
+            $st['raw'] = $j;
+        }
+    }
+    return $st;
+}
+
+function wa_gateway_send($to, $message, $imageUrl = '', $caption = null) {
+    $base = rtrim(setting('wa_gw_base', 'http://127.0.0.1:3001'), '/');
+    $key = setting('wa_gw_key', '');
+    if ($base === '') {
+        return [false, 'gateway belum dikonfigurasi'];
+    }
+    $to = preg_replace('/\D+/', '', (string)$to);
+    if ($to === '') {
+        return [false, 'nomor kosong'];
+    }
+    $body = ['to' => $to, 'message' => (string)$message];
+    if ($imageUrl !== '') {
+        $body['imageUrl'] = $imageUrl;
+        $body['caption'] = $caption === null ? (string)$message : (string)$caption;
+    }
+    $ch = curl_init($base . '/send');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($body),
+        CURLOPT_HTTPHEADER => array_merge(
+            ['Content-Type: application/json'],
+            $key !== '' ? ['X-Api-Key: ' . $key] : []
+        ),
+        CURLOPT_TIMEOUT => 15,
+    ]);
+    $res = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err = curl_error($ch);
+    curl_close($ch);
+    if ($err === '' && $code >= 200 && $code < 300 && is_string($res) && $res !== '') {
+        $j = json_decode($res, true);
+        if (is_array($j) && !empty($j['ok'])) {
+            return [true, ''];
+        }
+        return [false, 'gateway: ' . mb_substr((string)$res, 0, 120)];
+    }
+    return [false, 'gateway HTTP ' . $code . ($err !== '' ? ' ' . $err : ' ' . mb_substr((string)$res, 0, 80))];
+}
+
+function wa_send_fonnte($to, $message, $imageUrl = '') {
     if (!setting('wa_enabled')) {
         return false;
     }
@@ -241,6 +309,28 @@ function wa_send($to, $message, $imageUrl = '') {
         log_aktivitas('WA notif gagal', $provider . ' | code ' . $code . ' | ' . ($err !== '' ? $err : mb_substr((string)$res, 0, 120)));
     }
     return $ok;
+}
+
+// Jalur utama kirim WA: gateway Baileys self-hosted dulu, fallback ke Fonnte/wablas/meta.
+// Urutan: gateway (bila wa_gw_enabled=1 & connected) -> provider lama -> gagal.
+function wa_send($to, $message, $imageUrl = '') {
+    if (!setting('wa_enabled')) {
+        return false;
+    }
+    if (setting('wa_gw_enabled', '1') === '1') {
+        $gw = wa_gateway_status();
+        if (!empty($gw['connected'])) {
+            [$ok, $why] = wa_gateway_send($to, $message, $imageUrl);
+            if ($ok) {
+                return true;
+            }
+            log_aktivitas('WA gateway gagal, fallback provider', $why);
+        } elseif (!empty($gw['ok'])) {
+            log_aktivitas('WA gateway belum connect, fallback provider', 'status ' . ($gw['status'] ?? '?'));
+        }
+        // bila gateway mati total (ok=false), langsung fallback tanpa log berisik
+    }
+    return wa_send_fonnte($to, $message, $imageUrl);
 }
 
 function barcode_src($data) {
