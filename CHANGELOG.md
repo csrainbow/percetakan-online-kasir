@@ -4,6 +4,37 @@ Semua perubahan penting untuk aplikasi **Kasir Rainbow** (folder `kasir/`).
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 
+## [Unreleased] — 2026-09-10
+
+### Kasir — Struk & Payment Point dipisah (berdiri sendiri)
+- **Halaman Payment Point** (`n.php/{ref}/{id}/pay/{token}`, template `nota-templates/pay.php`) = **satu-satunya halaman pembayaran**: ringkasan pesanan + **daftar produk yang belum dibayarkan** + **pilihan QRIS statis & Transfer Bank** + nilai harus-bayar (**sisa + kode unik**) + tombol **Konfirmasi via WhatsApp**.
+- **Halaman Struk** (`.../struk/...`) = **murni bukti/struk**: panel transfer & QRIS statis **dihapus** dari struk; tidak ada lagi tombol "Bayar Online" generik — diganti badge **✅ LUNAS** bila sisa = 0, atau tombol **💳 Lanjut Bayar (Rp sisa)** yang mengarah ke Payment Point bila masih ada sisa (mis. DP).
+- **Aturan link WhatsApp** (`wa_pelanggan_msg` di `config.php`):
+  - `baru` (Belum Bayar) → link **Payment Point** + rincian bank + nilai = tagihan + kode unik.
+  - `dp` (masih ada sisa) → link **Payment Point** dengan nominal otomatis = **SISA + kode unik**.
+  - `lunas` / `selesai` / `batal` → link **Struk** (bukti lunas).
+- **Pengalihan otomatis** (`nota-publik.php`, status 302 ber-token):
+  - Buka STRUK/A5 tapi masih ada sisa → dialihkan ke **Payment Point**.
+  - Buka PAYMENT POINT tapi sudah lunas → dialihkan ke **Struk** (+ tombol **📄 Buka Halaman Struk** di halaman lunas).
+- **Kode Unik per pesanan** (3 digit, deterministik `nota_kode_unik()`): nilai bayar = **tagihan + kode unik** (es. `Rp 105.000` + `434` = `Rp 105.434`) agar pembayaran QRIS statis teridentifikasi.
+- File `nota-templates/transfer-options.php` tidak lagi di-include (panel lama pensiun); halaman A5 publik kini murni nota + tombol unduh PDF / konfirmasi WA.
+
+### Kasir — nota publik: Panel "Pilihan Transfer" (riwayat, sebelum dipisah)
+- **Nota publik (A5 & struk) kini tampil daftar pilihan transfer** di bawah nota, khusus untuk pelanggan: nilai tagihan, **QRIS statis** (`qris_image`) dan/atau **Transfer Bank** (`bank_nama` / `bank_rekening` / `bank_pemilik`).
+- **Kode Unik per pesanan** (3 sifer, deterministik dari `ref:id:NOTA_SECRET`): `nota_kode_unik()` di `config.php`. Nilai yang harus dibayarkan = **tagihan + kode unik** (es. `Rp 360.000` + `069` = `Rp 360.069`) sehingga toko bisa mengenali pembayaran via QRIS statis tanpa invoice ID.
+- Tombol **Salin** (kopier kode unik / nilai / no. rekening) + tombol **Konfirmasi via WhatsApp** (wa.me toko, pesan pre-fill dengan no. pesanan, nilai & kode unik).
+- Panel hanya tampil di tampilan publik (`$publik`) dan **tidak dicetak** (`@media print`), lokasi: `nota-templates/transfer-options.php` (include dari `a5.php` & `struk.php`).
+- Pesanan sudah **Lunas** → panel tampil catatan verde "sudah dibayar lunas" + kode unik referensi (nilai Rp 0).
+
+### Kasir — Payment Point (halaman pembayaran publik)
+- **Halaman baru `n.php/{ref}/{id}/pay/{token}`** dengan template `nota-templates/pay.php`: Payment Point lengkap per pesanan — ringkasan pesanan, **daftar produk yang belum dibayar**, sisa tagihan, dan **pilihan pembayaran**.
+- **Metode pembayaran** (tab interaktif):
+  - **🟢 QRIS** → tampil **QRIS statis** (`qris_image`) + **jumlah yang harus dibayar** (sisa + kode unik) + **kode unik** (tombol *Salin*).
+  - **🏦 Transfer Bank** → rekening (`bank_nama` / `bank_rekening` / `bank_pemilik`), jumlah harus-bayar + kode unik, tombol *Salin No. Rekening*.
+- Tombol **💬 Konfirmasi via WhatsApp** (pre-fill no. pesanan, nilai & kode unik) + tombol **Keluar**; halaman **mobile-first** dan tidak di-print.
+- **Tautan masuk**: tombol **💳 Bayar Online** di toolbar struk publik (bila sisa &gt; 0), tautan **Buka Payment Point** di panel transfer, dan link `pay` disisipkan di pesan WhatsApp **baru/DP** (`wa_pelanggan_msg`).
+- Route `n.php` & `nota-publik.php` menerima `t=pay`.
+
 ## [Unreleased] — 2026-09-09
 
 ### Game Top-Up (folder `game-topup/`) — akses via cslink.web.id

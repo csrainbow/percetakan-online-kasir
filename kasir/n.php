@@ -17,7 +17,7 @@ if ($id <= 0 || $k !== nota_token($ref, $id)) {
     http_response_code(404);
     exit('Nota tidak ditemukan.');
 }
-if (!in_array($t, ['struk', 'a5'])) {
+if (!in_array($t, ['struk', 'a5', 'pay'])) {
     http_response_code(404);
     exit('Nota tidak ditemukan.');
 }
