@@ -1,6 +1,6 @@
 <?php
 session_start();
-date_default_timezone_set('Asia/Jakarta');
+date_default_timezone_set('Asia/Makassar');
 
 define('APP_NAME', 'Kasir Percetakan');
 define('DB_PATH', __DIR__ . '/data/kasir.db');
@@ -11,7 +11,7 @@ function nota_token($ref, $id) {
 }
 
 // Kode unik 3-sifer per nota (pesanan/penjualan) untuk mengenali pembayaran
-// saat pelanggan transfer via QRIS statis / bank. Nilai bayar = tagihan + kode unik.
+// (atau dicadangkan utk perluasan; saat ini tidak dipakai).
 function nota_kode_unik($ref, $id) {
     $h = hash('sha256', 'kode-unik:' . $ref . ':' . (int)$id . ':' . NOTA_SECRET);
     return str_pad((int)hexdec(substr($h, 0, 6)) % 1000, 3, '0', STR_PAD_LEFT);
@@ -353,9 +353,9 @@ function wa_pelanggan_msg($ps, $event, $extra = '') {
     // ------------------------------------------------------------------
     //  ATURAN LINK WHATSAPP (struk vs payment point berdiri sendiri):
     //  - Belum Bayar ('baru')            → halaman PAYMENT POINT
-    //    (rekening + QRIS statis + ringkasan + nilai = sisa + kode unik)
+    //    (rekening + QRIS statis + ringkasan + nilai = sisa)
     //  - DP ('dp', masih ada sisa)       → halaman PAYMENT POINT
-    //    (nominal otomatis = SISA pembayaran + kode unik)
+    //    (nominal otomatis = SISA pembayaran)
     //  - Lunas ('lunas')                 → halaman STRUK (bukti lunas)
     //  - Selesai ('selesai') / Batal     → halaman STRUK
     // ------------------------------------------------------------------
@@ -367,15 +367,14 @@ function wa_pelanggan_msg($ps, $event, $extra = '') {
     $link = nota_link('pesanan', (int)$ps['id'], 'struk');
     $linkNota = nota_link('pesanan', (int)$ps['id']);
     $linkBayar = nota_link('pesanan', (int)$ps['id'], 'pay');
-    $kodeUnik = nota_kode_unik('pesanan', (int)$ps['id']);
-    $bayarSisa = max(0, $sisaVal) > 0 ? (float)$sisaVal + (float)$kodeUnik : 0.0;
+    $bayarSisa = max(0, $sisaVal);
     $waAdmin = setting('wa_admin_number', '') !== '' ? setting('wa_admin_number') : setting('telp');
     $bankNama = setting('bank_nama', 'Bank Central Asia');
     $bankRek = setting('bank_rekening', '7935405254');
     $bankPemilik = setting('bank_pemilik', 'Nur Ismani');
     $msgs = [
-        'baru'   => "🖨️ *PESANAN DITERIMA*\n\nHalo $name, pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nStatus pesanan Anda: *BELUM LUNAS* — silakan segera melakukan pembayaran:\n\n💳 *BAYAR ONLINE (Payment Point):*\n$linkBayar\n\n📱 *QRIS & TRANSFER BANK*\n🏦 Nama Bank: $bankNama\n💳 No. Rekening: $bankRek\n👤 Atas Nama: $bankPemilik\n\n💡 *Nilai bayar:* " . rp($bayarSisa) . " = Tagihan " . rp($sisaVal) . " + Kode Unik $kodeUnik\nCantumkan kode unik *$kodeUnik* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin\n\nTerima kasih 🙏",
-        'dp'     => "💰 *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sebesar " . rp($dpVal) . " sudah kami terima.\n\nSisa tagihan: " . rp($sisaVal) . " — mohon segera dilunasi.\n\n💳 *SISA BAYAR (Payment Point):*\n$linkBayar\n\n📱 *QRIS & TRANSFER BANK*\n🏦 Nama Bank: $bankNama\n💳 No. Rekening: $bankRek\n👤 Atas Nama: $bankPemilik\n\n💡 *Nilai bayar:* " . rp($bayarSisa) . " = Tagihan " . rp($sisaVal) . " + Kode Unik $kodeUnik\nCantumkan kode unik *$kodeUnik* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin\n\nTerima kasih 🙏",
+        'baru'   => "ðŸ–¨ï¸ *PESANAN DITERIMA*\n\nHalo $name, pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nStatus pesanan Anda: *BELUM LUNAS*\n\nðŸ’³ *Silakan bayar melalui Payment Point berikut:*\n$linkBayar\n\nðŸ’¡ *Nilai bayar:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin\n\nTerima kasih ðŸ™",
+        'dp'     => "ðŸ’° *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sebesar " . rp($dpVal) . " sudah kami terima.\n\nSisa tagihan: " . rp($sisaVal) . "\n\nðŸ’³ *Silakan lunasi melalui Payment Point berikut:*\n$linkBayar\n\nðŸ’¡ *Sisa tagihan:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin\n\nTerima kasih ðŸ™",
         'lunas'  => "âœ… *PEMBAYARAN LUNAS*\n\nHalo $name, pembayaran pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nPesanan akan segera kami proses.\n\nðŸ“„ *Struk:* $link\n\nTerima kasih ðŸ™",
         'selesai' => "ðŸŽ‰ *PESANAN SELESAI*\n\nHalo $name, pesanan *$code* sudah selesai dan siap untuk diambil / dikirim.\n\nBerikut struk dengan *barcode nota A5* untuk diunduh:\n$link\n\nTerima kasih sudah mempercayakan kami ðŸ™",
         'batal'  => "â„¹ï¸ *PESANAN DIBATALKAN*\n\nHalo $name, pesanan *$code* telah dibatalkan. Jika ada kendala, silakan hubungi kami kembali.\n\nTerima kasih ðŸ™",
@@ -387,7 +386,7 @@ function wa_pelanggan_msg($ps, $event, $extra = '') {
     if ($extra !== '') {
         $message .= "\n\n" . $extra;
     }
-    $message .= "\n\nâ€” " . setting('nama_toko', 'Percetakan Ikky Share');
+    $message .= "\n\nâ€” " . setting('nama_toko', 'PERCETAKAN RAINBOW');
     return $message;
 }
 

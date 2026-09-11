@@ -26,22 +26,30 @@ $scP = scope_sql('p');
 $scPe = scope_sql('pe');
 $sumPenjualan = DB::one("SELECT COALESCE(SUM(p.total),0) total, COUNT(*) c FROM penjualan p WHERE date(p.tgl) BETWEEN ? AND ? AND $scP$extraP", [$from, $to]);
 $sumPesanan = DB::one("SELECT COALESCE(SUM(pe.total),0) total, COUNT(*) c FROM pesanan pe WHERE date(pe.tgl) BETWEEN ? AND ? AND pe.status != 'Batal' AND pe.deleted = 0 AND " . scope_sql('pe') . "$extraPe", [$from, $to]);
-$sumTerima = DB::one("SELECT COALESCE(SUM(pp.jumlah),0) total, COUNT(*) c FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) BETWEEN ? AND ? AND $scPay$extraPay", [$from, $to]);
+$sumTerima = DB::one("SELECT COALESCE(SUM(pp.jumlah),0) total, COUNT(*) c FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) BETWEEN ? AND ? AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%') AND $scPay$extraPay", [$from, $to]);
 $piutangBerjalan = DB::one("SELECT COALESCE(SUM(sisa),0) total, COUNT(*) c FROM pesanan WHERE status = 'DP' AND deleted = 0 AND " . scope_sql('pesanan'));
 $perHari = DB::q("SELECT date(p.tgl) d, COUNT(*) c, COALESCE(SUM(p.total),0) t FROM penjualan p WHERE date(p.tgl) BETWEEN ? AND ? AND $scP$extraP GROUP BY date(p.tgl) ORDER BY d", [$from, $to]);
 $perHariPe = DB::q("SELECT date(pe.tgl) d, COUNT(*) c, COALESCE(SUM(pe.total),0) t FROM pesanan pe WHERE date(pe.tgl) BETWEEN ? AND ? AND pe.status != 'Batal' AND pe.deleted = 0 AND " . scope_sql('pe') . "$extraPe GROUP BY date(pe.tgl)", [$from, $to]);
+$perHariPay = DB::q("SELECT date(pp.tgl) d, COUNT(*) c, COALESCE(SUM(pp.jumlah),0) t FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) BETWEEN ? AND ? AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%') AND $scPay$extraPay GROUP BY date(pp.tgl) ORDER BY d", [$from, $to]);
 $perHariMap = [];
 foreach ($perHari as $d) {
-    $perHariMap[$d['d']] = ['d' => $d['d'], 'kasir' => (int)$d['c'], 'kasir_t' => (float)$d['t'], 'pesanan' => 0, 'pesanan_t' => 0.0];
+    $perHariMap[$d['d']] = ['d' => $d['d'], 'kasir' => (int)$d['c'], 'kasir_t' => (float)$d['t'], 'pesanan' => 0, 'pesanan_t' => 0.0, 'bayar' => 0, 'bayar_t' => 0.0];
 }
 foreach ($perHariPe as $d) {
     if (!isset($perHariMap[$d['d']])) {
-        $perHariMap[$d['d']] = ['d' => $d['d'], 'kasir' => 0, 'kasir_t' => 0.0, 'pesanan' => 0, 'pesanan_t' => 0.0];
+        $perHariMap[$d['d']] = ['d' => $d['d'], 'kasir' => 0, 'kasir_t' => 0.0, 'pesanan' => 0, 'pesanan_t' => 0.0, 'bayar' => 0, 'bayar_t' => 0.0];
     }
     $perHariMap[$d['d']]['pesanan'] = (int)$d['c'];
     $perHariMap[$d['d']]['pesanan_t'] = (float)$d['t'];
 }
 ksort($perHariMap);
+foreach ($perHariPay as $d) {
+    if (!isset($perHariMap[$d['d']])) {
+        $perHariMap[$d['d']] = ['d' => $d['d'], 'kasir' => 0, 'kasir_t' => 0.0, 'pesanan' => 0, 'pesanan_t' => 0.0, 'bayar' => 0, 'bayar_t' => 0.0];
+    }
+    $perHariMap[$d['d']]['bayar'] = (int)$d['c'];
+    $perHariMap[$d['d']]['bayar_t'] = (float)$d['t'];
+}
 $detail = DB::q("SELECT p.id, p.no_invoice, p.tgl, p.metode, p.total, p.bayar, p.kembalian, p.keterangan, u.username
                  FROM penjualan p LEFT JOIN users u ON u.id = p.user_id
                  WHERE date(p.tgl) BETWEEN ? AND ? AND $scP$extraP ORDER BY p.id DESC", [$from, $to]);
@@ -71,8 +79,8 @@ uasort($perProdukMap, function ($a, $b) {
 });
 $terimaDetail = DB::q("SELECT pp.tgl, pp.jumlah, pp.metode, pe.no_pesanan, pe.pelanggan
                        FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
-                       WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) BETWEEN ? AND ? AND $scPay$extraPay ORDER BY pp.id DESC", [$from, $to]);
-$pendapatan = (float)$sumPenjualan['total'] + (float)$sumPesanan['total'];
+                       WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) BETWEEN ? AND ? AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%') AND $scPay$extraPay ORDER BY pp.id DESC", [$from, $to]);
+$pendapatan = (float)$sumPenjualan['total'] + (float)$sumTerima['total'];
 $hppKasir = DB::one("SELECT COALESCE(SUM(pr.harga_beli * i.qty),0) h
                 FROM penjualan_item i
                 JOIN penjualan p ON p.id = i.penjualan_id
@@ -121,7 +129,7 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
         fputcsv($out, $fields, ',', '"', '');
     };
     fputs($out, "\xEF\xBB\xBF");
-    $csvf( ['Penjualan', $from . ' s/d ' . $to]);
+    $csvf( ['Laporan ' . $from . ' s/d ' . $to]);
     $csvf( ['No', 'Invoice', 'Tanggal', 'Metode', 'Total', 'Bayar', 'Kembali', 'Kasir']);
     foreach ($detail as $i => $d) {
         $csvf( [$i + 1, $d['no_invoice'], $d['tgl'], $d['metode'], $d['total'], $d['bayar'], $d['kembalian'], $d['username']]);
@@ -136,19 +144,23 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
     $csvf( []);
     $csvf( ['Produk Terjual']);
     $csvf( ['No', 'Nama', 'Qty', 'Total']);
-    foreach ($perProdukMap as $idx => $p) {
-        $csvf( [$idx + 1, $p['nama'], $p['qty'], $p['total']]);
+    $i = 0;
+    foreach ($perProdukMap as $p) {
+        $i++;
+        $csvf( [$i, $p['nama'], $p['qty'], $p['total']]);
     }
     $csvf( []);
     $csvf( ['Laba & Rugi', $from . ' s/d ' . $to]);
-    $csvf( ['Pendapatan', number_format($pendapatan, 0, ',', '.')]);
+    $csvf( ['Pendapatan (kas masuk)', number_format($pendapatan, 0, ',', '.')]);
     $csvf( ['HPP (harga pokok)', number_format($hpp, 0, ',', '.')]);
     $csvf( ['Laba Kotor', number_format($labaKotor, 0, ',', '.')]);
     $csvf( []);
     $csvf( ['Laba per Produk']);
     $csvf( ['No', 'Nama', 'Qty', 'Omzet', 'HPP', 'Laba']);
-    foreach ($labaProduk as $idx => $lp) {
-        $csvf( [$idx + 1, $lp['nama'], $lp['qty'], $lp['omzet'], $lp['hpp'], (float)$lp['omzet'] - (float)$lp['hpp']]);
+    $i = 0;
+    foreach ($labaProduk as $lp) {
+        $i++;
+        $csvf( [$i, $lp['nama'], $lp['qty'], $lp['omzet'], $lp['hpp'], (float)$lp['omzet'] - (float)$lp['hpp']]);
     }
     fclose($out);
     exit;
@@ -192,12 +204,12 @@ require __DIR__ . '/../layout/header.php';
         <div class="card-sub"><?= (int)$sumPenjualan['c'] ?> transaksi</div>
     </div>
     <div class="card">
-        <div class="card-label">Pesanan Baru</div>
+        <div class="card-label">Pesanan Dibuat</div>
         <div class="card-value"><?= rp($sumPesanan['total']) ?></div>
-        <div class="card-sub"><?= (int)$sumPesanan['c'] ?> pesanan dibuat di rentang ini</div>
+        <div class="card-sub"><?= (int)$sumPesanan['c'] ?> pesanan baru (volume)</div>
     </div>
     <div class="card">
-        <div class="card-label">Pembayaran Pesanan Masuk</div>
+        <div class="card-label">Kas Masuk Pesanan</div>
         <div class="card-value"><?= rp($sumTerima['total']) ?></div>
         <div class="card-sub"><?= (int)$sumTerima['c'] ?> pembayaran</div>
     </div>
@@ -212,9 +224,9 @@ require __DIR__ . '/../layout/header.php';
     <div class="panel">
         <h3>Per Hari</h3>
         <table>
-            <thead><tr><th>Tanggal</th><th>Kasir</th><th>Pesanan</th><th>Total Kasir</th><th>Total Pesanan</th></tr></thead>
+            <thead><tr><th>Tanggal</th><th>Kasir</th><th>Pesanan</th><th>Total Kasir</th><th>Total Pesanan</th><th>Kas Masuk</th></tr></thead>
             <tbody>
-            <?php if (!$perHariMap): ?><tr><td colspan="5" class="muted">Tidak ada data.</td></tr><?php endif; ?>
+            <?php if (!$perHariMap): ?><tr><td colspan="6" class="muted">Tidak ada data.</td></tr><?php endif; ?>
             <?php foreach ($perHariMap as $d): ?>
                 <tr>
                     <td><?= tglOnly($d['d'] . ' 00:00:00') ?></td>
@@ -222,6 +234,7 @@ require __DIR__ . '/../layout/header.php';
                     <td><?= (int)$d['pesanan'] ?></td>
                     <td><?= rp($d['kasir_t']) ?></td>
                     <td><?= rp($d['pesanan_t']) ?></td>
+                    <td><?= rp($d['bayar_t']) ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
@@ -284,7 +297,7 @@ require __DIR__ . '/../layout/header.php';
     <table>
         <thead><tr><th>No Pesanan</th><th>Tanggal</th><th>Pelanggan</th><th>Total</th><th>Status</th></tr></thead>
         <tbody>
-        <?php if (!$pesananDetail): ?><tr><td colspan="5" class="muted">Tidak ada data.</td></tr><?php endif; ?>
+        <?php if (!$pesananDetail): ?><tr><td colspan="6" class="muted">Tidak ada data.</td></tr><?php endif; ?>
         <?php foreach ($pesananDetail as $pd): ?>
             <tr>
                 <td><?= e($pd['no_pesanan']) ?></td>
@@ -304,7 +317,7 @@ require __DIR__ . '/../layout/header.php';
         <div class="card">
             <div class="card-label">Pendapatan</div>
             <div class="card-value"><?= rp($pendapatan) ?></div>
-            <div class="card-sub">Penjualan kasir + total pesanan baru</div>
+            <div class="card-sub">Penjualan kasir + kas masuk dari pesanan</div>
         </div>
         <div class="card">
             <div class="card-label">HPP (Harga Pokok)</div>
@@ -320,7 +333,7 @@ require __DIR__ . '/../layout/header.php';
     <table>
         <thead><tr><th>Produk</th><th>Qty</th><th>Omzet</th><th>HPP</th><th>Laba</th></tr></thead>
         <tbody>
-        <?php if (!$labaProduk): ?><tr><td colspan="5" class="muted">Tidak ada data.</td></tr><?php endif; ?>
+        <?php if (!$labaProduk): ?><tr><td colspan="6" class="muted">Tidak ada data.</td></tr><?php endif; ?>
         <?php foreach ($labaProduk as $lp): ?>
             <tr>
                 <td><?= e($lp['nama']) ?></td>
@@ -332,7 +345,7 @@ require __DIR__ . '/../layout/header.php';
         <?php endforeach; ?>
         </tbody>
     </table>
-    <p class="muted kecil">Catatan: HPP dihitung dari harga beli produk (transaksi kasir + item pesanan baru, tidak termasuk pesanan Batal). Pendapatan = nilai kasir + total pesanan baru; pembayaran pesanan yang masuk otomatis mengurangi piutang dan tidak dihitung ganda.</p>
+    <p class="muted kecil">Catatan: Pendapatan menggunakan basis kas (uang benar-benar masuk): penjualan kasir + pembayaran pesanan diterima (tidak termasuk pembayaran via kasir agar tidak double count). HPP dihitung dari harga beli produk terjual. Pesanan Dibuat menunjukkan volume order, bukan pendapatan.</p>
 </div>
 
 <div class="panel">
@@ -340,7 +353,7 @@ require __DIR__ . '/../layout/header.php';
     <table>
         <thead><tr><th>Tanggal</th><th>No Pesanan</th><th>Pelanggan</th><th>Jumlah</th><th>Metode</th></tr></thead>
         <tbody>
-        <?php if (!$terimaDetail): ?><tr><td colspan="5" class="muted">Tidak ada data.</td></tr><?php endif; ?>
+        <?php if (!$terimaDetail): ?><tr><td colspan="6" class="muted">Tidak ada data.</td></tr><?php endif; ?>
         <?php foreach ($terimaDetail as $p): ?>
             <tr>
                 <td><?= tgl($p['tgl']) ?></td>

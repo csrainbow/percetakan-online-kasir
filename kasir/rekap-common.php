@@ -20,10 +20,10 @@ function rekap_data($tgl, $userF = 0) {
                         WHERE date(p.tgl) = ? AND " . scope_sql('p') . "$extraP ORDER BY p.id", [$tgl]);
     $pembayaran = DB::q("SELECT pp.tgl, pp.jumlah, pp.metode, pe.no_pesanan, pe.pelanggan
                          FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
-                         WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) = ? AND $scPay$extraPay ORDER BY pp.id", [$tgl]);
+                         WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) = ? AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%') AND $scPay$extraPay ORDER BY pp.id", [$tgl]);
     $sumPembayaran = DB::one("SELECT COALESCE(SUM(pp.jumlah),0) total, COUNT(*) c FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
-                              WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) = ? AND $scPay$extraPay", [$tgl]);
-    $terimaKasir = DB::one("SELECT COALESCE(SUM(pp.jumlah),0) t FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
+                              WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) = ? AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%') AND $scPay$extraPay", [$tgl]);
+    $terimaKasir = DB::one("SELECT COALESCE(SUM(pp.jumlah),0) t, COUNT(*) c FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
                             WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) = ?
                             AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%') AND $scPay$extraPay", [$tgl]);
     $hpp = DB::one("SELECT COALESCE(SUM(pr.harga_beli * i.qty),0) h

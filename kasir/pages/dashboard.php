@@ -65,8 +65,9 @@ $sc = scope_sql('p');
 $hariIni = DB::one("SELECT COALESCE(SUM(total),0) total, SUM(c) c FROM (
     SELECT p.total AS total, 1 AS c FROM penjualan p WHERE date(p.tgl) = date('now','localtime') AND $sc
     UNION ALL
-    SELECT pe.total AS total, 1 AS c FROM pesanan pe
-    WHERE date(pe.tgl) = date('now','localtime') AND pe.status != 'Batal' AND pe.deleted = 0 AND " . scope_sql('pe') . "
+    SELECT pp.jumlah AS total, 1 AS c FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
+    WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) = date('now','localtime')
+    AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%') AND " . scope_sql('pe') . "
 )");
 $piutang = DB::one("SELECT COALESCE(SUM(pe.sisa),0) sisa, COUNT(*) c FROM pesanan pe WHERE pe.status = 'DP' AND pe.deleted = 0 AND " . scope_sql('pe'));
 $pesananAktif = DB::one("SELECT COUNT(*) c FROM pesanan pe WHERE pe.status IN ('DP','Lunas') AND pe.deleted = 0 AND " . scope_sql('pe'));
@@ -82,9 +83,10 @@ $gab7 = [];
 foreach ($penjualan7 as $r) {
     $gab7[$r['d']] = ['d' => $r['d'], 'kasir' => (int)$r['c'], 'pesanan' => 0, 't' => (float)$r['t']];
 }
-$pesanan7 = DB::q("SELECT date(pe.tgl) d, COUNT(*) c, COALESCE(SUM(pe.total),0) t FROM pesanan pe
-                   WHERE date(pe.tgl) >= date('now','localtime','-6 days') AND pe.status != 'Batal' AND pe.deleted = 0 AND " . scope_sql('pe') . "
-                   GROUP BY date(pe.tgl)");
+$pesanan7 = DB::q("SELECT date(pp.tgl) d, COUNT(*) c, COALESCE(SUM(pp.jumlah),0) t FROM pembayaran pp JOIN pesanan pe ON pe.id = pp.ref_id
+                   WHERE pp.ref_type = 'pesanan' AND date(pp.tgl) >= date('now','localtime','-6 days')
+                   AND (pp.keterangan IS NULL OR pp.keterangan NOT LIKE '%via kasir%') AND " . scope_sql('pe') . "
+                   GROUP BY date(pp.tgl)");
 foreach ($pesanan7 as $r) {
     if (!isset($gab7[$r['d']])) {
         $gab7[$r['d']] = ['d' => $r['d'], 'kasir' => 0, 'pesanan' => 0, 't' => 0.0];
@@ -135,7 +137,7 @@ require __DIR__ . '/../layout/header.php';
 
 <div class="cards">
     <div class="card">
-        <div class="card-label">Penjualan Hari Ini</div>
+        <div class="card-label">Kas Masuk Hari Ini</div>
         <div class="card-value"><?= rp($hariIni['total']) ?></div>
         <div class="card-sub"><?= (int)$hariIni['c'] ?> transaksi</div>
     </div>
@@ -294,7 +296,7 @@ require __DIR__ . '/../layout/header.php';
 <div class="panel">
     <h3>Transaksi 7 Hari Terakhir</h3>
     <table id="tabel" class="filterable">
-        <thead><tr><th data-k="Tanggal">Tanggal</th><th data-k="Kasir">Kasir</th><th data-k="Pesanan">Pesanan</th><th data-k="Total">Total</th></tr></thead>
+        <thead><tr><th data-k="Tanggal">Tanggal</th><th data-k="Kasir">Kasir</th><th data-k="Bayaran">Bayaran</th><th data-k="Total">Total</th></tr></thead>
         <tbody>
         <?php if (!$aktivitas7): ?>
             <tr><td colspan="4" class="muted">Belum ada data.</td></tr>

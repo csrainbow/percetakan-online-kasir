@@ -1,6 +1,6 @@
 <?php
 // Halaman manajemen WA Gateway (Baileys self-hosted). Superadmin only.
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../config.php';
 require_login();
 if (!is_superadmin()) {
     flash_set('error', 'Hanya super admin.');

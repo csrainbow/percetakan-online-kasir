@@ -5,17 +5,16 @@
 //  - Ringkasan pesanan (produk yang belum dibayarkan)
 //  - Pilihan metode pembayaran: QRIS statis & Transfer Bank
 //  - Apabila costumer memilih QRIS → tampil QRIS statis + jumlah yang harus
-//    dibayar (tagihan + kode unik) + kode unik
+//    dibayar (tagihan).
 // ============================================================================
 $ppRef = $ref ?? 'pesanan';
 $ppId  = (int)$id;
-$ppKode = nota_kode_unik($ppRef, $ppId);
 if ($ppRef === 'penjualan') {
     $ppSisa = ((string)($ps['status'] ?? '') === 'Menunggu QRIS') ? max(0, (float)$ps['total']) : 0.0;
 } else {
     $ppSisa = max(0, (float)($ps['sisa'] ?? 0));
 }
-$ppTotal       = $ppSisa > 0 ? $ppSisa + (float)$ppKode : 0.0;
+$ppTotal       = $ppSisa;
 $ppQris        = setting('qris_image');
 $ppBankNama    = setting('bank_nama', '');
 $ppBankRek     = setting('bank_rekening', '');
@@ -26,7 +25,7 @@ if ($ppTelp !== '') {
     $ppWaMsg = 'Halo ' . setting('nama_toko', 'Percetakan Rainbow') . ', saya ' . $ps['pelanggan']
         . '. Saya sudah membayar pesanan ' . $ps['no_pesanan'] . ' sebesar '
         . rp($ppTotal > 0 ? $ppTotal : $ps['total'])
-        . ($ppKode !== '' ? ' (kode unik ' . $ppKode . ').' : '.')
+        . '.'
         . ' Mohon konfirmasi pembayaran.';
     $ppWa = wa_href($ppTelp, $ppWaMsg);
 }
@@ -75,9 +74,6 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
 .pp-amount { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 4px; }
 .pp-amount .lb { font-size:12px; color:#475569; }
 .pp-amount .val { font-size:22px; font-weight:800; color:#fff; background:#0f172a; padding:4px 16px; border-radius:8px; }
-.pp-kode { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0 4px; }
-.pp-kode .lb { font-size:11px; color:#475569; text-transform:uppercase; letter-spacing:.4px; }
-.pp-kode .code { font-size:26px; font-weight:900; background:#facc15; color:#0f172a; padding:4px 16px; border-radius:10px; }
 .pp-btn { padding:8px 14px; border:1px solid #0f172a; border-radius:8px; background:#0f172a; color:#fff; cursor:pointer; font-size:12px; }
 .pp-note { margin:6px 0; font-size:12px; color:#475569; line-height:1.55; }
 .pp-wa { display:block; width:100%; text-align:center; background:#25D366; color:#fff; padding:12px 16px; border-radius:10px; text-decoration:none; font-size:14px; font-weight:700; }
@@ -158,19 +154,14 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
                 <span class="lb">Total yang harus dibayar</span>
                 <span class="val"><?= rp($ppTotal) ?></span>
             </div>
-            <div class="pp-kode">
-                <span class="lb">Kode Unik</span>
-                <span class="code" id="ppKodeQ"><?= e($ppKode) ?></span>
-                <button type="button" class="pp-btn" onclick="ppSalin(this,'<?= e($ppKode) ?>')">Salin Kode</button>
-            </div>
-            <p class="pp-note">Nilai <b><?= rp($ppTotal) ?></b> = Tagihan <b><?= rp($ppSisa) ?></b> + Kode Unik <b><?= e($ppKode) ?></b>.</p>
+            <p class="pp-note">Nilai yang harus dibayar: <b><?= rp($ppTotal) ?></b>.</p>
             <button type="button" class="pp-btn" onclick="ppSalin(this,<?= (int)$ppTotal ?>)">Salin Nilai</button>
         </div>
         <?php endif; ?>
 
         <?php if ($ppBankRek): ?>
         <div id="ppBankPanel" class="<?= $ppQris ? '' : 'act' ?>">
-            <p class="pp-note">Transfer ke bank di bawah, lalu cantumkan <b>kode unik</b> pada keterangan/berita transfer agar pembayaran mudah direkognisi. Pastikan nomor rekening dicek ulang sebelum transfer.</p>
+            <p class="pp-note">Transfer ke rekening di bawah. Pastikan nomor rekening dicek ulang sebelum transfer.</p>
             <div class="pp-meta" style="grid-template-columns:auto 1fr;">
                 <span>Bank</span><b><?= e($ppBankNama ?: '-') ?></b>
                 <span>No. Rekening</span><b><?= e($ppBankRek) ?></b>
@@ -180,12 +171,6 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
                 <span class="lb">Total yang harus dibayar</span>
                 <span class="val"><?= rp($ppTotal) ?></span>
             </div>
-            <div class="pp-kode">
-                <span class="lb">Kode Unik</span>
-                <span class="code" id="ppKodeB"><?= e($ppKode) ?></span>
-                <button type="button" class="pp-btn" onclick="ppSalin(this,'<?= e($ppKode) ?>')">Salin Kode</button>
-            </div>
-            <p class="pp-note">Cantumkan kode unik <b><?= e($ppKode) ?></b> pada keterangan/berita transfer agar pembayaran mudah direkognisi.</p>
             <button type="button" class="pp-btn" onclick="ppSalin(this,'<?= e($ppBankRek) ?>')">Salin No. Rekening</button>
         </div>
         <?php endif; ?>
@@ -205,7 +190,7 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
     <?php else: ?>
     <div class="pp-sec">
         <h3>💳 Pembayaran</h3>
-        <p class="pp-lunas">✅ Pesanan <b><?= e($ps['no_pesanan']) ?></b> sudah dibayar lunas — tidak ada sisa tagihan. Kode unik referensi: <b><?= e($ppKode) ?></b></p>
+        <p class="pp-lunas">✅ Pesanan <b><?= e($ps['no_pesanan']) ?></b> sudah dibayar lunas — tidak ada sisa tagihan. </p>
         <a class="pp-wa" style="background:#0f172a" href="<?= e($ppStrukUrl) ?>">📄 Buka Halaman Struk</a>
     </div>
     <div class="pp-sec pp-no-print">

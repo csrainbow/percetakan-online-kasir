@@ -58,6 +58,51 @@ body {
     padding: 0 10px;
 }
 
+.pp-wrap { position: relative; display: flex; align-items: center; }
+.pp-wrap .pp-toggle { cursor: pointer; }
+.pp-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 320px;
+    max-height: 420px;
+    overflow-y: auto;
+    background: #fff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    z-index: 60;
+    padding: 10px;
+}
+.pp-panel.open { display: block; }
+.pp-panel .pp-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+.pp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 4px;
+    border-top: 1px solid #f1f5f9;
+}
+.pp-row:first-of-type { border-top: 0; }
+.pp-info { display: flex; flex-direction: column; min-width: 0; }
+.pp-code { font-weight: 700; font-size: 13px; }
+.pp-meta { font-size: 12px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.pp-actions .btn { font-size: 12px; padding: 4px 8px; }
+.btn-pp { background: #16a34a; }
+.btn-pp:hover { background: #15803d; }
+.pp-empty { font-size: 13px; color: #94a3b8; padding: 8px 4px; }
+
 .wrap {
     max-width: 1100px;
     margin: 0 auto;
@@ -390,8 +435,9 @@ label { display: block; margin-bottom: 10px; font-weight: 500; font-size: 13px; 
     max-width: 380px;
 }
 
-.login-box h1 { margin: 0 0 4px; font-size: 22px; }
-.login-box .muted { margin: 0 0 18px; }
+.login-box h1 { margin: 0 0 4px; font-size: 22px; text-align: center; }
+.login-box .muted { margin: 0 0 18px; text-align: center; }
+.login-box .login-logo { display: block; max-width: 80px; max-height: 80px; margin: 0 auto 12px; }
 
 .qris-preview { max-width: 200px; display: block; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 8px; }
 

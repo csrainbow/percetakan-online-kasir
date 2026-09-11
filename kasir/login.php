@@ -29,13 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Login - <?= e(APP_NAME) ?></title>
-<link rel="stylesheet" href="assets/style.css">
+<title>Login - KASIR RAINBOW PRINTING</title>
+<link rel="stylesheet" href="assets/style.css?v=<?= filemtime(__DIR__ . '/assets/style.css') ?>">
 </head>
 <body class="login-body">
 <div class="login-box">
-    <h1><?= e(setting('nama_toko', APP_NAME)) ?></h1>
-    <p class="muted">Kasir <?= e(APP_NAME) ?></p>
+    <img src="assets/logo-login.png" alt="Logo Rainbow Printing" class="login-logo">
+    <h1>KASIR RAINBOW PRINTING</h1>
+    <p class="muted">Sistem Kasir Percetakan</p>
     <?php if ($err): ?>
         <div class="flash error"><?= e($err) ?></div>
     <?php endif; ?>

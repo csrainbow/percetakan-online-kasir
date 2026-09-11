@@ -242,10 +242,11 @@ class DB {
             self::run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', ['admin', password_hash('admin123', PASSWORD_DEFAULT), 'superadmin']);
         }
 
-        $kategori = ['Kartu Nama', 'Banner & Spanduk', 'Undangan', 'Stempel', 'Foto Copy & Cetak', 'ATK', 'Merchandise', 'Lainnya'];
-        foreach ($kategori as $k) {
-            self::run('INSERT OR IGNORE INTO kategori (nama) VALUES (?)', [$k]);
-        }
+        // [SEED-DINONAKTIFKAN] kategori contoh tidak diisi otomatis.
+        // $kategori = ['Kartu Nama', 'Banner & Spanduk', 'Undangan', 'Stempel', 'Foto Copy & Cetak', 'ATK', 'Merchandise', 'Lainnya'];
+        // foreach ($kategori as $k) {
+        //     self::run('INSERT OR IGNORE INTO kategori (nama) VALUES (?)', [$k]);
+        // }
 
         $defaults = [
             'nama_toko' => 'Percetakan Saya',
@@ -269,7 +270,8 @@ class DB {
         }
 
         $p = self::one('SELECT COUNT(*) c FROM produk');
-        if ($p['c'] == 0) {
+        if (false && $p['c'] == 0) { // [SEED-DINONAKTIFKAN] produk contoh
+
             $kat = [];
             foreach (self::q('SELECT id, nama FROM kategori') as $r) {
                 $kat[$r['nama']] = $r['id'];

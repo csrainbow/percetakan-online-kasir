@@ -48,14 +48,14 @@ require __DIR__ . '/../layout/header.php';
         <div class="card-sub"><?= (int)$r['sumPenjualan']['c'] ?> transaksi</div>
     </div>
     <div class="card">
-        <div class="card-label">Pembayaran Pesanan</div>
+        <div class="card-label">Kas Masuk Pesanan</div>
         <div class="card-value"><?= rp($r['sumPembayaran']['total']) ?></div>
-        <div class="card-sub"><?= (int)$r['sumPembayaran']['c'] ?> pembayaran</div>
+        <div class="card-sub"><?= (int)$r['sumPembayaran']['c'] ?> pembayaran di luar kasir</div>
     </div>
     <div class="card">
         <div class="card-label">Pendapatan</div>
         <div class="card-value"><?= rp($r['pendapatan']) ?></div>
-        <div class="card-sub">Kasir + pembayaran pesanan (non-kasir)</div>
+        <div class="card-sub">Penjualan kasir + kas masuk pesanan (non kasir)</div>
     </div>
     <div class="card">
         <div class="card-label">Laba Kotor</div>

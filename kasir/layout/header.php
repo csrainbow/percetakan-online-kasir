@@ -13,7 +13,7 @@ $page = $page ?? '';
 </head>
 <body>
 <header class="topbar">
-    <div class="brand"><?= e(setting('nama_toko', APP_NAME)) ?></div>
+    <div class="brand">APLIKASI KASIR PERCETAKAN RAINBOW</div>
     <nav>
         <a href="index.php" class="<?= $page === 'dashboard' ? 'act' : '' ?>">Dashboard</a>
         <a href="index.php?p=penjualan" class="<?= $page === 'penjualan' ? 'act' : '' ?>">Kasir</a>
@@ -25,6 +25,36 @@ $page = $page ?? '';
         <a href="index.php?p=laporan" class="<?= $page === 'laporan' ? 'act' : '' ?>">Laporan</a>
         <a href="index.php?p=pengaturan" class="<?= $page === 'pengaturan' ? 'act' : '' ?>">Pengaturan</a>
         <a href="index.php?p=wa-gateway" class="<?= $page === 'wa-gateway' ? 'act' : '' ?>">WA Gateway</a>
+        <div class="pp-wrap">
+            <a href="#" id="ppToggle" class="pp-toggle">Payment Point ▾</a>
+            <div class="pp-panel" id="ppPanel">
+                <div class="pp-title">Payment Point — Pesanan Belum Lunas</div>
+                <?php
+                $ppRows = DB::q(
+                    'SELECT pe.id, pe.no_pesanan, pe.pelanggan, pe.sisa, pe.status
+                     FROM pesanan pe
+                     WHERE pe.deleted = 0 AND pe.sisa > 0 AND pe.status NOT IN (\'Lunas\', \'Selesai\', \'Batal\')
+                       AND ' . scope_sql('pe') . '
+                     ORDER BY pe.id DESC LIMIT 8'
+                );
+                if ($ppRows):
+                    foreach ($ppRows as $pp): ?>
+                        <div class="pp-row" data-no="<?= e($pp['no_pesanan']) ?>">
+                            <div class="pp-info">
+                                <span class="pp-code"><?= e($pp['no_pesanan']) ?></span>
+                                <span class="pp-meta"><?= e($pp['pelanggan']) ?> · sisa <?= rp((float)$pp['sisa']) ?></span>
+                            </div>
+                            <div class="pp-actions">
+                                <a class="btn btn-xs" href="<?= e(nota_publik_url('pesanan', (int)$pp['id'], 'pay')) ?>" target="_blank" rel="noopener">Buka</a>
+                                <button type="button" class="btn btn-xs btn-pp" onclick="ppSalin(this)" title="Salin link payment point">Salin</button>
+                            </div>
+                        </div>
+                    <?php endforeach;
+                else: ?>
+                    <div class="pp-empty">Tidak ada pesanan belum lunas.</div>
+                <?php endif; ?>
+            </div>
+        </div>
         <?php if (is_superadmin()): ?>
             <a href="index.php?p=log" class="<?= $page === 'log' ? 'act' : '' ?>">Aktivitas</a>
         <?php endif; ?>

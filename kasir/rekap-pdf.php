@@ -55,7 +55,7 @@ ob_start();
 <table class="ringkas">
     <tr>
         <td class="label">Penjualan Kasir</td>
-        <td class="label">Pembayaran Pesanan</td>
+        <td class="label">Kas Masuk Pesanan</td>
         <td class="label">Pendapatan</td>
         <td class="label">HPP</td>
         <td class="label">Laba Kotor</td>

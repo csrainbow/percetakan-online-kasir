@@ -4,6 +4,38 @@ Semua perubahan penting untuk aplikasi **Kasir Rainbow** (folder `kasir/`).
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 
+## [Unreleased] — 2026-09-11
+### Kasir — Ringkas folder kerja: 1 folder resmi (`kasir/`) di `percetakan-online-kasir`
+- Folder duplikat/arsip kasir lama (`KASIR IKKY`, `kasir-hp`, `kasir-print`, `kasir-deploy`, `kasir-fixes-lokal`, `backup-2026-09-10`) **dipindah ke `_Arsip-Kasir/`** di root proyek.
+- Semua perbaikan live di server **disinkronkan server → repo** (`kasir/*`), agar perbaikan berikutnya cukup merujuk ke satu folder `percetakan-online-kasir/kasir`.
+- Backup server: `/root/kasir-backup-20260911-2210.tar.gz` + `kasir-db-backup-20260911.db`.
+
+### Kasir — Laporan & Dashboard basis kas (perbaikan nilai yang "miss")
+- **Akar masalah**: pendapatan dihitung dari **total pesanan (order / accrual)** padahal yang benar adalah **uang yang benar-benar masuk (cash basis)** — sekaligus pembayaran "via kasir" terhitung ganda (di penjualan kasir & pembayaran pesanan).
+- **`pages/laporan.php`**: `pendapatan = penjualan kasir + kas masuk pesanan`, semua query pembayaran (ringkasan & detail) kini **exclude `keterangan LIKE '%via kasir%'`**; kolom **Kas Masuk** per hari; label "Pesanan Dibuat" (volume) & "Kas Masuk Pesanan"; catatan & CSV memakai istilah kas masuk.
+- **`pages/dashboard.php`**: "Kas Masuk Hari Ini" = pembayaran diterima (bukan total pesanan); chart 7 hari = kasir + kas masuk; exclude via kasir; label "Bayaran".
+- **`rekap-common.php` / `pages/rekap.php` / `rekap-pdf.php`**: `sumPembayaran` & daftar pembayaran kini exclude via kasir agar konsisten dengan card Pendapatan; label "Kas Masuk Pesanan".
+- **CSV Laporan**: diperbaiki bug PHP 8 (TypeError) akibat memakai nama produk (string) sebagai indeks baris (`$idx + 1`) — diganti counter numerik; bagian "Laba per Produk" ikut diperbaiki.
+
+### Kasir — Pesan WhatsApp pelanggan disederhanakan (fokus Payment Point)
+- **Tidak ada lagi blok "QRIS & TRANSFER BANK"** di pesan WA `baru`/`dp` — pelanggan cukup diarahkan ke **satu tautan Payment Point** yang menonjol + nilai harus-bayar.
+- **Kode unik dihapus dari pesan WA**: `$kodeUnik` & `$bayarSisa` di `config.php` diganti `$bayarSisa = max(0, $sisaVal)` — pelanggan tidak perlu menambah kode unik sumbangan; instruksi tetap mencantumkan nama pesanan di berita transfer.
+- Template WA `baru`/`dp` di-rebuild (masih `*bold*` + emoji, teks valid UTF-8); komentar usang dibersihkan di `config.php` & `nota-publik.php`.
+
+### Kasir — Dropdown Payment Point di topbar
+- Menu nav **"Payment Point ▾"** di `layout/header.php` membuka panel berisi pesanan **belum lunas** (sisa > 0, status DP/Belum Bayar, ikut scope pembukuan, maks 8 terakhir).
+- Tiap baris: no. pesanan, pelanggan, sisa tagihan, tombol **Buka** (halaman Payment Point `t=pay`) + **Salin link** (clipboard + fallback).
+
+### Kasir — UI brand & login
+- Login (`login.php` + `assets/style.css`): judul **"KASIR RAINBOW PRINTING"**, logo `assets/logo-login.png` di atas judul (80×80 px), cache-buster CSS `?v=<mtime>` agar perubahan memperbarui browser.
+- Header (`layout/header.php`): brand **"APLIKASI KASIR PERCETAKAN RAINBOW"**.
+- Footer (`layout/footer.php`): **"Kasir Percetakan Rainbow V. 2"**.
+
+### Kasir — Dinformasi (perbaikan minggu sebelumnya, sudah ada di repo)
+- Tombol **Selesai** pesanan (sisa → hitung lunas, update + notif WA) teruji end-to-end.
+- **M2 panjang × lebar** (stiker per m²) dihitung correct walaupun panjang/lebar dengan koma (mis. 1,5) — fix case-insensitive.
+- **Deskripsi pesanan**: tidak lagi berubah otomatis saat memilih produk di dropdown kasir; otomatis diisi nama produk hanya saat tombol "+ Tambah" dan kolom deskripsi masih kosong.
+
 ## [Unreleased] — 2026-09-10
 ### Kasir — WA Gateway Baileys jadi satu-satunya penyedia (Fonnte pensiun)
 - **Fonnte dihapus total** dari kode (`wa_send_fonnte()` dihapus): akun Fonnte kena ban WhatsApp 2x, tidak dipakai lagi.

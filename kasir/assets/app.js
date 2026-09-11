@@ -583,3 +583,45 @@ function initPesanan() {
         });
     }
 }
+
+(function () {
+    var tgl = document.getElementById('ppToggle');
+    var pnl = document.getElementById('ppPanel');
+    if (!tgl || !pnl) return;
+    tgl.addEventListener('click', function (e) {
+        e.preventDefault();
+        pnl.classList.toggle('open');
+    });
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.pp-wrap')) {
+            pnl.classList.remove('open');
+        }
+    });
+})();
+
+function ppSalin(btn) {
+    var row = btn.closest('.pp-row');
+    var a = row && row.querySelector('a[target="_blank"]');
+    var url = a ? a.href : '';
+    if (!url) return;
+    var done = function () {
+        var t = btn.textContent;
+        btn.textContent = 'Tersalin ✓';
+        setTimeout(function () { btn.textContent = t; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done, function () { fallback(); });
+    } else {
+        fallback();
+    }
+    function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (err) {}
+        document.body.removeChild(ta);
+    }
+}

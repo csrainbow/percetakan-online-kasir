@@ -34,7 +34,7 @@ $publik = true;
 //  STRUK vs PAYMENT POINT BERDIRI SENDIRI (aturan pengalihan):
 //  - Link WA saat BELUM BAYAR / DP → halaman PAYMENT POINT.
 //    Bila pelanggan membuka STRUK tapi masih ada sisa tagihan,
-//    otomatis dialihkan ke PAYMENT POINT (nominal = sisa + kode unik).
+//    otomatis dialihkan ke PAYMENT POINT (nominal = sisa).
 //  - Setelah KONFIRMASI BAYAR (lunas) → halaman STRUK.
 //    Bila pelanggan membuka PAYMENT POINT tapi sudah lunas,
 //    otomatis dialihkan ke STRUK (bukti lunas).
