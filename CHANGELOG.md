@@ -17,6 +17,8 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 - **Pengaturan admin**: provider/Wablas diganti kolom URL Gateway + Kunci API; indicator status gateway ditampilkan langsung di tab WhatsApp.
 - **`waOrderStatus()`**: normalisasi nomor pakai `wa_norm_nomor()` (handle prefix 0/8 → 62…).
 - **Midtrans `order_id` unik per percobaan**: `create.php`, `finish.php`, `notification.php` disinkronkan dari server ke repo (fix status query salah karena suffix timestamp).
+- **Template invoice web sama seperti kasir**: `invoice.php` dipakai ulang layout nota A5 kasir (`a5-invoice.php`: logo, No. Pesanan, Status Pembayaran, tabel item + catatan, Jumlah Pelunasan, tanda tangan); info ukuran/bahan/jasa desain jadi catatan kecil per item. Print A5 landscape.
+- **WA notifikasi saat auto-payment Midtrans** di `payment/notification.php`: pelanggan dapat WA `paid`/`dp` via antrean kasir begitu webhook sukses.
 
 ### Kasir & Web utama bersamaan
 - **Midtrans mode production dikonfirmasi aktif** (`midtrans_is_production=1`); tidak ada sandbox tersisa.
