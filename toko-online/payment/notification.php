@@ -37,9 +37,11 @@ $notification = json_decode(file_get_contents('php://input'), true);
 logMidtrans("📩 Notification received", $notification);
 
 if (!$notification) {
-    logMidtrans("❌ Invalid notification - empty");
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Invalid notification']);
+    // 🔥 Request kosong/GET = health check / "Tes URL notifikasi" dari dashboard Midtrans.
+    // Balas 200 OK agar tes lolos; notifikasi asli selalu membawa body JSON.
+    logMidtrans("ℹ️ Empty/GET request (health check / URL test) - membalas 200");
+    http_response_code(200);
+    echo json_encode(['status' => 'ok', 'message' => 'Notification endpoint ready']);
     exit;
 }
 
@@ -71,9 +73,23 @@ if (!$orderCode || !$transactionStatus) {
 }
 
 // 🔥 🔥 CEK ORDER 🔥 🔥
+// create.php mengirim order_id = "order_code - <timestamp>". Coba exact dulu,
+// lalu cari versi tanpa suffix untuk menangani order_id yang punya timestamp.
 $stmt = $db->prepare("SELECT * FROM orders WHERE order_code = ?");
 $stmt->execute([$orderCode]);
 $order = $stmt->fetch();
+
+if (!$order) {
+    $baseCode = preg_replace('/-\d{9,11}$/', '', $orderCode);
+    if ($baseCode !== $orderCode) {
+        $stmt = $db->prepare("SELECT * FROM orders WHERE order_code = ?");
+        $stmt->execute([$baseCode]);
+        $order = $stmt->fetch();
+        if ($order) {
+            logMidtrans("🔗 Order ditemukan via base code tanpa suffix timestamp", ['order_id' => $orderCode, 'base_code' => $baseCode]);
+        }
+    }
+}
 
 if (!$order) {
     logMidtrans("❌ Order not found", ['order_code' => $orderCode]);
@@ -167,7 +183,7 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
         ]);
         $orderUpdated = true;
 
-        // 🔥 KIRIM WA KE PELANGGAN (Fonnte/Wablas)
+        // 🔥 KIRIM WA KE PELANGGAN (WA Gateway Baileys)
         if (function_exists('waOrderStatus')) {
             try {
                 waOrderStatus($db, $order['id'], $newPaymentStatus === 'paid' ? 'paid' : 'dp');

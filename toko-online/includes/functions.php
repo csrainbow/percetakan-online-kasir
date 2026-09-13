@@ -494,8 +494,8 @@ function seedSettings($db) {
         ['key' => 'store_phone', 'value' => '081234567890'],
         ['key' => 'whatsapp_number', 'value' => '6281234567890'],
         ['key' => 'wa_enabled', 'value' => ''],
-        ['key' => 'wa_provider', 'value' => 'fonnte'],
-        ['key' => 'wa_token', 'value' => ''],
+        ['key' => 'wa_gw_base', 'value' => 'http://127.0.0.1:3001'],
+        ['key' => 'wa_gw_key', 'value' => ''],
         ['key' => 'admin_email', 'value' => 'admin@rainbowprinting.com'],
         ['key' => 'qris_name', 'value' => ''],
         ['key' => 'qris_merchant_id', 'value' => ''],
@@ -527,55 +527,94 @@ if (!function_exists('formatRupiah')) {
         $amount = is_numeric($amount) ? $amount : 0;
         return 'Rp ' . number_format($amount, 0, ',', '.');
     }
-
-function waSend($to, $message) {
-    if (!getSetting('wa_enabled') || !getSetting('wa_token')) {
-        return false;
-    }
-    $provider = getSetting('wa_provider') === 'wablas' ? 'wablas' : 'fonnte';
-    $to = preg_replace('/\D+/', '', (string)$to);
-    if ($to === '') {
-        return false;
-    }
-    $ch = curl_init();
-    if ($provider === 'wablas') {
-        if (substr($to, 0, 1) === '0') {
-            $to = '62' . substr($to, 1);
-        }
-        curl_setopt_array($ch, [
-            CURLOPT_URL => 'https://patp.wablas.com/api/send-message',
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode(['phone' => $to, 'message' => $message, 'token' => getSetting('wa_token')]),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 8,
-        ]);
-    } else {
-        curl_setopt_array($ch, [
-            CURLOPT_URL => 'https://api.fonnte.com/send',
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode(['target' => $to, 'message' => $message, 'countryCode' => '62']),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: ' . getSetting('wa_token')],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 8,
-        ]);
-    }
-    $res = curl_exec($ch);
-    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $err = curl_error($ch);
-    curl_close($ch);
-    $ok = false;
-    if ($err === '' && is_string($res) && $res !== '') {
-        $j = json_decode($res, true);
-        if (is_array($j)) {
-            $ok = $j['status'] === true || $j['status'] === 'true' || $j['status'] === 1 || $j['status'] === '1';
-        }
-    }
-    if ($code !== 200 || !$ok) {
-        error_log('WA notif gagal: ' . $provider . ' | code ' . $code . ' | ' . ($err !== '' ? $err : mb_substr((string)$res, 0, 120)));
-    }
-    return $ok;
 }
+
+if (!function_exists('wa_norm_nomor')) {
+    // Normalisasi nomor ke format 62... (tanpa +, spasi, strip).
+    function wa_norm_nomor($to) {
+        $d = preg_replace('/\D+/', '', (string)$to);
+        if ($d === '') {
+            return '';
+        }
+        if (substr($d, 0, 1) === '0') {
+            $d = '62' . substr($d, 1);
+        } elseif (substr($d, 0, 1) === '8') {
+            $d = '62' . $d;
+        }
+        return $d;
+    }
+}
+
+if (!function_exists('waGatewayStatus')) {
+    // Status WA Gateway Baileys (server lokal, sama dengan kasir).
+    function waGatewayStatus($timeout = 5) {
+        $base = rtrim((string)getSetting('wa_gw_base'), '/');
+        $st = ['ok' => false, 'status' => 'unconfigured', 'connected' => false, 'me' => null, 'hasQr' => false, 'base' => $base];
+        if ($base === '') {
+            return $st;
+        }
+        $ch = curl_init($base . '/status');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $timeout,
+        ]);
+        $res = curl_exec($ch);
+        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($code === 200 && is_string($res) && $res !== '') {
+            $j = json_decode($res, true);
+            if (is_array($j)) {
+                $st['ok'] = true;
+                $st['status'] = (string)($j['status'] ?? 'unknown');
+                $st['connected'] = !empty($j['connected']);
+                $st['me'] = $j['me'] ?? null;
+                $st['hasQr'] = !empty($j['hasQr']);
+            }
+        }
+        return $st;
+    }
+}
+
+if (!function_exists('waSend')) {
+    // Kirim WA via WA Gateway Baileys lokal (bukan provider pihak ke-3).
+    function waSend($to, $message) {
+        if (!getSetting('wa_enabled')) {
+            return false;
+        }
+        $base = rtrim((string)getSetting('wa_gw_base'), '/');
+        $key = (string)getSetting('wa_gw_key');
+        if ($base === '') {
+            return false;
+        }
+        $to = wa_norm_nomor($to);
+        if ($to === '') {
+            return false;
+        }
+        $ch = curl_init($base . '/send');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode(['to' => $to, 'message' => (string)$message]),
+            CURLOPT_HTTPHEADER => array_merge(
+                ['Content-Type: application/json'],
+                $key !== '' ? ['X-Api-Key: ' . $key] : []
+            ),
+            CURLOPT_TIMEOUT => 15,
+        ]);
+        $res = curl_exec($ch);
+        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+        $ok = false;
+        if ($err === '' && $code >= 200 && $code < 300 && is_string($res) && $res !== '') {
+            $j = json_decode($res, true);
+            $ok = is_array($j) && !empty($j['ok']);
+        }
+        if (!$ok) {
+            error_log('WA notif gagal: gateway | code ' . $code . ' | ' . ($err !== '' ? $err : mb_substr((string)$res, 0, 120)));
+        }
+        return $ok;
+    }
 }
 
 if (!function_exists('getSetting')) {

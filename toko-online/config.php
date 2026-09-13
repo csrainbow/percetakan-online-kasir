@@ -38,7 +38,7 @@ define('SITE_NAME', 'Rainbow Printing');
 define('SITE_DESCRIPTION', 'Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, dan kebutuhan percetakan lainnya.');
 
 // 🔥 WhatsApp
-define('WHATSAPP_NUMBER', '6285346022172');
+define('WHATSAPP_NUMBER', '6285286470224');
 
 // 🔥 Admin Login
 define('ADMIN_USERNAME', 'admin');
@@ -132,12 +132,9 @@ function waOrderStatus($db, $orderId, $event, $extra = '') {
         $message .= "\n\n" . $extra;
     }
     $message .= "\n\n— Rainbow Printing";
-    $phone = preg_replace('/\D+/', '', (string)$order['customer_phone']);
+    $phone = function_exists('wa_norm_nomor') ? wa_norm_nomor($order['customer_phone']) : preg_replace('/\D+/', '', (string)$order['customer_phone']);
     if ($phone === '') {
         return false;
-    }
-    if (substr($phone, 0, 1) === '0') {
-        $phone = '62' . substr($phone, 1);
     }
     return waSend($phone, $message);
 }

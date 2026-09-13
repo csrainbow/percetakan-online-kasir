@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'midtrans_server_key', 'midtrans_client_key', 'midtrans_is_production',
         'invoice_template', 'invoice_footer', 'printer_options',
         'whatsapp_number', 'footer_text', 'google_analytics_id',
-        'wa_enabled', 'wa_provider', 'wa_token'
+        'wa_enabled', 'wa_gw_base', 'wa_gw_key'
     ];
     
     try {
@@ -354,22 +354,34 @@ include '../includes/header.php';
                             <option value="" <?= ($settings['wa_enabled'] ?? '') === '' ? 'selected' : '' ?>>Nonaktif</option>
                             <option value="1" <?= ($settings['wa_enabled'] ?? '') === '1' ? 'selected' : '' ?>>Aktif</option>
                         </select>
-                        <div class="helper-text">Kirim notifikasi WA ke nomor di atas setiap ada pesanan baru</div>
+                        <div class="helper-text">Kirim notifikasi WA (pesanan baru &amp; status pembayaran) via WA Gateway lokal</div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Penyedia Gateway</label>
-                            <select name="wa_provider">
-                                <option value="fonnte" <?= ($settings['wa_provider'] ?? 'fonnte') === 'fonnte' ? 'selected' : '' ?>>Fonnte</option>
-                                <option value="wablas" <?= ($settings['wa_provider'] ?? '') === 'wablas' ? 'selected' : '' ?>>Wablas</option>
-                            </select>
+                            <label>URL Gateway WhatsApp</label>
+                            <input type="text" name="wa_gw_base" value="<?= htmlspecialchars($settings['wa_gw_base'] ?? 'http://127.0.0.1:3001') ?>" placeholder="http://127.0.0.1:3001">
+                            <div class="helper-text">Induk WA Gateway Baileys (server lokal, sama dengan kasir)</div>
                         </div>
                         <div class="form-group">
-                            <label>Token API (Fonnte/Wablas)</label>
-                            <input type="text" name="wa_token" value="<?= htmlspecialchars($settings['wa_token'] ?? '') ?>" placeholder="Token dari dashboard Fonnte">
-                            <div class="helper-text">Token ada di menu Device Fonnte (tombol Token)</div>
+                            <label>Kunci API Gateway</label>
+                            <input type="text" name="wa_gw_key" value="<?= htmlspecialchars($settings['wa_gw_key'] ?? '') ?>" placeholder="hex 64 karakter" autocomplete="off">
+                            <div class="helper-text">Sama dengan kunci di halaman WA Gateway kasir</div>
                         </div>
                     </div>
+                    <?php if (function_exists('waGatewayStatus')): $gwSt = waGatewayStatus(2); ?>
+                    <div class="form-group">
+                        <label>Status Gateway Saat Ini</label>
+                        <?php if ($gwSt['connected']): ?>
+                            <p style="color:#166534;margin:4px 0;">✅ Terhubung<?= !empty($gwSt['me']) ? ' — ' . htmlspecialchars((string)$gwSt['me']) : '' ?></p>
+                        <?php elseif ($gwSt['hasQr']): ?>
+                            <p style="color:#b45309;margin:4px 0;">⚠️ Belum connect — tuntaskan QR di halaman WA Gateway kasir</p>
+                        <?php elseif ($gwSt['ok']): ?>
+                            <p style="color:#b91c1c;margin:4px 0;">⚡ Gateway belum connect (status: <?= htmlspecialchars((string)$gwSt['status']) ?>)</p>
+                        <?php else: ?>
+                            <p style="color:#b45309;margin:4px 0;">ℹ️ Gateway tidak terjangkau di <?= htmlspecialchars((string)$gwSt['base']) ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
                     <div class="form-group">
                         <label>Email Admin</label>
                         <input type="email" name="admin_email" value="<?= htmlspecialchars($settings['admin_email'] ?? '') ?>" placeholder="admin@email.com">

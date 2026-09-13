@@ -57,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['bayar_piutang'])) {
             'pelanggan' => $ps['pelanggan'],
             'telepon' => $ps['telepon'],
             'total' => $ps['total'],
+            'dp' => $jumlah,
+            'sisa' => $sisaBaru,
+            'metode' => $metode,
             'status' => $status,
         ], $sisaBaru <= 0 ? 'lunas' : 'dp');
         flash_set('success', 'Pembayaran piutang diterima.');

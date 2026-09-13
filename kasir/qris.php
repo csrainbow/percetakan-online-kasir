@@ -198,6 +198,9 @@ function qris_mark_pembayaran_lunas($id) {
                 'pelanggan' => $pe['pelanggan'],
                 'telepon' => $pe['telepon'],
                 'total' => (float)$pe['total'],
+                'dp' => (float)$pm['jumlah'],
+                'sisa' => $sisaBaru,
+                'metode' => 'QRIS',
                 'status' => $ev === 'lunas' ? 'Lunas' : 'DP',
             ], $ev);
         }

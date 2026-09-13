@@ -134,10 +134,13 @@ foreach ($orderItems as $item) {
     $totalItemAmount += $price * $qty;
 }
 
+// 🔥 order_id UNIK PER PERCOBAAN (agar bisa retry / DP lalu pelunasan)
+$midtransOrderId = $order['order_code'] . '-' . time();
+
 // 🔥 🔥 PARAMETER MIDTRANS 🔥 🔥
 $params = [
     'transaction_details' => [
-        'order_id' => $order['order_code'] . '-' . time(),
+        'order_id' => $midtransOrderId,
         'gross_amount' => (int) $sisaPembayaran,
     ],
     'customer_details' => [
@@ -168,9 +171,9 @@ $params = [
         'akulaku',
         'kredivo'
     ],
-    'finish_redirect_url' => BASE_URL . 'payment/finish.php?order=' . urlencode($order['order_code']),
-    'unfinish_redirect_url' => BASE_URL . 'payment/finish.php?order=' . urlencode($order['order_code']) . '&status=pending',
-    'error_redirect_url' => BASE_URL . 'payment/finish.php?order=' . urlencode($order['order_code']) . '&status=error',
+    'finish_redirect_url' => BASE_URL . 'payment/finish.php?order=' . urlencode($order['order_code']) . '&mid_order=' . urlencode($midtransOrderId),
+    'unfinish_redirect_url' => BASE_URL . 'payment/finish.php?order=' . urlencode($order['order_code']) . '&status=pending&mid_order=' . urlencode($midtransOrderId),
+    'error_redirect_url' => BASE_URL . 'payment/finish.php?order=' . urlencode($order['order_code']) . '&status=error&mid_order=' . urlencode($midtransOrderId),
 ];
 
 // 🔥 TAMBAHKAN CUSTOM FIELD UNTUK DP

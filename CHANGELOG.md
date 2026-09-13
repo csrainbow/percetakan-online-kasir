@@ -4,6 +4,25 @@ Semua perubahan penting untuk aplikasi **Kasir Rainbow** (folder `kasir/`).
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 
+## [Unreleased] — 2026-09-14
+### Kasir — V. 3 (Versi: V. 2 → V. 3)
+- **WA template diperbaiki**: pesan `dp` dengan sisa ≥ total (belum bayar apa-apa) dipaksa jadi `baru` — tidak ada lagi notif "DP diterima Rp 0" untuk order baru.
+- **Crontab `cron-wa.php` terpasang**: pesan antrean di server tidak lagi mandek; backlog terkirim otomatis.
+- **Fonnte / Wablas / Meta dihapus total** dari kode (pengaturan UI, `wa_send` provider lama, DB keys `wa_provider` / `wa_token` / `wa_meta_*`) — satu-satunya jalur kirim: **WA Gateway Baileys** lokal.
+- **Kolom `pesanan.metode` + migrasi**: metode pembayaran (Tunai/QRIS/Midtrans/Transfer) tersimpan per pesanan; alur DP/Lunas menyesuaikan.
+- **Kolom isi manual m² per baris**: untuk produk satuan m², baris item menampilkan kolom Panjang × Lebar input sendiri; qty(m²) = q₀ × P × L, subtotal = qty × harga.
+
+### Web utama (toko-online) — WA Gateway aktif
+- **WA migrasi Fonnte → WA Gateway Baileys**: same node `127.0.0.1:3001`, `wa_enabled` diaktifkan; nomor yang benar `6285286470224` (sebelumnya dummy).
+- **Pengaturan admin**: provider/Wablas diganti kolom URL Gateway + Kunci API; indicator status gateway ditampilkan langsung di tab WhatsApp.
+- **`waOrderStatus()`**: normalisasi nomor pakai `wa_norm_nomor()` (handle prefix 0/8 → 62…).
+- **Midtrans `order_id` unik per percobaan**: `create.php`, `finish.php`, `notification.php` disinkronkan dari server ke repo (fix status query salah karena suffix timestamp).
+
+### Kasir & Web utama bersamaan
+- **Midtrans mode production dikonfirmasi aktif** (`midtrans_is_production=1`); tidak ada sandbox tersisa.
+- **Webhook `/midtrans-webhook.php`**: `payment/notification.php` membalas 200 OK untuk health check / tes URL dari dashboard Midtrans.
+- **Footer versi dinaikkan ke V. 3**.
+
 ## [Unreleased] — 2026-09-11
 ### Kasir — Ringkas folder kerja: 1 folder resmi (`kasir/`) di `percetakan-online-kasir`
 - Folder duplikat/arsip kasir lama (`KASIR IKKY`, `kasir-hp`, `kasir-print`, `kasir-deploy`, `kasir-fixes-lokal`, `backup-2026-09-10`) **dipindah ke `_Arsip-Kasir/`** di root proyek.

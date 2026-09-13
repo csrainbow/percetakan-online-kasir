@@ -44,11 +44,26 @@ if ($isPaid) {
     );
     // Hitung ulang sisa pesanan
     $total_bayar = (float)DB::one("SELECT COALESCE(SUM(jumlah),0) t FROM pembayaran WHERE ref_type='pesanan' AND ref_id=? AND status='Lunas'", [$pesanan_id])['t'];
-    $ps = DB::one("SELECT total FROM pesanan WHERE id=?", [$pesanan_id]);
+    $ps = DB::one("SELECT * FROM pesanan WHERE id=?", [$pesanan_id]);
     if ($ps) {
         $sisa = max(0, (float)$ps['total'] - $total_bayar);
         $stat = $sisa <= 0 ? 'Lunas' : 'DP';
         DB::run("UPDATE pesanan SET sisa=?, status=? WHERE id=?", [$sisa, $stat, $pesanan_id]);
+        // Notifikasi WA dp/lunas ke pelanggan (pembayaran terverifikasi otomatis)
+        if (!empty($ps['telepon'])) {
+            $ev = $sisa <= 0 ? 'lunas' : 'dp';
+            wa_pelanggan([
+                'id' => $pesanan_id,
+                'no_pesanan' => $ps['no_pesanan'],
+                'pelanggan' => $ps['pelanggan'],
+                'telepon' => $ps['telepon'],
+                'total' => (float)$ps['total'],
+                'dp' => (float)$pm['jumlah'],
+                'sisa' => $sisa,
+                'metode' => 'Midtrans',
+                'status' => $ev === 'lunas' ? 'Lunas' : 'DP',
+            ], $ev);
+        }
     }
     echo json_encode(['status' => 'paid', 'order_id' => $order_id]);
 } else if ($isFailed) {

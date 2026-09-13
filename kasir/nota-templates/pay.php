@@ -3,7 +3,11 @@
 //  PAYMENT POINT — halaman pembayaran publik per pesanan
 //  Route: /n.php/{ref}/{id}/pay/{token}
 //  - Ringkasan pesanan (produk yang belum dibayarkan)
-//  - Pilihan metode pembayaran: QRIS statis & Transfer Bank
+//  - Metode yang ditampilkan mengikuti metode yang dipilih admin saat membuat
+//    pesanan (kolom pesanan.metode):
+//      Tunai / Transfer / (belum diisi) → QRIS statis + Transfer Bank
+//      QRIS      → QRIS statis (cek manual) + Midtrans (cek otomatis)
+//      Midtrans  → Midtrans (pembayaran via Snap, terverifikasi otomatis)
 //  - Apabila costumer memilih QRIS → tampil QRIS statis + jumlah yang harus
 //    dibayar (tagihan).
 // ============================================================================
@@ -20,6 +24,36 @@ $ppBankNama    = setting('bank_nama', '');
 $ppBankRek     = setting('bank_rekening', '');
 $ppBankPemilik = setting('bank_pemilik', '');
 $ppTelp        = setting('telp');
+$ppMidtrans    = midtrans_is_ready();
+$ppMetode      = strtolower(trim((string)($ps['metode'] ?? '')));
+$ppShowQris    = true;
+$ppShowBank    = true;
+$ppShowMid     = false;
+if ($ppMetode === 'qris') {
+    $ppShowQris = true;
+    $ppShowBank = false;
+    $ppShowMid  = true;
+} elseif ($ppMetode === 'midtrans') {
+    $ppShowQris = false;
+    $ppShowBank = false;
+    $ppShowMid  = true;
+}
+if (!$ppMidtrans) {
+    $ppShowMid = false;
+    if ($ppMetode === 'midtrans') {
+        $ppShowQris = true;
+        $ppShowBank = true;
+    }
+}
+$ppAct = 'qris';
+if ($ppShowMid && $ppMetode === 'midtrans') {
+    $ppAct = 'midtrans';
+} elseif ($ppShowMid && $ppMetode === 'qris' && !$ppQris) {
+    $ppAct = 'midtrans';
+} elseif (!$ppQris && $ppShowBank && $ppBankRek) {
+    $ppAct = 'bank';
+}
+$ppAdaMetode = ($ppShowQris && $ppQris) || ($ppShowBank && $ppBankRek) || ($ppShowMid);
 $ppWa = '';
 if ($ppTelp !== '') {
     $ppWaMsg = 'Halo ' . setting('nama_toko', 'Percetakan Rainbow') . ', saya ' . $ps['pelanggan']
@@ -41,6 +75,9 @@ $ppStatus = in_array($ps['status'], ['Selesai', 'Batal']) ? $ps['status'] : ($ps
 <meta name="robots" content="noindex,nofollow">
 <base href="<?= e($ppBase) ?>">
 <title>Pembayaran <?= e($ps['no_pesanan']) ?> — <?= e(setting('nama_toko')) ?></title>
+<?php if ($ppShowMid): ?>
+<script src="https://<?= midtrans_is_production() ? 'app.midtrans.com' : 'app.sandbox.midtrans.com' ?>/snap/snap.js" data-client-key="<?= e(midtrans_client_key()) ?>"></script>
+<?php endif; ?>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:Arial,Helvetica,sans-serif; }
 body { background:linear-gradient(160deg,#eef2ff,#f8fafc 60%,#f1f5f9); min-height:100vh; }
@@ -67,9 +104,10 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
 .pp-methods { display:flex; gap:10px; }
 .pp-method { flex:1; border:2px solid #e2e8f0; border-radius:12px; padding:12px 10px; background:#f8fafc; cursor:pointer; text-align:center; font-size:13px; font-weight:700; color:#475569; transition:all .15s; }
 .pp-method .ico { font-size:26px; margin:0 auto 6px; display:block; }
+.pp-method small { display:block; font-size:10px; font-weight:600; opacity:.85; margin-top:2px; }
 .pp-method.act { border-color:#0f172a; background:#0f172a; color:#fff; box-shadow:0 4px 10px rgba(15,23,42,.18); }
-#ppQrisPanel, #ppBankPanel { display:none; }
-#ppQrisPanel.act, #ppBankPanel.act { display:block; }
+#ppQrisPanel, #ppBankPanel, #ppMidPanel { display:none; }
+#ppQrisPanel.act, #ppBankPanel.act, #ppMidPanel.act { display:block; }
 .pp-qris-img { max-width:200px; margin:8px auto; display:block; border:1px solid #cbd5e1; border-radius:10px; }
 .pp-amount { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 4px; }
 .pp-amount .lb { font-size:12px; color:#475569; }
@@ -134,20 +172,25 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
     <div class="pp-sec">
         <h3>💳 Pilihan Pembayaran</h3>
         <div class="pp-methods">
-            <?php if ($ppQris): ?>
-            <div class="pp-method<?= $ppQris ? ' act' : '' ?>" id="ppM-qris" onclick="ppSel('qris')">
-                <span class="ico">🟢</span>QRIS
+            <?php if ($ppShowQris && $ppQris): ?>
+            <div class="pp-method<?= $ppAct === 'qris' ? ' act' : '' ?>" id="ppM-qris" onclick="ppSel('qris')">
+                <span class="ico">🟢</span>QRIS<small>cek manual</small>
             </div>
             <?php endif; ?>
-            <?php if ($ppBankRek): ?>
-            <div class="pp-method<?= $ppQris ? '' : ' act' ?>" id="ppM-bank" onclick="ppSel('bank')">
-                <span class="ico">🏦</span>Transfer Bank
+            <?php if ($ppShowBank && $ppBankRek): ?>
+            <div class="pp-method<?= $ppAct === 'bank' ? ' act' : '' ?>" id="ppM-bank" onclick="ppSel('bank')">
+                <span class="ico">🏦</span>Transfer Bank<small>cek manual</small>
+            </div>
+            <?php endif; ?>
+            <?php if ($ppShowMid): ?>
+            <div class="pp-method<?= $ppAct === 'midtrans' ? ' act' : '' ?>" id="ppM-mid" onclick="ppSel('midtrans')">
+                <span class="ico">💳</span>Midtrans<small>cek otomatis</small>
             </div>
             <?php endif; ?>
         </div>
 
-        <?php if ($ppQris): ?>
-        <div id="ppQrisPanel" class="<?= $ppQris ? 'act' : '' ?>">
+        <?php if ($ppShowQris && $ppQris): ?>
+        <div id="ppQrisPanel" class="<?= $ppAct === 'qris' ? 'act' : '' ?>">
             <p class="pp-note">Scan <b>QRIS statis</b> dengan aplikasi banka / e-wallet, lalu bayar nilai di bawah.</p>
             <img class="pp-qris-img" src="<?= e($ppQris) ?>" alt="QRIS Statis">
             <div class="pp-amount">
@@ -159,8 +202,8 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
         </div>
         <?php endif; ?>
 
-        <?php if ($ppBankRek): ?>
-        <div id="ppBankPanel" class="<?= $ppQris ? '' : 'act' ?>">
+        <?php if ($ppShowBank && $ppBankRek): ?>
+        <div id="ppBankPanel" class="<?= $ppAct === 'bank' ? 'act' : '' ?>">
             <p class="pp-note">Transfer ke rekening di bawah. Pastikan nomor rekening dicek ulang sebelum transfer.</p>
             <div class="pp-meta" style="grid-template-columns:auto 1fr;">
                 <span>Bank</span><b><?= e($ppBankNama ?: '-') ?></b>
@@ -175,14 +218,29 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
         </div>
         <?php endif; ?>
 
-        <?php if (!$ppQris && !$ppBankRek): ?>
+        <?php if ($ppShowMid): ?>
+        <div id="ppMidPanel" class="<?= $ppAct === 'midtrans' ? 'act' : '' ?>">
+            <p class="pp-note">Bayar <b><?= rp($ppTotal) ?></b> melalui <b>Midtrans</b>. Pembayaran <b>terverifikasi otomatis</b> — cashier tidak perlu cek manual.</p>
+            <div class="pp-amount">
+                <span class="lb">Total yang harus dibayar</span>
+                <span class="val"><?= rp($ppTotal) ?></span>
+            </div>
+            <button type="button" class="pp-btn" id="ppBayarMid">💳 Bayar via Midtrans</button>
+            <p class="pp-note" id="ppMidMsg"></p>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!$ppAdaMetode): ?>
             <p class="pp-lunas">Belum ada metode pembayaran dikonfigurasi. Mohon kontak toko via WhatsApp / telepon.</p>
         <?php endif; ?>
     </div>
 
     <div class="pp-sec pp-no-print">
         <?php if ($ppWa): ?>
-        <p class="pp-note">Setelah transfer, klik di bawah untuk konfirmasi:</p>
+        <?php $ppNoteAkhir = ($ppShowMid && !$ppShowQris && !$ppShowBank)
+            ? 'Pembayaran via <b>Midtrans</b> terverifikasi otomatis. Apabila ada kendala, hubungi kami di bawah:'
+            : 'Setelah transfer / scan QRIS, klik di bawah untuk konfirmasi:'; ?>
+        <p class="pp-note"><?= $ppNoteAkhir ?></p>
         <a class="pp-wa" href="<?= e($ppWa) ?>" target="_blank">💬 Konfirmasi via WhatsApp</a>
         <?php endif; ?>
         <button class="pp-keluar" onclick="keluarNota()">✕ Keluar</button>
@@ -206,21 +264,64 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
 
 <script>
 function ppSel(m) {
-    var q = document.getElementById('ppQrisPanel');
-    var b = document.getElementById('ppBankPanel');
-    var mq = document.getElementById('ppM-qris');
-    var mb = document.getElementById('ppM-bank');
-    if (m === 'qris') {
-        if (q) q.className = 'act';
-        if (b) b.className = '';
-        if (mq) mq.className = 'pp-method act';
-        if (mb) mb.className = 'pp-method';
-    } else {
-        if (q) q.className = '';
-        if (b) b.className = 'act';
-        if (mq) mq.className = 'pp-method';
-        if (mb) mb.className = 'pp-method act';
+    var map = {
+        qris: ['ppM-qris', 'ppQrisPanel'],
+        bank: ['ppM-bank', 'ppBankPanel'],
+        midtrans: ['ppM-mid', 'ppMidPanel']
+    };
+    var act = map[m] || null;
+    var ids = ['ppM-qris', 'ppM-bank', 'ppM-mid', 'ppQrisPanel', 'ppBankPanel', 'ppMidPanel'];
+    for (var i = 0; i < ids.length; i++) {
+        var el = document.getElementById(ids[i]);
+        if (!el) continue;
+        if (act && ids[i] === act[0]) { el.className = 'pp-method act'; continue; }
+        if (act && ids[i] === act[1]) { el.className = 'act'; continue; }
+        if (ids[i].indexOf('ppM-') === 0) el.className = 'pp-method';
+        else el.className = '';
     }
+}
+function bayarMidtransPublic() {
+    var btn = document.getElementById('ppBayarMid');
+    var msg = document.getElementById('ppMidMsg');
+    if (!btn) return;
+    if (btn.disabled) return;
+    btn.disabled = true;
+    if (msg) { msg.textContent = 'Membuat pembayaran…'; msg.style.color = '#475569'; }
+    fetch('pay-midtrans.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            ref: <?= json_encode($ref) ?>,
+            id: <?= (int)$ppId ?>,
+            k: <?= json_encode($k ?? '') ?>
+        })
+    }).then(function (r) { return r.json(); }).then(function (data) {
+        if (data.error) {
+            if (msg) { msg.textContent = 'Gagal: ' + data.error; msg.style.color = '#b91c1c'; }
+            btn.disabled = false;
+            return;
+        }
+        if (typeof snap !== 'undefined' && snap.pay) {
+            snap.pay(data.snap_token, {
+                onSuccess: function () {
+                    if (msg) { msg.textContent = '✅ Pembayaran diterima! Memperbarui halaman…'; msg.style.color = '#166534'; }
+                    setTimeout(function () { location.reload(); }, 2500);
+                },
+                onPending: function () { if (msg) msg.textContent = '⏳ Menunggu pembayaran selesai…'; },
+                onError: function () { if (msg) msg.textContent = 'Terjadi kesalahan saat pembayaran.'; btn.disabled = false; },
+                onClose: function () { if (msg) msg.textContent = ''; btn.disabled = false; }
+            });
+        } else {
+            if (msg) { msg.textContent = 'Snap.js belum dimuat. Muat ulang halaman.'; msg.style.color = '#b91c1c'; }
+            btn.disabled = false;
+        }
+    }).catch(function () {
+        if (msg) { msg.textContent = 'Gagal menghubungi server.'; msg.style.color = '#b91c1c'; }
+        btn.disabled = false;
+    });
+}
+if (document.getElementById('ppBayarMid')) {
+    document.getElementById('ppBayarMid').addEventListener('click', bayarMidtransPublic);
 }
 function keluarNota() {
     if (history.length > 1) { history.back(); } else { window.close(); }

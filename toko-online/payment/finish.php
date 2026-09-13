@@ -15,6 +15,7 @@ if (!isset($_SESSION['customer_id'])) {
 $orderCode = $_GET['order'] ?? '';
 $transactionId = $_GET['transaction_id'] ?? '';
 $statusParam = $_GET['status'] ?? '';
+$midOrderId = $_GET['mid_order'] ?? '';
 
 if (empty($orderCode)) {
     header('Location: /index.php');
@@ -56,8 +57,10 @@ if ($serverKey && $orderCode) {
     $baseUrl = $isSandbox ? 'https://api.sandbox.midtrans.com' : 'https://api.midtrans.com';
 
     try {
+        // 🔥 order_id asli dari redirect (dengan suffix -timestamp). Fallback ke order_code untuk lama.
+        $statusOrderId = $midOrderId ?: $orderCode;
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $baseUrl . '/v2/' . urlencode($orderCode) . '/status');
+        curl_setopt($ch, CURLOPT_URL, $baseUrl . '/v2/' . urlencode($statusOrderId) . '/status');
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/json']);
         curl_setopt($ch, CURLOPT_USERPWD, $serverKey . ':');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -75,7 +78,7 @@ if ($serverKey && $orderCode) {
             $paymentMethod = $result['payment_type'] ?? '';
             $grossAmount = $result['gross_amount'] ?? 0;
             
-            logMidtrans("Midtrans status check: $transactionStatus for order $orderCode");
+            logMidtrans("Midtrans status check: $transactionStatus for order $statusOrderId");
             
             // 🔥 🔥 UPDATE STATUS BERDASARKAN RESPONSE MIDTRANS 🔥 🔥
             if (in_array($transactionStatus, ['capture', 'settlement'])) {

@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ok = wa_send($tujuan, $pesan);
                 flash_set($ok ? 'success' : 'error', $ok
                     ? 'Pesan test terkirim ke ' . $tujuan . '.'
-                    : 'Pesan test GAGAL terkirim. Cek log aktivitas (provider: ' . setting('wa_provider', 'fonnte') . ').');
+                    : 'Pesan test GAGAL terkirim. Cek log aktivitas.');
             }
         }
         header('Location: index.php?p=pengaturan');
@@ -63,13 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
         } else {
             set_setting('wa_enabled', !empty($_POST['wa_enabled']) ? '1' : '');
-            $wp = $_POST['wa_provider'] ?? 'fonnte';
-            set_setting('wa_provider', in_array($wp, ['fonnte', 'wablas', 'meta']) ? $wp : 'fonnte');
-            set_setting('wa_token', trim($_POST['wa_token'] ?? ''));
-            set_setting('wa_meta_token', trim($_POST['wa_meta_token'] ?? ''));
-            set_setting('wa_meta_phone_id', trim($_POST['wa_meta_phone_id'] ?? ''));
-            set_setting('wa_meta_template', trim($_POST['wa_meta_template'] ?? '') !== '' ? trim($_POST['wa_meta_template']) : 'kasir_notifikasi');
-            set_setting('wa_meta_lang', trim($_POST['wa_meta_lang'] ?? '') !== '' ? trim($_POST['wa_meta_lang']) : 'id');
             set_setting('wa_admin_number', trim($_POST['wa_admin_number'] ?? ''));
             set_setting('wa_notif_pembayaran', !empty($_POST['wa_notif_pembayaran']) ? '1' : '');
             flash_set('success', 'Pengaturan notifikasi disimpan.');
@@ -418,28 +411,6 @@ require __DIR__ . '/../layout/header.php';
                 <input type="checkbox" name="wa_enabled" value="1" <?= setting('wa_enabled') ? 'checked' : '' ?>>
                 Aktifkan notifikasi WhatsApp
             </label>
-            <label>Penyedia Gateway
-                <select name="wa_provider">
-                    <option value="fonnte" <?= setting('wa_provider', 'fonnte') === 'fonnte' ? 'selected' : '' ?>>Fonnte (api.fonnte.com)</option>
-                    <option value="wablas" <?= setting('wa_provider') === 'wablas' ? 'selected' : '' ?>>Wablas (patp.wablas.com)</option>
-                    <option value="meta" <?= setting('wa_provider') === 'meta' ? 'selected' : '' ?>>WhatsApp Business Cloud API (Meta, resmi)</option>
-                </select>
-            </label>
-            <label>API Token
-                <input type="password" name="wa_token" value="<?= e(setting('wa_token')) ?>" placeholder="Token dari Fonnte/Wablas">
-            </label>
-            <label>Meta — Access Token (Permanent)
-                <input type="password" name="wa_meta_token" value="<?= e(setting('wa_meta_token')) ?>" placeholder="Token dari Meta for Developers">
-            </label>
-            <label>Meta — Phone Number ID
-                <input type="text" name="wa_meta_phone_id" value="<?= e(setting('wa_meta_phone_id')) ?>" placeholder="cth: 123456789012345">
-            </label>
-            <label>Meta — Nama Template
-                <input type="text" name="wa_meta_template" value="<?= e(setting('wa_meta_template')) ?>" placeholder="kasir_notifikasi">
-            </label>
-            <label>Meta — Kode Bahasa Template
-                <input type="text" name="wa_meta_lang" value="<?= e(setting('wa_meta_lang', 'id')) ?>" placeholder="id">
-            </label>
             <label>Nomor Admin Tujuan Notifikasi
                 <input type="text" name="wa_admin_number" value="<?= e(setting('wa_admin_number')) ?>" placeholder="08xxxxxxxxxx">
             </label>
@@ -452,9 +423,7 @@ require __DIR__ . '/../layout/header.php';
                 <input type="text" name="test_wa_tujuan" value="<?= e(setting('wa_admin_number')) ?>" placeholder="Nomor tujuan test (08xx...)">
                 <button type="submit" class="btn kecil" name="test_wa" value="1">Test Kirim</button>
             </div>
-            <p class="muted kecil"><b>Fonnte/Wablas:</b> daftar di fonnte.com / wablas.com, salin API token, tempel di "API Token". <b>Gunakan sumber siluman/device — berisiko kena pembatasan WhatsApp.</b><br>
-            <b>Meta (resmi, direkomendasikan):</b> buka developers.facebook.com → Create App → Business → WhatsApp → dapatkan <i>Access Token</i> & <i>Phone Number ID</i> dari dashboard. Buat <i>Message Template</i> bernama <code>kasir_notifikasi</code> kategori <b>Utility</b>, bahasa <code>id</code>, body: <code>{{1}}</code> (isi = pesan notifikasi). Semua notifikasi kasir akan dikirim lewat template ini.<br>
-            Nomor admin tujuan diisi dengan nomor admin (tanpa izin nomor baru apapun).</p>
+            <p class="muted kecil"><b>WA Gateway (lokal):</b> pengiriman memakai gateway WhatsApp di server (lihat menu <b>WA Gateway</b>). Kelola template pesan lewat menu <b>Pesanan</b> → tombol <b>Template WA</b>. Nomor admin tujuan diisi dengan nomor admin (tanpa izin nomor baru apapun).</p>
             <button type="submit" class="btn" name="simpan_wa" value="1">Simpan Notifikasi</button>
         </form>
     </div>

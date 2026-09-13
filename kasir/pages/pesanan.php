@@ -21,12 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $status = ($dp >= $total) ? 'Lunas' : 'DP';
             $no = next_number('PSN', 'pesanan');
-            DB::run('INSERT INTO pesanan (no_pesanan, tgl, pelanggan, telepon, deskripsi, total, dp, sisa, status, user_id, estimasi) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-                [$no, date('Y-m-d H:i:s'), $pelanggan, $telepon, $deskripsi, $total, $dp, $total - $dp, $status, $_SESSION['user_id'], $estimasi]);
+            DB::run('INSERT INTO pesanan (no_pesanan, tgl, pelanggan, telepon, deskripsi, total, dp, sisa, status, user_id, estimasi, metode) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                [$no, date('Y-m-d H:i:s'), $pelanggan, $telepon, $deskripsi, $total, $dp, $total - $dp, $status, $_SESSION['user_id'], $estimasi, $metode]);
             $pid = DB::lastId();
             if ($dp > 0) {
+                $pmStatus = strtolower($metode) === 'qris' ? 'Menunggu QRIS' : (strtolower($metode) === 'midtrans' ? 'Menunggu Midtrans' : 'Lunas');
                 DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
-                    ['pesanan', $pid, date('Y-m-d H:i:s'), $dp, $metode, 'Pembayaran awal / DP', $metode === 'QRIS' ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
+                    ['pesanan', $pid, date('Y-m-d H:i:s'), $dp, $metode, 'Pembayaran awal / DP', $pmStatus, $_SESSION['user_id']]);
                 if ($metode === 'QRIS') {
                     $pmPid = DB::lastId();
                     $qr = qris_create_invoice('PB' . $pmPid, (int)round($dp));
@@ -50,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         $q = (float)($it['qty'] ?? 0);
                         $h = (float)($it['harga'] ?? 0);
-                        $st = (float)($it['subtotal'] ?? 0);
+                        $st = $q * $h;
                         if ($q <= 0 || $h < 0) {
                             continue;
                         }
@@ -68,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if ($telepon !== '') {
                 $eventBaru = 'baru';
-                if ($dp > 0 && $metode !== 'QRIS') {
+                if ($dp > 0 && in_array(strtolower($metode), ['tunai', 'cash', 'transfer'])) {
                     $eventBaru = $dp >= $total ? 'lunas' : 'dp';
                 }
                 wa_pelanggan([
@@ -77,6 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'pelanggan' => $pelanggan,
                     'telepon' => $telepon,
                     'total' => $total,
+                    'dp' => $dp,
+                    'sisa' => max(0, $total - $dp),
+                    'metode' => $metode,
                     'status' => $status,
                 ], $eventBaru);
             }
@@ -105,6 +109,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'pelanggan' => $pe['pelanggan'],
                     'telepon' => $pe['telepon'],
                     'total' => (float)$pe['total'],
+                    'dp' => (float)($pm['jumlah'] ?? 0),
+                    'sisa' => max(0, (float)$pe['total'] - $totalBayar),
+                    'metode' => (string)($pm['metode'] ?? 'Tunai'),
                     'status' => $ev === 'lunas' ? 'Lunas' : 'DP',
                 ], $ev);
             }
@@ -159,6 +166,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'pelanggan' => $ps['pelanggan'],
                 'telepon' => $ps['telepon'],
                 'total' => $ps['total'],
+                'dp' => $jumlah,
+                'sisa' => $sisaBaru,
+                'metode' => $metode,
                 'status' => $status,
             ], $sisaBaru <= 0 ? 'lunas' : 'dp');
             flash_set('success', 'Pembayaran diterima.');
@@ -256,9 +266,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sudahBayar = (float)DB::one("SELECT COALESCE(SUM(jumlah),0) t FROM pembayaran WHERE ref_type='pesanan' AND ref_id = ?", [$id])['t'];
             $delta = max(0, $dp - (float)$ps['dp']);
             if ($delta > 0) {
+                $pmStatusE = strtolower($metode) === 'qris' ? 'Menunggu QRIS' : (strtolower($metode) === 'midtrans' ? 'Menunggu Midtrans' : 'Lunas');
                 DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
-                    ['pesanan', $id, date('Y-m-d H:i:s'), $delta, $metode, 'Perubahan DP / tambah uang muka (edit)', $metode === 'QRIS' ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
-                if ($metode === 'QRIS') {
+                    ['pesanan', $id, date('Y-m-d H:i:s'), $delta, $metode, 'Perubahan DP / tambah uang muka (edit)', $pmStatusE, $_SESSION['user_id']]);
+                if (strtolower($metode) === 'qris') {
                     $pmPid = DB::lastId();
                     $qr = qris_create_invoice('PB' . $pmPid, (int)round($delta));
                     if ($qr['ok']) {
@@ -269,6 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         log_aktivitas('QRIS gagal', $ps['no_pesanan'] . ' | ' . $qr['error']);
                     }
                 }
+                DB::run('UPDATE pesanan SET metode = ? WHERE id = ?', [$metode, $id]);
                 $sudahBayar += $delta;
             }
             $sisa = max(0, $total - $sudahBayar);
@@ -306,6 +318,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'pelanggan' => $pelanggan,
                     'telepon' => $telepon,
                     'total' => $total,
+                    'dp' => $dp,
+                    'sisa' => $sisa,
+                    'metode' => $metode,
                     'status' => 'DP',
                 ], 'dp');
             }
@@ -356,12 +371,18 @@ foreach ($pesanan as $ps) {
         continue;
     }
     $st = $ps['status'];
+    $stSisa = (float)$ps['sisa'];
+    $stTotal = (float)$ps['total'];
     if ($st === 'Selesai') {
         $ev = 'selesai';
     } elseif ($st === 'Batal') {
         $ev = 'batal';
-    } elseif ($st === 'Lunas' || (float)$ps['sisa'] <= 0) {
+    } elseif ($st === 'Lunas' || $stSisa <= 0) {
         $ev = 'lunas';
+    } elseif ($st === 'DP' && $stSisa >= $stTotal) {
+        // Belum ada pembayaran sama sekali → pesan pembuatan pesanan (PESANAN DITERIMA),
+        // bukan "DP diterima Rp 0".
+        $ev = 'baru';
     } elseif ($st === 'DP') {
         $ev = 'dp';
     } else {
@@ -446,7 +467,7 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
             </div>
             <table id="tabelItem" style="margin-top:6px;">
                 <thead>
-                    <tr><th style="text-align:left;">Nama</th><th style="width:60px;text-align:center;">Qty</th><th style="width:90px;text-align:right;">Harga</th><th style="width:100px;text-align:right;">Subtotal</th><th style="width:30px;"></th></tr>
+                    <tr><th style="text-align:left;">Nama</th><th style="width:120px;text-align:center;">Ukuran P &times; L</th><th style="width:70px;text-align:center;">Qty (m&sup2;)</th><th style="width:90px;text-align:right;">Harga</th><th style="width:100px;text-align:right;">Subtotal</th><th style="width:30px;"></th></tr>
                 </thead>
                 <tbody id="daftarItem"></tbody>
             </table>
@@ -500,6 +521,139 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
         <?php endif; ?>
     </div>
 </div>
+<script>
+(function () {
+    if (!window.PESANAN_PRODUK) return;
+    var produk = window.PESANAN_PRODUK;
+    var pSel = document.getElementById('produkHitung');
+    var m2Box = document.getElementById('m2Box');
+    var inP = document.getElementById('panjangM');
+    var inL = document.getElementById('lebarM');
+    var inQ = document.getElementById('qtyPesanan');
+    var btnAdd = document.getElementById('btnTambahItem');
+    var tbody = document.getElementById('daftarItem');
+    var info = document.getElementById('itemInfo');
+    var totalEl = document.getElementById('totalPesanan');
+    var jsonEl = document.getElementById('itemsPesanan');
+    var m2Info = document.getElementById('m2Info');
+    if (!pSel || !btnAdd || !tbody || !jsonEl) return;
+    function rpJs(n) {
+        return 'Rp ' + Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+    }
+    function findProd(id) {
+        for (var i = 0; i < produk.length; i++) if (produk[i].id === id) return produk[i];
+        return null;
+    }
+    function isM2(p) {
+        var s = String(p.satuan || '').toLowerCase();
+        var k = String(p.kategori || '').toLowerCase();
+        return s === 'm2' || k.indexOf('banner') > -1 || k.indexOf('spanduk') > -1;
+    }
+    var itemArr = [];
+    pSel.addEventListener('change', function () {
+        var p = findProd(parseInt(pSel.value, 10));
+        if (!p) { m2Box.classList.add('hidden'); m2Info.textContent = ''; return; }
+        if (isM2(p)) {
+            m2Box.classList.remove('hidden');
+            m2Info.textContent = 'Harga: ' + rpJs(p.harga) + ' / m\u00b2';
+        } else {
+            m2Box.classList.add('hidden');
+            m2Info.textContent = 'Harga: ' + rpJs(p.harga) + ' /' + (p.satuan || 'unit');
+        }
+    });
+    btnAdd.addEventListener('click', function () {
+        var p = findProd(parseInt(pSel.value, 10));
+        if (!p) { window.alert('Pilih produk terlebih dahulu.'); return; }
+        var q = parseFloat(inQ.value) || 0;
+        if (q <= 0) { window.alert('Isi jumlah (Qty).'); return; }
+        var m2 = isM2(p);
+        var P = null, L = null, qa = q;
+        if (m2) {
+            P = parseFloat(inP.value) || 0;
+            L = parseFloat(inL.value) || 0;
+            if (P <= 0 || L <= 0) { window.alert('Isi panjang dan lebar (m).'); return; }
+            qa = q * P * L;
+        }
+        itemArr.push({ produk_id: p.id, nama: p.nama, qty: qa, harga: p.harga, subtotal: qa * p.harga, m2: m2, P: P, L: L, q0: q });
+        render();
+    });
+    function fmtNum(n) {
+        return Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+    }
+    function updateTotals() {
+        var sum = 0;
+        itemArr.forEach(function (it) { sum += it.subtotal; });
+        if (totalEl && sum >= 0) totalEl.value = Math.round(sum * 100) / 100;
+        jsonEl.value = JSON.stringify(itemArr.map(function (it) {
+            return { produk_id: it.produk_id, nama: it.nama, qty: it.qty, harga: it.harga, subtotal: it.subtotal };
+        }));
+    }
+    function render() {
+        tbody.innerHTML = '';
+        itemArr.forEach(function (it, idx) {
+            var tr = document.createElement('tr');
+            var tdN = document.createElement('td');
+            var inN = document.createElement('input');
+            inN.type = 'text'; inN.className = 'ci-nama'; inN.value = it.nama; inN.style.width = '100%';
+            tdN.appendChild(inN);
+            var tdU = document.createElement('td');
+            tdU.style.textAlign = 'center';
+            var iP = null, iL = null;
+            if (it.m2) {
+                iP = document.createElement('input');
+                iP.type = 'number'; iP.min = '0'; iP.step = '0.01'; iP.className = 'ci-p'; iP.style.width = '52px'; iP.value = it.P; iP.title = 'Panjang (m)';
+                iL = document.createElement('input');
+                iL.type = 'number'; iL.min = '0'; iL.step = '0.01'; iL.className = 'ci-l'; iL.style.width = '52px'; iL.value = it.L; iL.title = 'Lebar (m)';
+                tdU.appendChild(iP);
+                tdU.appendChild(document.createTextNode(' \u00d7 '));
+                tdU.appendChild(iL);
+            } else {
+                tdU.appendChild(document.createTextNode('-'));
+            }
+            var tdQ = document.createElement('td');
+            tdQ.style.textAlign = 'center';
+            tdQ.textContent = it.m2 ? fmtNum(it.qty) + ' m\u00b2' : fmtNum(it.qty);
+            var tdH = document.createElement('td');
+            tdH.style.textAlign = 'right';
+            var inH = document.createElement('input');
+            inH.type = 'number'; inH.min = '0'; inH.step = '0.01'; inH.className = 'ci-harga'; inH.style.width = '88px'; inH.value = it.harga;
+            tdH.appendChild(inH);
+            var tdS = document.createElement('td');
+            tdS.style.textAlign = 'right';
+            tdS.className = 'ci-st';
+            tdS.textContent = rpJs(it.subtotal);
+            var tdD = document.createElement('td');
+            var b = document.createElement('button');
+            b.type = 'button'; b.className = 'btn kecil bahaya'; b.textContent = 'x';
+            b.addEventListener('click', (function (i) { return function () { itemArr.splice(i, 1); render(); }; })(idx));
+            tdD.appendChild(b);
+            tr.appendChild(tdN); tr.appendChild(tdU); tr.appendChild(tdQ); tr.appendChild(tdH); tr.appendChild(tdS); tr.appendChild(tdD);
+            tbody.appendChild(tr);
+            function hitung() {
+                it.nama = inN.value;
+                it.harga = parseFloat(inH.value) || 0;
+                if (it.m2) {
+                    it.P = parseFloat(iP.value) || 0;
+                    it.L = parseFloat(iL.value) || 0;
+                    it.qty = (it.q0 || 1) * it.P * it.L;
+                    tdQ.textContent = fmtNum(it.qty) + ' m\u00b2';
+                } else {
+                    it.qty = it.q0 || 0;
+                }
+                it.subtotal = it.qty * it.harga;
+                tdS.textContent = rpJs(it.subtotal);
+                updateTotals();
+            }
+            inN.addEventListener('input', hitung);
+            if (iP) iP.addEventListener('input', hitung);
+            if (iL) iL.addEventListener('input', hitung);
+            inH.addEventListener('input', hitung);
+        });
+        if (info) info.textContent = itemArr.length ? (itemArr.length + ' item ditambahkan. Khusus produk m2: isi panjang \u00d7 lebar per baris.') : 'Belum ada item. Pilih produk lalu klik "+ Tambah ke Pesanan" (bisa lebih dari satu).';
+        updateTotals();
+    }
+})();
+</script>
 
 <?php if (setting('qris_image')): ?>
 <div id="modalQris" class="modal hidden">

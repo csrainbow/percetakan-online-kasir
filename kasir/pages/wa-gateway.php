@@ -66,7 +66,7 @@ require __DIR__ . '/../layout/header.php';
 ?>
 <div class="panel">
     <h2>WA Gateway (Baileys — Self Hosted)</h2>
-    <p class="muted">Pengiriman utama notifikasi kasir. Bila gateway tidak connect, otomatis fallback ke provider (Fonnte/Wablas/Meta) sesuai Pengaturan.</p>
+    <p class="muted">Pengiriman utama notifikasi kasir. Semua pesan pelanggan/admin diproses dari antrean wa_queue oleh cron-wa.php lewat gateway ini.</p>
     <table>
         <tr><th style="width:220px">Status gateway</th><td>
             <?php if ($gw['connected']): ?>

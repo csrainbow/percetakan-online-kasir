@@ -73,7 +73,8 @@ class DB {
             sisa REAL NOT NULL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'DP',
             user_id INTEGER,
-            keterangan TEXT DEFAULT ''
+            keterangan TEXT DEFAULT '',
+            metode TEXT DEFAULT ''
         )");
         $s->exec("CREATE TABLE IF NOT EXISTS pesanan_item (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -165,6 +166,18 @@ class DB {
         }
         if (!$hasDeleted) {
             self::run("ALTER TABLE pesanan ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0");
+        }
+
+        $cols = self::q('PRAGMA table_info(pesanan)');
+        $hasMetode = false;
+        foreach ($cols as $c) {
+            if ($c['name'] === 'metode') {
+                $hasMetode = true;
+                break;
+            }
+        }
+        if (!$hasMetode) {
+            self::run("ALTER TABLE pesanan ADD COLUMN metode TEXT DEFAULT ''");
         }
 
         $cols = self::q('PRAGMA table_info(penjualan)');
