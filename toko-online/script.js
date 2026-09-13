@@ -64,7 +64,7 @@ function showNotification(msg, type) {
     var div = document.createElement('div');
     div.className = 'notif-toast';
     
-    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : type === 'warning' ? '#f39c12' : '#3498db';
+    var bgColor = type === 'success' ? 'var(--success)' : type === 'error' ? '#e74c3c' : type === 'warning' ? 'var(--warning)' : 'var(--info)';
     var icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
     
     div.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);background:' + bgColor + ';color:#fff;padding:12px 24px;border-radius:8px;z-index:99999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center;max-width:90%;';
@@ -258,7 +258,7 @@ function renderCart() {
         if (item.designService === 'jasa') {
             dsLabel = ' <span style="font-size:12px;color:#e67e22;">🎨 +Jasa Desain</span>';
         } else if (item.designService === 'upload') {
-            dsLabel = item.designFile ? ' <span style="font-size:12px;color:#27ae60;">✅ File terupload</span>' : ' <span style="font-size:12px;color:#f39c12;">📎 File Desain (upload di checkout)</span>';
+            dsLabel = item.designFile ? ' <span style="font-size:12px;color:var(--success);">✅ File terupload</span>' : ' <span style="font-size:12px;color:var(--warning);">📎 File Desain (upload di checkout)</span>';
         }
         var itemKey = getItemKey(item);
         
@@ -578,7 +578,7 @@ function previewDesignFile() {
             preview.innerHTML = `
                 <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                     <img src="${e.target.result}" style="max-width:150px;max-height:150px;border-radius:6px;border:1px solid #ddd;padding:4px;">
-                    <span style="font-size:12px;color:#27ae60;">✅ ${file.name} (${sizeLabel})</span>
+                    <span style="font-size:12px;color:var(--success);">✅ ${file.name} (${sizeLabel})</span>
                 </div>
             `;
         };
@@ -587,7 +587,7 @@ function previewDesignFile() {
         preview.innerHTML = `
             <div style="margin-top:8px;display:flex;align-items:center;gap:10px;">
                 <span style="font-size:24px;">📄</span>
-                <span style="font-size:12px;color:#27ae60;">✅ ${file.name} (${sizeLabel})</span>
+                <span style="font-size:12px;color:var(--success);">✅ ${file.name} (${sizeLabel})</span>
             </div>
         `;
     }

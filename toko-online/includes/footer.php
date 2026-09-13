@@ -10,6 +10,10 @@ $whatsappNumber = getSetting('whatsapp_number') ?: '';
 
 </div> <!-- 🔥 CLOSE MAIN-CONTENT -->
 
+<?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/admin/') === 0): ?>
+    <link rel="stylesheet" href="/css/admin-theme.css?v=<?= filemtime(__DIR__ . '/../css/admin-theme.css') ?: time() ?>">
+<?php endif; ?>
+
 <!-- ============================================
      FOOTER
      ============================================ -->
@@ -42,6 +46,7 @@ $whatsappNumber = getSetting('whatsapp_number') ?: '';
                 <li><a href="/"><i class="fas fa-home"></i> Beranda</a></li>
                 <li><a href="/products.php"><i class="fas fa-box"></i> Produk</a></li>
                 <li><a href="/tentang-kami.php"><i class="fas fa-info-circle"></i> Tentang Kami</a></li>
+                <li><a href="/panduan-pemesanan.php"><i class="fas fa-book-open"></i> Panduan Pemesanan</a></li>
                 <?php if (isset($_SESSION['customer_id']) && $_SESSION['customer_id'] > 0): ?>
                     <li><a href="/customer/dashboard.php"><i class="fas fa-user"></i> Dashboard</a></li>
                 <?php else: ?>
@@ -55,7 +60,7 @@ $whatsappNumber = getSetting('whatsapp_number') ?: '';
             <h4>Customer Service</h4>
             <ul>
                 <li><a href="/faq.php"><i class="fas fa-question-circle"></i> FAQ</a></li>
-                <li><a href="/tentang-kami.php#kontak"><i class="fas fa-phone"></i> Kontak</a></li>
+                <li><a href="/customer-service.php"><i class="fas fa-phone"></i> Kontak</a></li>
                 <li><a href="/privacy-policy.php"><i class="fas fa-shield-alt"></i> Privasi</a></li>
                 <li><a href="/terms-of-service.php"><i class="fas fa-file-contract"></i> Syarat & Ketentuan</a></li>
             </ul>
@@ -95,10 +100,11 @@ $whatsappNumber = getSetting('whatsapp_number') ?: '';
             <div style="margin-top:15px;">
                 <p style="font-size:12px;color:#666;margin-bottom:6px;">Metode Pembayaran</p>
                 <div class="payment-icons">
-                    <i class="fas fa-credit-card" title="Kartu Kredit"></i>
-                    <i class="fas fa-university" title="Transfer Bank"></i>
-                    <i class="fas fa-mobile-alt" title="QRIS"></i>
-                    <i class="fas fa-building" title="COD"></i>
+                    <span class="pay-badge bca" title="Bank Central Asia">BCA</span>
+                    <span class="pay-badge mandiri" title="Bank Mandiri">Mandiri</span>
+                    <span class="pay-badge bri" title="Bank Rakyat Indonesia">BRI</span>
+                    <span class="pay-badge bni" title="Bank Negara Indonesia">BNI</span>
+                    <span class="pay-badge qris" title="QRIS">QRIS</span>
                 </div>
             </div>
         </div>
@@ -184,69 +190,12 @@ $whatsappNumber = getSetting('whatsapp_number') ?: '';
      FOOTER STYLES (TERSISIP DI SINI)
      ============================================ -->
 <style>
-/* 🔥 FOOTER */
-.footer {
-    background: #2c3e50;
-    color: #ccc;
-    padding: 40px 0 15px;
-    margin-top: 40px;
-    border-top: 4px solid #f39c12;
-}
-
-.footer .container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 30px;
-}
-
-.footer-column h4 {
-    color: #f39c12;
-    font-size: 16px;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.footer-column p {
-    font-size: 13px;
-    line-height: 1.7;
-    color: #ccc;
-    margin: 4px 0;
-}
-
-.footer-column ul {
-    list-style: none;
-    padding: 0;
-}
-
-.footer-column ul li {
-    margin-bottom: 6px;
-}
-
-.footer-column ul li a {
-    color: #ccc;
-    text-decoration: none;
-    font-size: 13px;
-    transition: all 0.3s;
-}
-
-.footer-column ul li a:hover {
-    color: #f39c12;
-    padding-left: 4px;
-}
-
-.footer-column ul li a i {
-    width: 18px;
-    color: #f39c12;
-}
-
-/* 🔥 SOCIAL LINKS */
+/* 🔥 SOCIAL LINKS & PAYMENT ICONS (tidak ada di style.css) */
 .social-links {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
 }
-
 .social-link {
     display: inline-flex;
     align-items: center;
@@ -259,107 +208,40 @@ $whatsappNumber = getSetting('whatsapp_number') ?: '';
     transition: all 0.3s;
     font-size: 16px;
 }
-
 .social-link:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
-
-.social-link.facebook {
-    background: #1877f2;
-}
-.social-link.instagram {
-    background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-}
-.social-link.youtube {
-    background: #ff0000;
-}
-.social-link.whatsapp {
-    background: #25d366;
-}
-.social-link.twitter {
-    background: #1da1f2;
-}
-
-/* 🔥 PAYMENT ICONS */
-.payment-icons {
-    display: flex;
-    gap: 8px;
-    font-size: 22px;
-    color: #ddd;
-}
-
-.payment-icons i {
-    transition: all 0.3s;
+.social-link.facebook { background: #1877f2; }
+.social-link.instagram { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+.social-link.youtube { background: #ff0000; }
+.social-link.whatsapp { background: #25d366; }
+.social-link.twitter { background: #1da1f2; }
+.payment-icons { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.pay-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.06);
+    transition: all 0.25s;
     cursor: default;
 }
-
-.payment-icons i:hover {
-    color: #f39c12;
-    transform: scale(1.1);
-}
-
-/* 🔥 FOOTER BOTTOM */
-.footer-bottom {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding-top: 15px;
-    margin-top: 15px;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    font-size: 13px;
-    color: #999;
-}
-
-.footer-bottom a {
-    color: #f39c12;
-    text-decoration: none;
-}
-
-.footer-bottom a:hover {
-    text-decoration: underline;
-}
-
-/* 🔥 RESPONSIVE FOOTER */
+.pay-badge:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.pay-badge.bca { background: #0060af; color: #fff; }
+.pay-badge.mandiri { background: #e6a400; color: #002b6a; }
+.pay-badge.mandiri::first-letter { color: #d51635; }
+.pay-badge.bri { background: #003a70; color: #fff; }
+.pay-badge.bni { background: #f58220; color: #fff; }
+.pay-badge.qris { background: linear-gradient(135deg, #101010, #333); color: #fff; }
 @media (max-width: 768px) {
-    .footer .container {
-        grid-template-columns: 1fr;
-        text-align: center;
-        gap: 20px;
-    }
-    
-    .footer-column h4 {
-        border-bottom: none;
-        text-align: center;
-    }
-    
-    .social-links {
-        justify-content: center;
-    }
-    
-    .payment-icons {
-        justify-content: center;
-    }
-    
-    .footer-column ul li a i {
-        width: auto;
-        margin-right: 4px;
-    }
-}
-
-@media (max-width: 480px) {
-    .footer {
-        padding: 25px 0 10px;
-    }
-    .footer .container {
-        gap: 15px;
-    }
-    .footer-column h4 {
-        font-size: 14px;
-    }
-    .footer-column p,
-    .footer-column ul li a {
-        font-size: 12px;
-    }
+    .social-links { justify-content: center; }
+    .payment-icons { justify-content: center; }
 }
 </style>
 

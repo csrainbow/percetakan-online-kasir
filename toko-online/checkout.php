@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/qris.php';
+require_once __DIR__ . '/includes/payment_autocheck.php';
 
 $pageTitle = 'Checkout';
 
@@ -17,8 +19,8 @@ $banks = array_filter($banks, function($b) {
 
 $qrisName = getSetting('qris_name');
 $qrisImage = getSetting('qris_image');
-$midtransServerKey = getSetting('midtrans_server_key');
-$storeName = getSetting('store_name') ?: 'Rainbow Printing';
+$qrisApiReady = qris_api_ready();
+$storeName = getSetting('store_name') ?: 'Percetakan Rainbow';
 
 // 🔥 AMBIL DATA CUSTOMER JIKA LOGIN
 $customerData = ['name' => '', 'phone' => '', 'address' => ''];
@@ -42,7 +44,7 @@ include 'includes/header.php';
 }
 .checkout-container h1 {
     font-size: 24px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 5px;
 }
 .checkout-container .subtitle {
@@ -78,10 +80,10 @@ include 'includes/header.php';
 .checkout-form h2,
 .checkout-summary h2 {
     font-size: 18px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 15px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #f39c12;
+    border-bottom: 2px solid var(--danger);
 }
 
 /* 🔥 FORM */
@@ -92,7 +94,7 @@ include 'includes/header.php';
     display: block;
     font-weight: 600;
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 5px;
 }
 .form-group input,
@@ -109,7 +111,7 @@ include 'includes/header.php';
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-    border-color: #f39c12;
+    border-color: var(--danger);
     outline: none;
     box-shadow: 0 0 0 3px rgba(243,156,18,0.15);
 }
@@ -134,7 +136,7 @@ include 'includes/header.php';
 .payment-info h4 {
     font-size: 14px;
     margin-bottom: 10px;
-    color: #2c3e50;
+    color: #111111;
 }
 .bank-list {
     display: grid;
@@ -148,7 +150,7 @@ include 'includes/header.php';
 }
 .bank-item .bank-name {
     font-weight: 600;
-    color: #2c3e50;
+    color: #111111;
 }
 .bank-item .bank-detail {
     font-size: 13px;
@@ -166,21 +168,6 @@ include 'includes/header.php';
     background: #fff;
 }
 
-/* 🔥 COD WARNING */
-.cod-warning {
-    display: none;
-    margin-top: 15px;
-    padding: 12px 16px;
-    background: #fff3cd;
-    border-radius: 8px;
-    color: #856404;
-    font-size: 13px;
-    border-left: 4px solid #f39c12;
-}
-.cod-warning.show {
-    display: block;
-}
-
 /* 🔥 USER LOGIN BADGE */
 .user-badge {
     padding: 10px 15px;
@@ -189,7 +176,7 @@ include 'includes/header.php';
     margin-bottom: 15px;
     font-size: 13px;
     color: #2e7d32;
-    border-left: 4px solid #27ae60;
+    border-left: 4px solid var(--success);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -197,7 +184,7 @@ include 'includes/header.php';
     gap: 8px;
 }
 .user-badge .logout-link {
-    color: #e74c3c;
+    color: var(--danger);
     font-size: 12px;
     text-decoration: none;
 }
@@ -219,7 +206,7 @@ include 'includes/header.php';
     padding: 12px 0 0;
     font-size: 18px;
     font-weight: 700;
-    border-top: 2px solid #2c3e50;
+    border-top: 2px solid #111111;
     margin-top: 8px;
 }
 .summary-empty {
@@ -245,11 +232,11 @@ include 'includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
 }
 .btn-primary:disabled {
     opacity: 0.6;
@@ -261,8 +248,8 @@ include 'includes/header.php';
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -300,7 +287,7 @@ include 'includes/header.php';
     <div id="checkout-empty" style="display:none;">
         <div style="text-align:center;padding:60px 20px;background:#fff;border-radius:10px;border:1px solid #e9ecef;">
             <div style="font-size:48px;margin-bottom:15px;">🛒</div>
-            <h3 style="color:#2c3e50;margin-bottom:8px;">Keranjang Kosong</h3>
+            <h3 style="color:#111111;margin-bottom:8px;">Keranjang Kosong</h3>
             <p style="color:#6c757d;">Belum ada produk di keranjang Anda.</p>
             <a href="products.php" class="btn btn-primary" style="margin-top:15px;">Mulai Belanja</a>
         </div>
@@ -346,27 +333,26 @@ include 'includes/header.php';
                     <label for="payment_method">Pilih Pembayaran *</label>
                     <select name="payment_method" id="payment_method" required>
                         <option value="">-- Pilih Metode --</option>
-                        <?php if ($midtransServerKey): ?>
-                            <option value="midtrans">Midtrans (QRIS/Transfer/VA/E-Wallet)</option>
+                        <?php if (!empty($banks)): ?>
+                            <option value="transfer">🏦 Transfer Bank (Cek Manual + Foto Bukti)</option>
                         <?php endif; ?>
-                        <option value="transfer">Transfer Bank Manual</option>
                         <?php if ($qrisImage): ?>
-                            <option value="qris">QRIS Manual</option>
+                            <option value="qris">📱 QRIS (Cek Manual)</option>
                         <?php endif; ?>
-                        <option value="cod">Bayar di Tempat (COD)</option>
+                        <?php if ($qrisApiReady): ?>
+                            <option value="qris_dinamis">⚡ QRIS (Cek Otomatis — API Integrasi)</option>
+                        <?php endif; ?>
                     </select>
+                    <?php if (empty($banks) && !$qrisImage && !$qrisApiReady): ?>
+                        <p style="color:var(--danger);font-size:13px;margin-top:6px;">⚠️ Belum ada metode pembayaran aktif. Hubungi admin.</p>
+                    <?php endif; ?>
                     <div class="helper-text">Pilih metode pembayaran yang sesuai</div>
                 </div>
 
-                <!-- 🔥 COD WARNING -->
-                <div class="cod-warning" id="cod-warning">
-                    ⚠️ Pesanan dengan <strong>Jasa Desain</strong> tidak bisa menggunakan COD. 
-                    Silakan pilih Transfer Bank, QRIS, atau Midtrans untuk melanjutkan.
-                </div>
-
                 <!-- 🔥 BANK INFO -->
-                <div class="payment-info" id="bank-info">
-                    <h4>🏦 Transfer ke salah satu rekening berikut:</h4>
+                <div class="payment-info" id="transfer-info">
+                    <h4>🏦 Transfer Bank (Cek Manual)</h4>
+                    <p style="font-size:13px;color:#555;margin-bottom:10px;">Transfer ke salah satu rekening berikut, lalu upload foto bukti transfer:</p>
                     <div class="bank-list">
                         <?php foreach ($banks as $b): ?>
                             <div class="bank-item">
@@ -379,7 +365,7 @@ include 'includes/header.php';
                         <?php endforeach; ?>
                         <?php if (empty($banks)): ?>
                             <div class="bank-item">
-                                <div class="bank-detail" style="color:#e74c3c;">
+                                <div class="bank-detail" style="color:var(--danger);">
                                     ⚠️ Belum ada rekening bank yang dikonfigurasi. Hubungi admin.
                                 </div>
                             </div>
@@ -390,44 +376,30 @@ include 'includes/header.php';
                     </p>
                 </div>
 
-                <!-- 🔥 QRIS INFO -->
+                <!-- 🔥 QRIS MANUAL INFO -->
                 <div class="payment-info" id="qris-info">
-                    <h4>📱 Scan QRIS untuk bayar:</h4>
+                    <h4>📱 QRIS (Cek Manual)</h4>
                     <?php if ($qrisImage): ?>
                         <img src="/uploads/<?= htmlspecialchars($qrisImage) ?>" alt="QRIS" class="qris-image">
                     <?php else: ?>
-                        <p style="color:#e74c3c;">⚠️ QRIS belum dikonfigurasi. Hubungi admin.</p>
+                        <p style="color:var(--danger);">⚠️ QRIS belum dikonfigurasi. Hubungi admin.</p>
                     <?php endif; ?>
                     <?php if ($qrisName): ?>
                         <p style="text-align:center;">a.n. <strong><?= htmlspecialchars($qrisName) ?></strong></p>
                     <?php endif; ?>
-                    <p style="font-size:13px;color:#6c757d;margin-top:10px;text-align:center;">
-                        Scan menggunakan aplikasi e-wallet (GoPay, OVO, DANA, dll) atau mobile banking.
+<p style="font-size:13px;color:#6c757d;margin-top:10px;text-align:center;">
+                        Scan QRIS, lalu upload bukti pembayaran di halaman berikutnya untuk dicek manual oleh admin.
                     </p>
                 </div>
 
-                <!-- 🔥 MIDTRANS INFO -->
-                <div class="payment-info" id="midtrans-info">
-                    <h4>💳 Pembayaran Online via Midtrans</h4>
+                <!-- 🔥 QRIS DINAMIS INFO -->
+                <div class="payment-info" id="qris_dinamis-info">
+                    <h4>⚡ QRIS (Cek Otomatis — API Integrasi)</h4>
                     <p style="color:#555;font-size:14px;">
-                        Setelah pesanan dibuat, kamu akan diarahkan ke halaman pembayaran Midtrans.
+                        QRIS Dinamis dibuat otomatis saat pesanan diproses (berlaku 30 menit).
                     </p>
                     <p style="color:#555;font-size:14px;">
-                        Pembayaran akan terverifikasi secara <strong>otomatis</strong>.
-                    </p>
-                    <p style="color:#999;font-size:12px;margin-top:8px;">
-                        Metode: QRIS, GoPay, OVO, DANA, Shopeepay, Transfer Bank, Virtual Account, Indomaret/Alfamart
-                    </p>
-                </div>
-
-                <!-- 🔥 COD INFO -->
-                <div class="payment-info" id="cod-info">
-                    <h4>💵 Bayar di Tempat (COD)</h4>
-                    <p style="color:#555;font-size:14px;">
-                        Pembayaran dilakukan saat barang diterima di alamat tujuan.
-                    </p>
-                    <p style="color:#e74c3c;font-size:13px;margin-top:8px;">
-                        ⚠️ COD hanya tersedia untuk area tertentu. Konfirmasi via WhatsApp setelah order.
+                        Pembayaran terverifikasi <strong>otomatis</strong> lewat integrasi API — tanpa perlu upload bukti.
                     </p>
                 </div>
             </div>
@@ -476,18 +448,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var targetId = this.value + '-info';
         var target = document.getElementById(targetId);
         if (target) target.classList.add('show');
-        
-        // 🔥 CEK COD + JASA DESAIN
-        var codWarning = document.getElementById('cod-warning');
-        var cart = getCart();
-        var hasJasa = cart.some(function(i) { return i.designService === 'jasa'; });
-        
-        if (this.value === 'cod' && hasJasa) {
-            codWarning.classList.add('show');
-            codWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else {
-            codWarning.classList.remove('show');
-        }
     });
     
     // 🔥 Trigger initial state
@@ -517,13 +477,7 @@ async function submitOrder(event) {
         return;
     }
     
-    // 🔥 Validasi COD + Jasa Desain
     var paymentMethod = formData.get('payment_method');
-    var hasJasa = items.some(function(i) { return i.designService === 'jasa'; });
-    if (paymentMethod === 'cod' && hasJasa) {
-        showNotification('Pesanan dengan Jasa Desain tidak bisa menggunakan COD. Silakan pilih Transfer Bank, QRIS, atau Midtrans.', 'error');
-        return;
-    }
     
     var data = {
         name: formData.get('name'),
@@ -563,17 +517,10 @@ async function submitOrder(event) {
         if (result.success) {
             localStorage.removeItem('cart');
             updateCartBadge();
-            
-            // 🔥 Jika Midtrans, redirect ke payment
-            if (paymentMethod === 'midtrans' && result.order_code) {
-                // Tunggu sebentar lalu redirect
-                showNotification('✅ Pesanan berhasil! Mengarahkan ke pembayaran...', 'success');
-                setTimeout(function() {
-                    window.location.href = '/payment/confirm.php?order=' + encodeURIComponent(result.order_code);
-                }, 1500);
-            } else {
+            showNotification('✅ Pesanan berhasil!', 'success');
+            setTimeout(function() {
                 window.location.href = '/order-success.php?order=' + encodeURIComponent(result.order_code);
-            }
+            }, 1200);
         } else {
             showNotification(result.message || 'Gagal memproses pesanan', 'error');
             btn.disabled = false;
@@ -604,7 +551,7 @@ function showNotification(msg, type) {
     
     var div = document.createElement('div');
     div.className = 'notif-toast';
-    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#f39c12';
+    var bgColor = type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--danger)';
     div.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);background:' + bgColor + ';color:#fff;padding:12px 24px;border-radius:8px;z-index:99999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center;max-width:90%;';
     div.textContent = msg;
     document.body.appendChild(div);

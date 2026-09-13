@@ -242,7 +242,7 @@ include '../includes/header.php';
 }
 .admin-sidebar {
     width: 220px;
-    background: #2c3e50;
+    background: var(--primary);
     padding: 20px 15px;
     border-radius: 8px;
     flex-shrink: 0;
@@ -251,7 +251,7 @@ include '../includes/header.php';
     height: fit-content;
 }
 .admin-sidebar h2 {
-    color: #f39c12;
+    color: var(--warning);
     font-size: 16px;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -272,10 +272,10 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .admin-sidebar ul li a:hover { background: rgba(255,255,255,0.1); color: #fff; }
-.admin-sidebar ul li a.active { background: #f39c12; color: #fff; }
+.admin-sidebar ul li a.active { background: var(--warning); color: #fff; }
 
 .admin-main { flex: 1; min-width: 0; }
-.admin-main h1 { font-size: 24px; color: #2c3e50; margin-bottom: 20px; }
+.admin-main h1 { font-size: 24px; color: var(--primary); margin-bottom: 20px; }
 
 .alert {
     padding: 12px 15px;
@@ -295,13 +295,13 @@ include '../includes/header.php';
     border: none;
     transition: all 0.3s;
 }
-.btn-primary { background: #2c3e50; color: #fff; }
+.btn-primary { background: var(--primary); color: #fff; }
 .btn-primary:hover { background: #1a252f; }
-.btn-success { background: #27ae60; color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
 .btn-success:hover { background: #1e8449; }
 .btn-danger { background: #e74c3c; color: #fff; }
 .btn-danger:hover { background: #c0392b; }
-.btn-outline { background: #fff; color: #2c3e50; border: 1px solid #2c3e50; }
+.btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
 .btn-outline:hover { background: #f8f9fa; }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
 
@@ -356,7 +356,7 @@ include '../includes/header.php';
     font-size: 11px;
     font-weight: 600;
 }
-.status-pending_verification { background: #3498db; color: #fff; }
+.status-pending_verification { background: var(--info); color: #fff; }
 
 /* 🔥 FORM */
 .admin-form {
@@ -368,10 +368,10 @@ include '../includes/header.php';
 }
 .admin-form h2 {
     font-size: 18px;
-    color: #2c3e50;
+    color: var(--primary);
     margin-bottom: 15px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #f39c12;
+    border-bottom: 2px solid var(--warning);
 }
 .form-group {
     margin-bottom: 15px;
@@ -381,7 +381,7 @@ include '../includes/header.php';
     font-weight: 600;
     margin-bottom: 5px;
     font-size: 14px;
-    color: #2c3e50;
+    color: var(--primary);
 }
 .form-group input, .form-group textarea, .form-group select {
     width: 100%;
@@ -391,7 +391,7 @@ include '../includes/header.php';
     font-size: 14px;
 }
 .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-    border-color: #f39c12;
+    border-color: var(--warning);
     outline: none;
 }
 .form-row {
@@ -439,7 +439,7 @@ include '../includes/header.php';
     overflow: hidden;
     transition: all 0.3s;
 }
-.image-item:hover { border-color: #f39c12; }
+.image-item:hover { border-color: var(--warning); }
 .image-item img {
     width: 100%;
     height: 100%;
@@ -468,7 +468,7 @@ include '../includes/header.php';
     position: absolute;
     bottom: 4px;
     left: 4px;
-    background: #27ae60;
+    background: var(--success);
     color: #fff;
     padding: 2px 8px;
     border-radius: 4px;
@@ -743,9 +743,9 @@ include '../includes/header.php';
                             </td>
                             <td>
                                 <?php if ($p['stock'] > 10): ?>
-                                    <span style="color:#27ae60;">✅ <?= $p['stock'] ?></span>
+                                    <span style="color:var(--success);">✅ <?= $p['stock'] ?></span>
                                 <?php elseif ($p['stock'] > 0): ?>
-                                    <span style="color:#f39c12;">⚠️ <?= $p['stock'] ?></span>
+                                    <span style="color:var(--warning);">⚠️ <?= $p['stock'] ?></span>
                                 <?php else: ?>
                                     <span style="color:#e74c3c;">❌ Habis</span>
                                 <?php endif; ?>

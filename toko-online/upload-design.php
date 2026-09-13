@@ -151,7 +151,37 @@ if (move_uploaded_file($file['tmp_name'], $targetPath)) {
         // Tidak mengganggu proses utama
     }
 
-    // 🔥 🔥 KIRIM NOTIFIKASI KE ADMIN 🔥 🔥
+    // 🔥 🔥 KIRIM NOTIFIKASI KE CUSTOMER (EMAIL + WA) 🔥 🔥
+    try {
+        $cust = $db->prepare("SELECT name, email, phone FROM customers WHERE id = ?");
+        $cust->execute([$customerId]);
+        $custInfo = $cust->fetch();
+        if ($custInfo) {
+            $subjCust = "📎 Desain Diterima - " . $originalName;
+            $msgCust = "File desain \"" . $originalName . "\" berhasil kami terima.\n\n"
+                . "Customer: " . ($custInfo['name'] ?: $customerName) . "\n"
+                . "File: " . $originalName . "\n"
+                . "Ukuran: " . number_format($file['size'] / 1024, 1) . " KB\n"
+                . "Waktu: " . date('d/m/Y H:i:s') . "\n\n"
+                . "Tim kami akan segera memproses. Hasil desain akan dikirim ke WA/email ini.\n\n"
+                . "Abaikan email ini bila bukan Anda yang mengupload.";
+            if (!empty($custInfo['email'])) {
+                sendEmail($custInfo['email'], $subjCust, $msgCust);
+                logDesignUpload("Customer email sent", ['email' => $custInfo['email']]);
+            }
+            if (!empty($custInfo['phone'])) {
+                wa_web_send($custInfo['phone'], "📎 *Desain Diterima*\n\nHalo " . ($custInfo['name'] ?: $customerName)
+                    . ", file \"" . $originalName . "\" berhasil kami terima.\nUkuran: "
+                    . number_format($file['size'] / 1024, 1) . " KB\nWaktu: " . date('d/m/Y H:i:s')
+                    . "\n\nTim kami akan memproses & membalas hasil desain ke nomor ini.\n\n— Percetakan Rainbow");
+                logDesignUpload("Customer WA queued", ['phone' => $custInfo['phone']]);
+            }
+        }
+    } catch (Exception $e) {
+        logDesignUpload("Customer notify error: " . $e->getMessage());
+    }
+
+    // 🔥 🔥 KIRIM NOTIFIKASI KE ADMIN (EMAIL + WA) 🔥 🔥
     try {
         $adminEmail = getSetting('admin_email');
         if ($adminEmail) {
@@ -167,6 +197,14 @@ if (move_uploaded_file($file['tmp_name'], $targetPath)) {
             sendEmail($adminEmail, $subject, $message);
             logDesignUpload("Admin email sent", ['email' => $adminEmail]);
         }
+        wa_web_notify_admin("📎 Upload Desain Baru - " . $originalName, [
+            "Nama file: " . $originalName,
+            "Ukuran: " . number_format($file['size'] / 1024, 1) . " KB",
+            "Tipe: " . strtoupper($ext),
+            "Customer: " . $customerName . " (ID: $customerId)",
+            "Link: https://rainbowprinting.web.id/uploads/designs/" . $filename,
+            "Waktu: " . date('d/m/Y H:i:s'),
+        ]);
     } catch (Exception $e) {
         logDesignUpload("Email error: " . $e->getMessage());
     }

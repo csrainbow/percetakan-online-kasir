@@ -12,6 +12,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/qris.php';
 
 header('Content-Type: application/json');
 
@@ -301,6 +302,35 @@ try {
         'total' => $total,
         'customer_id' => $customerId
     ]);
+
+    // 🔥 🔥 QRIS DINAMIS (hanya jika pelanggan pilih "QRIS Otomatis/API" & API terkonfigurasi) 🔥 🔥
+    $qrisInfo = null;
+    if ($paymentMethod === 'qris_dinamis' && qris_api_ready()) {
+        $qi = qris_issue_order($orderCode, $total, $orderId);
+        if ($qi['ok'] && !empty($qi['row'])) {
+            $qrisInfo = [
+                'qris_content' => $qi['row']['qris_content'],
+                'qris_invid' => $qi['row']['qris_invid'],
+                'qris_nmid' => $qi['row']['qris_nmid'],
+                'qris_expiry' => $qi['row']['qris_expiry'],
+                'qris_request_date' => $qi['row']['qris_request_date'],
+            ];
+        }
+    }
+
+    // 🔥 🔥 NOMINAL UNIK (Jalur B — auto-check pembayaran) 🔥 🔥
+    // Dipakai untuk transfer & QRIS statis (cek manual): total + kode unik, dicocokkan otomatis.
+    $payCode = 0;
+    $uniqueAmount = 0;
+    $isSoapQris = ($paymentMethod === 'qris_dinamis' && $qrisInfo !== null);
+    if ($paymentMethod !== 'cod' && $paymentMethod !== 'midtrans' && !$isSoapQris) {
+        require_once __DIR__ . '/includes/payment_autocheck.php';
+        $uniqueAmount = pay_attach_order($db, $orderId, $total, $paymentMethod);
+        $pc = $db->prepare("SELECT pay_code FROM orders WHERE id=?");
+        $pc->execute([$orderId]);
+        $payCode = (int)$pc->fetchColumn();
+    }
+    logOrder("Unique amount computed", ['order_code' => $orderCode, 'pay_code' => $payCode, 'unique_amount' => $uniqueAmount]);
     
     // 🔥 🔥 KIRIM NOTIFIKASI KE ADMIN 🔥 🔥
     try {
@@ -314,30 +344,25 @@ try {
             $message .= "Total: Rp " . number_format($total, 0, ',', '.') . "\n";
             $message .= "Metode: " . $paymentMethod . "\n";
             $message .= "Item: " . count($validItems) . " item\n\n";
+if ($uniqueAmount > 0) {
+                $message .= "Nominal unik: Rp " . number_format($uniqueAmount, 0, ',', '.') . " (kode " . $payCode . ")\n";
+                }
             $message .= "Link: https://rainbowprinting.web.id/admin/order-detail.php?id=" . $orderId;
             sendEmail($adminEmail, $subject, $message);
             logOrder("Admin notification sent", ['email' => $adminEmail]);
         }
+        if (function_exists('wa_web_notify_admin')) {
+            wa_web_notify_admin("📦 Pesanan Baru (Web) - " . $orderCode, [
+                "Customer: " . $name,
+                "Telepon: " . $phoneClean,
+                "Total: Rp " . number_format($total, 0, ',', '.'),
+                "Metode: " . $paymentMethod,
+                "Item: " . count($validItems) . " item",
+                "Link: https://rainbowprinting.web.id/admin/order-detail.php?id=" . $orderId,
+            ]);
+        }
     } catch (Exception $e) {
         logOrder("Email error: " . $e->getMessage());
-    }
-
-    // 🔥 🔥 KIRIM NOTIFIKASI WHATSAPP 🔥 🔥
-    try {
-        $waTo = getSetting('whatsapp_number') ?: WHATSAPP_NUMBER;
-        $waMsg = "🛒 *PESANAN BARU (TOKO ONLINE)*\n"
-            . "No: " . $orderCode . "\n"
-            . "Nama: " . $name . "\n"
-            . "Telepon: " . $phoneClean . "\n"
-            . "Total: Rp " . number_format($total, 0, ',', '.') . "\n"
-            . "Metode: " . $paymentMethod . "\n"
-            . "Item: " . count($validItems) . " item\n"
-            . "Waktu: " . date('d/m/Y H:i') . "\n"
-            . "Detail: https://rainbowprinting.web.id/admin/order-detail.php?id=" . $orderId;
-        $waOk = waSend($waTo, $waMsg);
-        logOrder("WA notification sent", ['to' => $waTo, 'ok' => $waOk]);
-    } catch (Exception $e) {
-        logOrder("WA error: " . $e->getMessage());
     }
     
     // 🔥 🔥 RESPONSE 🔥 🔥
@@ -347,8 +372,12 @@ try {
         'order_code' => $orderCode,
         'total' => $total,
         'order_id' => $orderId,
+        'pay_code' => $payCode,
+        'unique_amount' => $uniqueAmount,
         'has_design' => $hasDesignService,
-        'has_custom_size' => $hasCustomSize
+        'has_custom_size' => $hasCustomSize,
+        'qris' => $qrisInfo,
+        'qris_api_ready' => qris_api_ready(),
     ]);
     
 } catch (PDOException $e) {

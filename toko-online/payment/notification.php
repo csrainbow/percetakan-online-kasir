@@ -92,9 +92,11 @@ if (!$order) {
 }
 
 if (!$order) {
-    logMidtrans("❌ Order not found", ['order_code' => $orderCode]);
-    http_response_code(404);
-    echo json_encode(['status' => 'error', 'message' => 'Order not found']);
+    // 🔥 Order tidak ditemukan (mis. notifikasi mock dari "Tes URL" atau order dari sistem lain).
+    // Tetap balas 200 agar Midtrans tidak menganggap kegagalan HTTP; tidak ada yang perlu di-update.
+    logMidtrans("ℹ️ Order not found - membalas 200 (tes URL / order asing)", ['order_code' => $orderCode]);
+    http_response_code(200);
+    echo json_encode(['status' => 'ok', 'message' => 'Notification received (order unknown)']);
     exit;
 }
 
@@ -182,23 +184,13 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
             $order['id']
         ]);
         $orderUpdated = true;
-
-        // 🔥 KIRIM WA KE PELANGGAN (WA Gateway Baileys)
-        if (function_exists('waOrderStatus')) {
-            try {
-                waOrderStatus($db, $order['id'], $newPaymentStatus === 'paid' ? 'paid' : 'dp');
-                logMidtrans("✅ WA sent to customer: " . $order['customer_phone']);
-            } catch (Exception $e) {
-                logMidtrans("❌ WA error: " . $e->getMessage());
-            }
-        }
         
         // 🔥 SIMPAN KE TABEL PAYMENTS
         $checkPayment = $db->prepare("SELECT id FROM payments WHERE order_id=? AND payment_type='midtrans' AND amount=?");
         $checkPayment->execute([$order['id'], $amount]);
         if (!$checkPayment->fetch()) {
             $stmt = $db->prepare("INSERT INTO payments (order_id, amount, bank_name, account_number, account_name, proof_image, payment_type, status, created_at) 
-                                   VALUES (?, ?, 'Midtrans', 'Online', 'Midtrans', '', 'midtrans', 'approved', datetime('now'))");
+                                   VALUES (?, ?, 'Midtrans', 'Online', 'Midtrans', '', 'midtrans', 'approved', NOW())");
             $stmt->execute([
                 $order['id'],
                 $amount,
@@ -208,6 +200,17 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
             logMidtrans("✅ Payment recorded in payments table", ['amount' => $amount]);
         }
         
+        // 🔥 KIRIM WA KE PELANGGAN (via antrean kasir)
+        try {
+            if (function_exists('waOrderStatus') && !empty($order['customer_phone'])) {
+                $waEv = $newPaymentStatus === 'paid' ? 'paid' : 'dp';
+                $waSent = waOrderStatus($db, (int)$order['id'], $waEv);
+                logMidtrans('WA to customer: ' . ($waSent ? 'enqueued' : 'skipped'));
+            }
+        } catch (\Throwable $e) {
+            logMidtrans('WA error: ' . $e->getMessage());
+        }
+
         // 🔥 🔥 KIRIM EMAIL NOTIFIKASI 🔥 🔥
         try {
             $adminEmail = getSetting('admin_email');
@@ -240,7 +243,7 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
                     $message .= "Sisa pembayaran: Rp " . number_format($order['total'] - $newTotalPaid, 0, ',', '.') . "\n";
                     $message .= "Silakan lunasi sisa pembayaran melalui halaman pesanan Anda.\n\n";
                 }
-                $message .= "Terima kasih telah berbelanja di Rainbow Printing!\n";
+                $message .= "Terima kasih telah berbelanja di Percetakan Rainbow!\n";
                 $message .= "Link: https://rainbowprinting.web.id/customer/order-detail.php?order=" . $order['order_code'];
                 sendEmail($customerEmail, $subject, $message);
                 logMidtrans("📧 Customer email sent to: $customerEmail");

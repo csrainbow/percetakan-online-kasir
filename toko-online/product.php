@@ -16,7 +16,7 @@ if (!$product) {
     $pageTitle = 'Produk Tidak Ditemukan';
     include 'includes/header.php';
     echo '<div style="text-align:center;padding:60px 20px;">';
-    echo '<h1 style="font-size:48px;color:#2c3e50;">404</h1>';
+    echo '<h1 style="font-size:48px;color:#111111;">404</h1>';
     echo '<p style="color:#6c757d;">Produk yang Anda cari tidak ditemukan.</p>';
     echo '<a href="products.php" class="btn btn-primary">Kembali ke Produk</a>';
     echo '</div>';
@@ -24,8 +24,7 @@ if (!$product) {
     exit;
 }
 
-$pageTitle = htmlspecialchars($product['name']) . ' - Rainbow Printing';
-$canonicalUrl = 'https://rainbowprinting.web.id/product.php?slug=' . urlencode($slug);
+$pageTitle = htmlspecialchars($product['name']) . ' - Percetakan Rainbow';
 
 // 🔥 AMBIL PRODUK TERKAIT
 $related = $db->prepare("SELECT * FROM products WHERE category = ? AND id != ? LIMIT 4");
@@ -171,7 +170,7 @@ include 'includes/header.php';
 .slider-thumb.active,
 .slider-thumb:hover {
     opacity: 1;
-    border-color: #f39c12;
+    border-color: var(--danger);
 }
 
 /* 🔥 PRODUCT INFO */
@@ -188,13 +187,13 @@ include 'includes/header.php';
 }
 .product-detail-info h1 {
     font-size: 26px;
-    color: #2c3e50;
+    color: #111111;
     margin: 0;
 }
 .product-detail-info .product-price {
     font-size: 24px;
     font-weight: 700;
-    color: #2c3e50;
+    color: #111111;
 }
 .product-detail-info .product-description {
     color: #555;
@@ -212,7 +211,7 @@ include 'includes/header.php';
     display: block;
     margin-bottom: 5px;
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
 }
 .custom-size-inputs select,
 .custom-size-inputs input {
@@ -233,7 +232,7 @@ include 'includes/header.php';
     margin-top: 10px;
 }
 #size-total strong {
-    color: #2c3e50;
+    color: #111111;
 }
 
 /* 🔥 DESIGN SERVICE */
@@ -254,7 +253,7 @@ include 'includes/header.php';
 .design-service-options input[type="radio"] {
     width: 16px;
     height: 16px;
-    accent-color: #f39c12;
+    accent-color: var(--danger);
 }
 #design-upload-area {
     margin: 8px 0 8px 28px;
@@ -289,9 +288,9 @@ include 'includes/header.php';
     justify-content: center;
 }
 .qty-control button:hover {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
-    border-color: #2c3e50;
+    border-color: #111111;
 }
 .qty-control input {
     width: 50px;
@@ -321,11 +320,11 @@ include 'includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
     transform: translateY(-1px);
 }
 .btn-lg {
@@ -341,7 +340,7 @@ include 'includes/header.php';
 }
 .related h2 {
     font-size: 20px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 15px;
 }
 .related .product-grid {
@@ -360,7 +359,7 @@ include 'includes/header.php';
 .related .product-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border-color: #f39c12;
+    border-color: var(--danger);
 }
 .related .product-img-link {
     display: block;
@@ -385,12 +384,12 @@ include 'includes/header.php';
     font-size: 13px;
     margin: 0 0 4px;
     line-height: 1.4;
-    color: #2c3e50;
+    color: #111111;
 }
 .related .product-info .product-price {
     font-size: 15px;
     font-weight: 700;
-    color: #2c3e50;
+    color: #111111;
 }
 .related .product-info .btn {
     display: block;
@@ -399,12 +398,12 @@ include 'includes/header.php';
     font-size: 12px;
     padding: 6px;
     background: transparent;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
     border-radius: 4px;
 }
 .related .product-info .btn:hover {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 
@@ -414,7 +413,7 @@ include 'includes/header.php';
     top: 15px;
     left: 50%;
     transform: translateX(-50%);
-    background: #27ae60;
+    background: var(--success);
     color: #fff;
     padding: 12px 24px;
     border-radius: 8px;
@@ -587,7 +586,7 @@ include 'includes/header.php';
                                data-vname="<?= htmlspecialchars($v['name'], ENT_QUOTES) ?>"
                                data-vprice="<?= $v['price'] ?>" onchange="calcPrice()">
                         <?= htmlspecialchars($v['name']) ?> 
-                        <span style="color:#e67e22;font-size:13px;">+ <?= formatRupiah($v['price']) ?></span>
+                        <span style="color:var(--danger);font-size:13px;">+ <?= formatRupiah($v['price']) ?></span>
                     </label>
                 </div>
                 <?php endforeach; ?>
@@ -667,6 +666,7 @@ include 'includes/header.php';
  */
 
 // 🔥 VARIABLES
+var isCustomerLoggedIn = <?= isset($_SESSION['customer_id']) ? 'true' : 'false' ?>;
 var currentSlide = 0;
 var totalSlides = <?= count($productImages) ?>;
 
@@ -924,6 +924,11 @@ function addToCart(id, name, qty, price, isCustom, width, height, matPrice, matN
     }
     
     localStorage.setItem('cart', JSON.stringify(cart));
+
+    if (!isCustomerLoggedIn) {
+        window.location.href = '/register.php?redirect=' + encodeURIComponent('/checkout.php');
+        return;
+    }
     
     // 🔥 Update badge
     var total = cart.reduce(function(sum, item) { return sum + (item.qty || 0); }, 0);
@@ -941,7 +946,7 @@ function addToCart(id, name, qty, price, isCustom, width, height, matPrice, matN
 function uploadDesignFile(file, callback) {
     var status = document.getElementById('design-file-status');
     status.textContent = '⏳ Mengupload...';
-    status.style.color = '#f39c12';
+    status.style.color = 'var(--danger)';
     
     var formData = new FormData();
     formData.append('design_file', file);
@@ -954,24 +959,24 @@ function uploadDesignFile(file, callback) {
                 var resp = JSON.parse(xhr.responseText);
                 if (resp.success) {
                     status.textContent = '✅ File berhasil diupload';
-                    status.style.color = '#27ae60';
+                    status.style.color = 'var(--success)';
                     callback(resp.filename);
                 } else {
                     status.textContent = '❌ ' + (resp.message || 'Gagal upload');
-                    status.style.color = '#e74c3c';
+                    status.style.color = 'var(--danger)';
                 }
             } catch (e) {
                 status.textContent = '❌ Gagal upload file';
-                status.style.color = '#e74c3c';
+                status.style.color = 'var(--danger)';
             }
         } else {
             status.textContent = '❌ Server error (' + xhr.status + ')';
-            status.style.color = '#e74c3c';
+            status.style.color = 'var(--danger)';
         }
     };
     xhr.onerror = function() {
         status.textContent = '❌ Network error';
-        status.style.color = '#e74c3c';
+        status.style.color = 'var(--danger)';
     };
     xhr.send(formData);
 }
@@ -983,7 +988,7 @@ function showNotification(msg, type) {
     
     var div = document.createElement('div');
     div.className = 'notif-toast';
-    div.style.backgroundColor = type === 'error' ? '#e74c3c' : '#27ae60';
+    div.style.backgroundColor = type === 'error' ? 'var(--danger)' : 'var(--success)';
     div.textContent = msg;
     document.body.appendChild(div);
     

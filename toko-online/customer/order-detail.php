@@ -85,10 +85,10 @@ include '../includes/header.php';
     font-weight: bold;
     margin-top: 4px;
 }
-.payment-summary-item .value.text-success { color: #27ae60; }
+.payment-summary-item .value.text-success { color: var(--success); }
 .payment-summary-item .value.text-danger { color: #e74c3c; }
-.payment-summary-item .value.text-warning { color: #f39c12; }
-.payment-summary-item .value.text-primary { color: #2c3e50; }
+.payment-summary-item .value.text-warning { color: var(--warning); }
+.payment-summary-item .value.text-primary { color: var(--primary); }
 
 .progress-bar-container {
     margin-top: 12px;
@@ -100,7 +100,7 @@ include '../includes/header.php';
 .progress-bar-fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #f39c12, #27ae60);
+    background: linear-gradient(90deg, var(--warning), var(--success));
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -119,18 +119,18 @@ include '../includes/header.php';
     font-size: 12px;
     font-weight: 600;
 }
-.status-pending { background: #f39c12; color: #fff; }
-.status-desain { background: #8e44ad; color: #fff; }
-.status-processed { background: #3498db; color: #fff; }
-.status-printing { background: #2c3e50; color: #fff; }
-.status-done { background: #27ae60; color: #fff; }
+.status-pending { background: var(--warning); color: #fff; }
+.status-desain { background: var(--secondary); color: #fff; }
+.status-processed { background: var(--info); color: #fff; }
+.status-printing { background: var(--primary); color: #fff; }
+.status-done { background: var(--success); color: #fff; }
 .status-cancelled { background: #e74c3c; color: #fff; }
 .status-failed { background: #e74c3c; color: #fff; }
 .status-unpaid { background: #95a5a6; color: #fff; }
-.status-pending_verification { background: #f39c12; color: #fff; }
-.status-paid { background: #27ae60; color: #fff; }
-.status-dp { background: #f39c12; color: #fff; }
-.status-verified { background: #27ae60; color: #fff; }
+.status-pending_verification { background: var(--warning); color: #fff; }
+.status-paid { background: var(--success); color: #fff; }
+.status-dp { background: var(--warning); color: #fff; }
+.status-verified { background: var(--success); color: #fff; }
 .status-rejected { background: #e74c3c; color: #fff; }
 
 /* 🔥 ORDER DETAIL CARD */
@@ -218,11 +218,11 @@ include '../includes/header.php';
     font-weight: 600;
 }
 .payment-type-dp {
-    background: #f39c12;
+    background: var(--warning);
     color: #fff;
 }
 .payment-type-pelunasan {
-    background: #27ae60;
+    background: var(--success);
     color: #fff;
 }
 
@@ -238,21 +238,21 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: var(--primary);
     color: #fff;
 }
 .btn-primary:hover {
     background: #1a252f;
 }
 .btn-warning {
-    background: #f39c12;
+    background: var(--warning);
     color: #fff;
 }
 .btn-warning:hover {
     background: #d68910;
 }
 .btn-success {
-    background: #27ae60;
+    background: var(--success);
     color: #fff;
 }
 .btn-success:hover {
@@ -260,8 +260,8 @@ include '../includes/header.php';
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: var(--primary);
+    border: 1px solid var(--primary);
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -372,19 +372,19 @@ include '../includes/header.php';
         ?></span>
     </p>
     <?php if ($order['payment_status'] === 'dp' && $sisaPembayaran > 0): ?>
-        <p style="color:#f39c12;font-weight:bold;margin-top:5px;">
+        <p style="color:var(--warning);font-weight:bold;margin-top:5px;">
             💰 DP telah dibayar. Sisa pembayaran: <?= formatRupiah($sisaPembayaran) ?>
         </p>
     <?php endif; ?>
     <?php if ($order['payment_status'] === 'pending_verification'): ?>
-        <p style="color:#f39c12;font-weight:bold;margin-top:5px;">
+        <p style="color:var(--warning);font-weight:bold;margin-top:5px;">
             ⏳ Bukti pembayaran sedang diverifikasi oleh admin.
         </p>
     <?php endif; ?>
 </div>
 
 <!-- 🔥 ITEM PESANAN -->
-<h2 style="margin-top:20px;font-size:18px;color:#2c3e50;">📦 Item Pesanan</h2>
+<h2 style="margin-top:20px;font-size:18px;color:var(--primary);">📦 Item Pesanan</h2>
 <table class="table">
     <thead>
         <tr>
@@ -405,21 +405,21 @@ include '../includes/header.php';
             <td><?= ($item['width'] && $item['height']) ? intval($item['width']) . '×' . intval($item['height']) . ' cm' : '-' ?></td>
             <td>
                 <?php if ($item['design_service'] === 'jasa'): ?>
-                    <span style="display:inline-block;padding:3px 10px;background:#f39c12;color:#fff;border-radius:4px;font-size:12px;font-weight:bold;">Jasa Desain</span>
+                    <span style="display:inline-block;padding:3px 10px;background:var(--warning);color:#fff;border-radius:4px;font-size:12px;font-weight:bold;">Jasa Desain</span>
                 <?php elseif ($item['design_service'] === 'upload'): ?>
-                    <span style="display:inline-block;padding:3px 10px;background:#3498db;color:#fff;border-radius:4px;font-size:12px;">Upload File</span>
+                    <span style="display:inline-block;padding:3px 10px;background:var(--info);color:#fff;border-radius:4px;font-size:12px;">Upload File</span>
                 <?php else: ?>
                     <span style="color:#999;font-size:12px;">-</span>
                 <?php endif; ?>
                 
                 <?php if ($item['design_file']): ?>
-                    <br><span style="font-size:11px;color:#3498db;margin-top:4px;display:inline-block;">
+                    <br><span style="font-size:11px;color:var(--info);margin-top:4px;display:inline-block;">
                         📎 <a href="/uploads/designs/<?= htmlspecialchars($item['design_file']) ?>" target="_blank" style="text-decoration:underline;">File Desain</a>
                     </span>
                 <?php endif; ?>
                 
                 <?php if ($item['design_result_file']): ?>
-                    <br><span style="font-size:11px;color:#27ae60;margin-top:4px;display:inline-block;">
+                    <br><span style="font-size:11px;color:var(--success);margin-top:4px;display:inline-block;">
                         ✅ <a href="/uploads/designs/<?= htmlspecialchars($item['design_result_file']) ?>" target="_blank" style="text-decoration:underline;">Download Hasil Desain</a>
                     </span>
                 <?php endif; ?>
@@ -440,7 +440,7 @@ include '../includes/header.php';
 
 <!-- 🔥 RIWAYAT PEMBAYARAN -->
 <?php if (!empty($payments)): ?>
-    <h2 style="margin-top:20px;font-size:18px;color:#2c3e50;">💰 Riwayat Pembayaran</h2>
+    <h2 style="margin-top:20px;font-size:18px;color:var(--primary);">💰 Riwayat Pembayaran</h2>
     <div class="payment-history">
         <?php foreach ($payments as $p): 
             $isDp = ($p['payment_type'] === 'dp' && $p['amount'] < $order['total']);
@@ -466,7 +466,7 @@ include '../includes/header.php';
 
 <!-- 🔥 STATUS DESAIN -->
 <?php if ($order['status'] === 'desain'): ?>
-    <div style="margin-top:15px;padding:15px;background:#e8daef;border-radius:8px;color:#6c3483;">
+    <div style="margin-top:15px;padding:15px;background:#e8daef;border-radius:8px;color:var(--secondary-dark);">
         <strong>⏳ Proses Desain</strong>
         <p style="margin-top:5px;font-size:14px;">Pesanan sedang dalam proses desain oleh tim kami. Hasil desain akan tampil di sini setelah selesai.</p>
     </div>

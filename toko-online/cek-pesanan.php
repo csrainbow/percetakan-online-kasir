@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/qris.php';
+require_once __DIR__ . '/includes/payment_autocheck.php';
 
 $pageTitle = 'Cek Pesanan';
 $result = null;
@@ -72,7 +74,7 @@ include 'includes/header.php';
 
 .cek-container h1 {
     font-size: 24px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 10px;
 }
 
@@ -98,7 +100,7 @@ include 'includes/header.php';
     display: block;
     font-weight: 600;
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 5px;
 }
 .cek-form .form-group input {
@@ -110,7 +112,7 @@ include 'includes/header.php';
     transition: border-color 0.3s;
 }
 .cek-form .form-group input:focus {
-    border-color: #f39c12;
+    border-color: var(--danger);
     outline: none;
     box-shadow: 0 0 0 3px rgba(243,156,18,0.15);
 }
@@ -126,7 +128,7 @@ include 'includes/header.php';
     padding: 15px 20px;
     background: #e8f5e9;
     border-radius: 8px;
-    border-left: 4px solid #27ae60;
+    border-left: 4px solid var(--success);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -140,7 +142,7 @@ include 'includes/header.php';
 }
 .last-order-box .order-code {
     font-size: 14px;
-    color: #2c3e50;
+    color: #111111;
     font-weight: normal;
 }
 
@@ -158,7 +160,7 @@ include 'includes/header.php';
     font-size: 14px;
 }
 .order-detail-card strong {
-    color: #2c3e50;
+    color: #111111;
 }
 
 /* 🔥 PAYMENT SUMMARY */
@@ -170,7 +172,7 @@ include 'includes/header.php';
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 10px;
-    border-left: 4px solid #f39c12;
+    border-left: 4px solid var(--danger);
 }
 .payment-summary .item {
     text-align: center;
@@ -184,11 +186,11 @@ include 'includes/header.php';
 .payment-summary .item .value {
     font-size: 18px;
     font-weight: bold;
-    color: #2c3e50;
+    color: #111111;
 }
-.payment-summary .item .value.success { color: #27ae60; }
-.payment-summary .item .value.danger { color: #e74c3c; }
-.payment-summary .item .value.warning { color: #f39c12; }
+.payment-summary .item .value.success { color: var(--success); }
+.payment-summary .item .value.danger { color: var(--danger); }
+.payment-summary .item .value.warning { color: var(--danger); }
 
 .progress-bar-container {
     margin-top: 10px;
@@ -200,7 +202,7 @@ include 'includes/header.php';
 .progress-bar-fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #f39c12, #27ae60);
+    background: linear-gradient(90deg, var(--danger), var(--success));
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -229,30 +231,30 @@ include 'includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
 }
 .btn-success {
-    background: #27ae60;
+    background: var(--success);
     color: #fff;
 }
 .btn-success:hover {
     background: #1e8449;
 }
 .btn-warning {
-    background: #f39c12;
+    background: var(--danger);
     color: #fff;
 }
 .btn-warning:hover {
-    background: #d68910;
+    background: #c62828;
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -400,12 +402,34 @@ include 'includes/header.php';
                     ?>
                 </span>
             </p>
-            <p><strong>Metode:</strong> <?= ucfirst($result['payment_method'] ?? 'Transfer') ?></p>
+            <p><strong>Metode:</strong>
+                <?php
+                $methodLabels = [
+                    'transfer' => 'Transfer Bank (Cek Manual)',
+                    'qris' => 'QRIS (Cek Manual)',
+                    'qris_dinamis' => 'QRIS (Cek Otomatis / API)',
+                    'cod' => 'Bayar di Tempat (COD)',
+                    'midtrans' => 'Midtrans Online'
+                ];
+                echo $methodLabels[$result['payment_method'] ?? ''] ?? ucfirst($result['payment_method'] ?? 'Transfer');
+                ?>
+            </p>
             <p><strong>Tanggal:</strong> <?= date('d/m/Y H:i', strtotime($result['created_at'])) ?></p>
+            <?php if (($result['payment_status'] ?? '') === 'unpaid' && !empty($result['unique_amount']) && in_array($result['payment_method'] ?? '', ['transfer', 'qris', 'qris_dinamis'])): ?>
+                <?php $pb = pay_breakdown($result); ?>
+                <p style="margin-top:8px;padding:10px 12px;background:#fff3cd;border-left:4px solid var(--danger);border-radius:6px;font-size:13px;">
+                    💳 Bayar tepat <strong><?= formatRupiah($pb['unique']) ?></strong>
+                    (Total <?= formatRupiah($pb['total']) ?>
+                    <?php if ($pb['fee'] > 0): ?>
+                        + Biaya penyedia layanan <?= pm_pct_str($pb['fee_pct']) ?> (<?= formatRupiah($pb['fee']) ?>)
+                    <?php endif; ?>
+                    + kode unik <strong><?= htmlspecialchars($pb['code']) ?></strong>) — otomatis LUNAS saat nominal cocok.
+                </p>
+            <?php endif; ?>
         </div>
 
         <!-- 🔥 ITEMS -->
-        <h2 style="font-size:18px;color:#2c3e50;margin-bottom:15px;">📦 Item Pesanan</h2>
+        <h2 style="font-size:18px;color:#111111;margin-bottom:15px;">📦 Item Pesanan</h2>
         <div style="overflow-x:auto;">
             <table class="table">
                 <thead>
@@ -428,21 +452,21 @@ include 'includes/header.php';
                             $varData = !empty($item['variants']) ? json_decode($item['variants'], true) : [];
                             if (!empty($varData)): 
                                 foreach ($varData as $vr): ?>
-                                    <br><small style="color:#e67e22;">+ <?= htmlspecialchars($vr['name']) ?> <?= formatRupiah($vr['price']) ?></small>
+                                    <br><small style="color:var(--danger);">+ <?= htmlspecialchars($vr['name']) ?> <?= formatRupiah($vr['price']) ?></small>
                             <?php endforeach; endif; ?>
                         </td>
                         <td><?= htmlspecialchars($item['material_name']) ?: '-' ?></td>
                         <td><?= ($item['width'] && $item['height']) ? intval($item['width']) . '×' . intval($item['height']) . ' cm' : '-' ?></td>
                         <td>
                             <?php if ($item['design_service'] === 'jasa'): ?>
-                                <span style="display:inline-block;padding:2px 10px;background:#f39c12;color:#fff;border-radius:4px;font-size:11px;font-weight:bold;">🎨 Jasa Desain</span>
+                                <span style="display:inline-block;padding:2px 10px;background:var(--danger);color:#fff;border-radius:4px;font-size:11px;font-weight:bold;">🎨 Jasa Desain</span>
                             <?php elseif ($item['design_service'] === 'upload'): ?>
-                                <span style="display:inline-block;padding:2px 10px;background:#3498db;color:#fff;border-radius:4px;font-size:11px;">📎 Upload File</span>
+                                <span style="display:inline-block;padding:2px 10px;background:var(--info);color:#fff;border-radius:4px;font-size:11px;">📎 Upload File</span>
                             <?php else: ?>
                                 <span style="color:#999;font-size:12px;">-</span>
                             <?php endif; ?>
                             <?php if ($item['design_result_file']): ?>
-                                <br><span style="font-size:11px;color:#27ae60;">✅ <a href="/uploads/designs/<?= htmlspecialchars($item['design_result_file']) ?>" target="_blank">Download Hasil</a></span>
+                                <br><span style="font-size:11px;color:var(--success);">✅ <a href="/uploads/designs/<?= htmlspecialchars($item['design_result_file']) ?>" target="_blank">Download Hasil</a></span>
                             <?php endif; ?>
                         </td>
                         <td style="text-align:center;"><?= $item['quantity'] ?></td>
@@ -462,15 +486,58 @@ include 'includes/header.php';
 
         <!-- 🔥 STATUS DESAIN -->
         <?php if ($result['status'] === 'desain'): ?>
-            <div style="margin-top:15px;padding:15px;background:#e8daef;border-radius:8px;color:#6c3483;">
+            <div style="margin-top:15px;padding:15px;background:#e8daef;border-radius:8px;color:var(--secondary-dark);">
                 <strong>⏳ Proses Desain</strong>
                 <p style="margin:5px 0 0;font-size:14px;">Pesanan sedang dalam proses desain oleh tim kami. Hasil desain akan tampil di sini setelah selesai.</p>
             </div>
         <?php endif; ?>
 
+        <!-- 🔥 🔥 QRIS DINAMIS (jika order QRIS & belum lunas) 🔥 🔥 -->
+        <?php if (in_array($result['payment_method'] ?? '', ['qris', 'qris_dinamis']) && ($result['payment_status'] ?? '') === 'unpaid'): ?>
+            <?php if (!empty($result['qris_content'])): ?>
+                <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
+                    <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 Scan QRIS untuk membayar</p>
+                    <img src="<?= qris_png_datauri($result['qris_content']) ?>" alt="QRIS" style="max-width:220px;width:100%;display:block;margin:0 auto 8px;border:1px solid #e2e8f0;border-radius:8px;">
+                    <?php if (!empty($result['qris_nmid'])): ?>
+                        <p style="margin:0;font-size:12px;color:#666;">NMID: <strong><?= htmlspecialchars($result['qris_nmid']) ?></strong></p>
+                    <?php endif; ?>
+                    <?php if (!empty($result['qris_invid'])): ?>
+                        <p style="margin:0;font-size:12px;color:#666;">INV: <strong><?= htmlspecialchars($result['qris_invid']) ?></strong></p>
+                    <?php endif; ?>
+                    <p style="margin:0;font-size:12px;color:#666;">Berlaku s/d <strong><?= htmlspecialchars($result['qris_expiry'] ?: qris_expiry_str($result)) ?></strong></p>
+                    <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">QRIS berlaku 30 menit.</p>
+                    <button type="button" class="btn btn-warning" onclick="tampilQris('<?= addslashes($result['order_code']) ?>','<?= addslashes($result['customer_phone']) ?>')">
+                        🔄 Periksa Status Pembayaran
+                    </button>
+                </div>
+            <?php elseif (($result['payment_method'] ?? '') === 'qris_dinamis' && qris_api_ready()): ?>
+                <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
+                    <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 QRIS Dinamis</p>
+                    <p style="font-size:14px;color:#666;">QRIS sedang diproses. Klik tombol di bawah.</p>
+                    <button type="button" class="btn btn-warning" onclick="tampilQris('<?= addslashes($result['order_code']) ?>','<?= addslashes($result['customer_phone']) ?>')">
+                        🔄 Dapatkan QRIS & Periksa Status
+                    </button>
+                </div>
+            <?php elseif (($result['payment_method'] ?? '') === 'qris'): ?>
+                <?php $qrisImg = getSetting('qris_image'); ?>
+                <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
+                    <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 Scan QRIS Statis untuk bayar (Cek Manual)</p>
+                    <?php if ($qrisImg): ?>
+                        <img src="/uploads/<?= htmlspecialchars($qrisImg) ?>" alt="QRIS" style="max-width:220px;width:100%;display:block;margin:0 auto 8px;border:1px solid #e2e8f0;border-radius:8px;">
+                    <?php else: ?>
+                        <p style="color:var(--danger);">⚠️ QRIS belum dikonfigurasi.</p>
+                    <?php endif; ?>
+                    <?php if (getSetting('qris_name')): ?>
+                        <p style="margin:0;font-size:13px;color:#666;">a.n. <strong><?= htmlspecialchars(getSetting('qris_name')) ?></strong></p>
+                    <?php endif; ?>
+                    <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">Bayar tepat nominal unik agar otomatis LUNAS, lalu upload bukti pembayaran di bawah.</p>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+
         <!-- 🔥 🔥 TOMBOL AKSI 🔥 🔥 -->
         <div class="btn-group">
-            <?php if ($result['payment_status'] === 'unpaid' && in_array($result['payment_method'], ['transfer','qris'])): ?>
+            <?php if ($result['payment_status'] === 'unpaid' && in_array($result['payment_method'], ['transfer','qris','qris_dinamis'])): ?>
                 <a href="/payment/confirm.php?order=<?= urlencode($result['order_code']) ?>" class="btn btn-warning btn-lg">
                     💳 Upload Bukti Pembayaran
                 </a>
@@ -502,7 +569,7 @@ include 'includes/header.php';
             <?php endif; ?>
 
             <?php if ($result['payment_method'] === 'cod' && $result['payment_status'] === 'unpaid'): ?>
-                <div style="padding:12px 16px;background:#eaf2f8;border-radius:8px;color:#2c3e50;width:100%;text-align:center;">
+                <div style="padding:12px 16px;background:#eaf2f8;border-radius:8px;color:#111111;width:100%;text-align:center;">
                     💵 Pembayaran dilakukan saat barang diterima (COD).
                 </div>
             <?php endif; ?>
@@ -590,6 +657,42 @@ async function payMidtrans(orderCode) {
         }
     }
 }
-</script>
+<div id="modalQris" class="modal hidden">
+        <div class="modal-box">
+            <h3>QRIS Pembayaran</h3>
+            <div id="qrisBox"><p class="muted">Menyiapkan QRIS...</p></div>
+            <button type="button" class="btn" id="btnTutupQris">Tutup</button>
+        </div>
+    </div>
+    <script>
+    function tampilQris(orderCode, phone) {
+        var modal = document.getElementById('modalQris');
+        var box = document.getElementById('qrisBox');
+        if (!modal || !box) return;
+        modal.classList.remove('hidden');
+        box.innerHTML = '<p class="muted">Mengambil QRIS...</p>';
+        document.getElementById('btnTutupQris').onclick = function() { modal.classList.add('hidden'); };
+        fetch('/qris-status.php?order_code=' + encodeURIComponent(orderCode) + '&phone=' + encodeURIComponent(phone))
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.ok) { box.innerHTML = '<p class="bahaya">' + String(d.error || 'Gagal').replace(/</g,'&lt;') + '</p>'; return; }
+                var html = '';
+                if (d.qris_image) html += '<img class="qris-dinamis" src="' + d.qris_image + '" alt="QRIS">';
+                html += '<p class="muted">' + String(d.status_teks || '') + '</p>';
+                if (d.nmid) html += '<p class="muted kecil">NMID: <b>' + String(d.nmid) + '</b></p>';
+                if (d.invid) html += '<p class="muted kecil">INV: ' + String(d.invid) + '</p>';
+                if (d.expiry) html += '<p class="muted kecil">Berlaku s/d <b>' + String(d.expiry) + '</b></p>';
+                if (d.paid) {
+                    html += '<p class="badge ok">' + String(d.status_teks) + '</p>';
+                    html += '<p><a href="/invoice.php?order=' + encodeURIComponent(orderCode) + '" class="btn btn-success">🧾 Lihat Invoice</a></p>';
+                } else if (!d.paid && !d.expired) {
+                    html += '<p><button type="button" class="btn" onclick="tampilQris(\'' + orderCode + '\',\'' + phone + '\')">🔄 Periksa Lagi</button></p>';
+                }
+                box.innerHTML = html;
+            })
+            .catch(function() { box.innerHTML = '<p class="bahaya">Gagal menghubungi server.</p>'; });
+    }
+    </script>
+    </script>
 
 <?php include 'includes/footer.php'; ?>

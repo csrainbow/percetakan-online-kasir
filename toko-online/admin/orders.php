@@ -295,19 +295,19 @@ include '../includes/header.php';
                 <span class="label">📦 Total</span>
             </div>
             <div class="stat-item">
-                <span class="number" style="color:#f39c12;"><?= $stats['pending'] ?? 0 ?></span>
+                <span class="number" style="color:var(--warning);"><?= $stats['pending'] ?? 0 ?></span>
                 <span class="label">⏳ Pending</span>
             </div>
             <div class="stat-item">
-                <span class="number" style="color:#27ae60;"><?= $stats['paid'] ?? 0 ?></span>
+                <span class="number" style="color:var(--success);"><?= $stats['paid'] ?? 0 ?></span>
                 <span class="label">✅ Lunas</span>
             </div>
             <div class="stat-item">
-                <span class="number" style="color:#f39c12;"><?= $stats['dp'] ?? 0 ?></span>
+                <span class="number" style="color:var(--warning);"><?= $stats['dp'] ?? 0 ?></span>
                 <span class="label">💰 DP</span>
             </div>
             <div class="stat-item">
-                <span class="number" style="color:#3498db;"><?= $stats['verification'] ?? 0 ?></span>
+                <span class="number" style="color:var(--info);"><?= $stats['verification'] ?? 0 ?></span>
                 <span class="label">⏳ Verifikasi</span>
             </div>
         </div>
@@ -379,7 +379,7 @@ include '../includes/header.php';
                         <td><?= formatRupiah($o['total']) ?></td>
                         <td><?= formatRupiah($o['total_paid']) ?></td>
                         <td>
-                            <strong style="color: <?= $sisa > 0 ? '#e74c3c' : '#27ae60' ?>">
+                            <strong style="color: <?= $sisa > 0 ? '#e74c3c' : 'var(--success)' ?>">
                                 <?= formatRupiah($sisa) ?>
                             </strong>
                             <?php if ($sisa > 0): ?>

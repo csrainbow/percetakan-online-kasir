@@ -54,7 +54,7 @@ include '../includes/header.php';
 .dashboard-header h1 {
     margin: 0;
     font-size: 24px;
-    color: #2c3e50;
+    color: var(--primary);
 }
 .dashboard-header .subtitle {
     color: #6c757d;
@@ -88,16 +88,16 @@ include '../includes/header.php';
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-.stat-item .number.total { color: #2c3e50; }
-.stat-item .number.pending { color: #f39c12; }
-.stat-item .number.paid { color: #27ae60; }
-.stat-item .number.dp { color: #f39c12; }
-.stat-item .number.verification { color: #3498db; }
-.stat-item.border-total { border-bottom-color: #2c3e50; }
-.stat-item.border-pending { border-bottom-color: #f39c12; }
-.stat-item.border-paid { border-bottom-color: #27ae60; }
-.stat-item.border-dp { border-bottom-color: #f39c12; }
-.stat-item.border-verification { border-bottom-color: #3498db; }
+.stat-item .number.total { color: var(--primary); }
+.stat-item .number.pending { color: var(--warning); }
+.stat-item .number.paid { color: var(--success); }
+.stat-item .number.dp { color: var(--warning); }
+.stat-item .number.verification { color: var(--info); }
+.stat-item.border-total { border-bottom-color: var(--primary); }
+.stat-item.border-pending { border-bottom-color: var(--warning); }
+.stat-item.border-paid { border-bottom-color: var(--success); }
+.stat-item.border-dp { border-bottom-color: var(--warning); }
+.stat-item.border-verification { border-bottom-color: var(--info); }
 
 /* 🔥 ORDER CARD */
 .order-card {
@@ -110,7 +110,7 @@ include '../includes/header.php';
 }
 .order-card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border-color: #f39c12;
+    border-color: var(--warning);
 }
 .order-card .order-header {
     display: flex;
@@ -123,11 +123,11 @@ include '../includes/header.php';
 .order-card .order-code {
     font-size: 16px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--primary);
     text-decoration: none;
 }
 .order-card .order-code:hover {
-    color: #f39c12;
+    color: var(--warning);
 }
 .order-card .order-date {
     font-size: 13px;
@@ -174,7 +174,7 @@ include '../includes/header.php';
 .progress-bar .fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #f39c12, #27ae60);
+    background: linear-gradient(90deg, var(--warning), var(--success));
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -194,15 +194,15 @@ include '../includes/header.php';
     font-weight: 600;
 }
 .status-pending { background: #fff3cd; color: #856404; }
-.status-desain { background: #e8daef; color: #6c3483; }
+.status-desain { background: #e8daef; color: var(--secondary-dark); }
 .status-processed { background: #cce5ff; color: #004085; }
 .status-printing { background: #d4edda; color: #155724; }
 .status-done { background: #d1ecf1; color: #0c5460; }
 .status-cancelled { background: #f8d7da; color: #721c24; }
 .status-unpaid { background: #e9ecef; color: #495057; }
 .status-pending_verification { background: #fff3cd; color: #856404; }
-.status-dp { background: #f39c12; color: #fff; }
-.status-paid { background: #27ae60; color: #fff; }
+.status-dp { background: var(--warning); color: #fff; }
+.status-paid { background: var(--success); color: #fff; }
 
 /* 🔥 EMPTY STATE */
 .empty-state {
@@ -234,14 +234,14 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: var(--primary);
     color: #fff;
 }
 .btn-primary:hover {
     background: #1a252f;
 }
 .btn-warning {
-    background: #f39c12;
+    background: var(--warning);
     color: #fff;
 }
 .btn-warning:hover {
@@ -249,8 +249,8 @@ include '../includes/header.php';
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: var(--primary);
+    border: 1px solid var(--primary);
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -390,10 +390,10 @@ include '../includes/header.php';
                             <span style="color:#e67e22;font-size:12px;">(+ Jasa Desain)</span>
                         <?php endif; ?>
                         <?php if ($item['design_result_file']): ?>
-                            <span style="color:#27ae60;font-size:12px;">✅ Hasil siap</span>
+                            <span style="color:var(--success);font-size:12px;">✅ Hasil siap</span>
                         <?php endif; ?>
                         <?php if ($item['design_file']): ?>
-                            <span style="color:#3498db;font-size:12px;">📎 File</span>
+                            <span style="color:var(--info);font-size:12px;">📎 File</span>
                         <?php endif; ?>
                         × <?= $item['quantity'] ?>
                     </span>
@@ -454,7 +454,7 @@ include '../includes/header.php';
                 <?php endif; ?>
                 
                 <?php if ($o['status'] === 'desain'): ?>
-                    <span style="display:inline-block;padding:6px 12px;background:#e8daef;border-radius:6px;font-size:12px;color:#6c3483;">
+                    <span style="display:inline-block;padding:6px 12px;background:#e8daef;border-radius:6px;font-size:12px;color:var(--secondary-dark);">
                         <i class="fas fa-paint-brush"></i> Proses Desain
                     </span>
                 <?php endif; ?>
@@ -528,7 +528,7 @@ function showNotification(msg, type) {
     
     var div = document.createElement('div');
     div.className = 'notif-toast';
-    var bgColor = type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#f39c12';
+    var bgColor = type === 'success' ? 'var(--success)' : type === 'error' ? '#e74c3c' : 'var(--warning)';
     div.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);background:' + bgColor + ';color:#fff;padding:12px 24px;border-radius:8px;z-index:99999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center;max-width:90%;';
     div.textContent = msg;
     document.body.appendChild(div);

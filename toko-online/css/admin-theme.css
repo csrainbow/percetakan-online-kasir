@@ -1,0 +1,134 @@
+:root {
+    --admin-surface: #ffffff;
+    --admin-surface-muted: #f6f7f9;
+    --admin-border: #e2e8f0;
+    --admin-text: #273142;
+}
+
+body:has(.admin-main), body:has(.admin-login) {
+    background: var(--light) !important;
+    color: var(--admin-text) !important;
+}
+
+.admin-sidebar {
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+    color: var(--white) !important;
+}
+
+.admin-sidebar a,
+.admin-sidebar h2,
+.admin-sidebar .brand,
+.admin-sidebar .logo {
+    color: var(--white) !important;
+}
+
+.admin-sidebar a.active,
+.admin-sidebar ul li a.active {
+    background: linear-gradient(135deg, var(--accent1), var(--accent2)) !important;
+    color: var(--dark) !important;
+}
+
+.admin-main h1,
+.admin-main h2,
+.admin-main h3,
+.admin-main h4,
+.admin-main label,
+.admin-main .stat-label,
+.admin-main .card-title {
+    color: var(--primary) !important;
+}
+
+.admin-main .card,
+.admin-main .stat-card,
+.admin-main .panel,
+.admin-main .table-wrap,
+.admin-main form,
+.admin-login .login-box {
+    background: var(--admin-surface) !important;
+    border-color: var(--admin-border) !important;
+}
+
+.admin-main .btn-primary,
+.admin-main button.btn-primary,
+.admin-main input[type="submit"],
+.admin-login button[type="submit"] {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--white) !important;
+}
+
+.admin-main .btn-primary:hover,
+.admin-main button.btn-primary:hover,
+.admin-login button[type="submit"]:hover {
+    background: var(--primary-light) !important;
+    border-color: var(--primary-light) !important;
+}
+
+.admin-main .btn-warning,
+.admin-main .status-pending,
+.admin-main .status-dp {
+    background: var(--warning) !important;
+    border-color: var(--warning) !important;
+    color: var(--white) !important;
+}
+
+.admin-main .btn-danger,
+.admin-main .status-cancelled,
+.admin-main .status-batal {
+    background: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: var(--white) !important;
+}
+
+.admin-main .stat-card.primary,
+.admin-main .stat-card.warning,
+.admin-main .stat-card.danger,
+.admin-main .stat-card.success,
+.admin-main .stat-card.info {
+    border-left-color: var(--primary) !important;
+}
+
+.admin-main input,
+.admin-main select,
+.admin-main textarea {
+    border-color: var(--admin-border) !important;
+    color: var(--admin-text) !important;
+    background: var(--admin-surface) !important;
+}
+
+.admin-main input:focus,
+.admin-main select:focus,
+.admin-main textarea:focus {
+    border-color: var(--accent1) !important;
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.16) !important;
+    outline: none !important;
+}
+
+.admin-main table thead,
+.admin-main .table thead {
+    background: var(--primary) !important;
+    color: var(--white) !important;
+}
+
+.admin-main table th,
+.admin-main table td {
+    border-color: var(--admin-border) !important;
+}
+
+.admin-main .alert-success { background: #d4edda !important; color: #155724 !important; }
+.admin-main .alert-danger { background: #f8d7da !important; color: #721c24 !important; }
+.admin-main .alert-warning { background: #fff3cd !important; color: #856404 !important; }
+.admin-main .alert-info { background: #d1ecf1 !important; color: #0c5460 !important; }
+
+.admin-login {
+    background: linear-gradient(135deg, var(--light) 0%, #e2e8f0 100%) !important;
+}
+
+.admin-login .login-box::before {
+    background: linear-gradient(90deg, var(--primary), var(--accent1), var(--accent2)) !important;
+}
+
+.admin-login .login-box .logo-icon {
+    background: var(--primary) !important;
+    color: var(--accent1) !important;
+}

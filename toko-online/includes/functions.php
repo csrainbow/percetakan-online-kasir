@@ -1,6 +1,6 @@
 <?php
 // ============================================
-// FUNCTIONS - Rainbow Printing
+// FUNCTIONS - Percetakan Rainbow
 // ============================================
 
 // 🔥 Inisialisasi Database
@@ -102,6 +102,59 @@ function initDatabase() {
         )");
     } catch (Exception $e) {
         error_log("Failed to create orders table: " . $e->getMessage());
+    }
+
+    // 🔥 TAMBAH KOLOM QRIS (jika belum ada — idempotent)
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN qris_content TEXT DEFAULT ''");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN qris_invid TEXT DEFAULT ''");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN qris_nmid TEXT DEFAULT ''");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN qris_request_date TEXT DEFAULT ''");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN qris_expiry TEXT DEFAULT ''");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN qris_last_check TEXT DEFAULT ''");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN qris_check_count INTEGER DEFAULT 0");
+    } catch (Exception $e) {}
+
+    // 🔥 TAMBAH KOLOM NOMINAL UNIK (auto-check pembayaran)
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN pay_code INTEGER DEFAULT 0");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN unique_amount INTEGER DEFAULT 0");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN paid_at DATETIME DEFAULT NULL");
+    } catch (Exception $e) {}
+
+    // 🔥 TABEL PAYMENT_HITS (notifikasi mutasi masuk dari API/cron)
+    try {
+        $db->exec("CREATE TABLE IF NOT EXISTS payment_hits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            amount INTEGER NOT NULL,
+            txdate TEXT DEFAULT '',
+            refno TEXT DEFAULT '',
+            description TEXT DEFAULT '',
+            bank_name TEXT DEFAULT '',
+            matched_order_id INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'new',
+            source TEXT DEFAULT 'api',
+            note TEXT DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+    } catch (Exception $e) {
+        error_log("Failed to create payment_hits table: " . $e->getMessage());
     }
 
     // 🔥 TABEL ORDER_ITEMS
@@ -237,19 +290,6 @@ function initDatabase() {
         error_log("Failed to create admin_logs table: " . $e->getMessage());
     }
 
-    // 🔥 TABEL CUSTOMER_LOGS
-    try {
-        $db->exec("CREATE TABLE IF NOT EXISTS customer_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            customer_id INTEGER,
-            action VARCHAR(50),
-            ip_address VARCHAR(45),
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-    } catch (Exception $e) {
-        error_log("Failed to create customer_logs table: " . $e->getMessage());
-    }
-
     // 🔥 TABEL REGISTER_ATTEMPTS (Rate Limiting Registrasi)
     try {
         $db->exec("CREATE TABLE IF NOT EXISTS register_attempts (
@@ -296,6 +336,7 @@ function initDatabase() {
         "ALTER TABLE orders ADD COLUMN payment_deadline DATETIME DEFAULT NULL",
         "ALTER TABLE orders ADD COLUMN printer_type TEXT DEFAULT ''",
         "ALTER TABLE orders ADD COLUMN midtrans_token TEXT DEFAULT ''",
+        "ALTER TABLE orders ADD COLUMN service_fee INTEGER DEFAULT 0",
         "ALTER TABLE customers ADD COLUMN address TEXT DEFAULT ''",
         "ALTER TABLE customers ADD COLUMN remember_token TEXT DEFAULT ''",
         "ALTER TABLE customers ADD COLUMN remember_expires DATETIME DEFAULT NULL",
@@ -304,6 +345,8 @@ function initDatabase() {
         "ALTER TABLE content_pages ADD COLUMN meta_description TEXT",
         "ALTER TABLE content_pages ADD COLUMN meta_keywords VARCHAR(255)",
         "ALTER TABLE content_pages ADD COLUMN is_active INTEGER DEFAULT 1",
+        "ALTER TABLE content_pages ADD COLUMN created_at DATETIME DEFAULT NULL",
+        "ALTER TABLE content_pages ADD COLUMN updated_at DATETIME DEFAULT NULL",
     ];
 
     foreach ($alterQueries as $sql) {
@@ -479,30 +522,29 @@ function seedSettings($db) {
     $settings = [
         ['key' => 'bank1_name', 'value' => 'BRI'],
         ['key' => 'bank1_account', 'value' => '1234567890'],
-        ['key' => 'bank1_name_holder', 'value' => 'Rainbow Printing'],
+        ['key' => 'bank1_name_holder', 'value' => 'Percetakan Rainbow'],
         ['key' => 'bank2_name', 'value' => 'BCA'],
         ['key' => 'bank2_account', 'value' => '0987654321'],
-        ['key' => 'bank2_name_holder', 'value' => 'Rainbow Printing'],
+        ['key' => 'bank2_name_holder', 'value' => 'Percetakan Rainbow'],
         ['key' => 'bank3_name', 'value' => 'Mandiri'],
         ['key' => 'bank3_account', 'value' => '5555555555'],
-        ['key' => 'bank3_name_holder', 'value' => 'Rainbow Printing'],
+        ['key' => 'bank3_name_holder', 'value' => 'Percetakan Rainbow'],
         ['key' => 'midtrans_server_key', 'value' => ''],
         ['key' => 'midtrans_client_key', 'value' => ''],
-        ['key' => 'midtrans_is_production', 'value' => '0'],
-        ['key' => 'store_name', 'value' => 'Rainbow Printing'],
+        ['key' => 'store_name', 'value' => 'Percetakan Rainbow'],
         ['key' => 'store_address', 'value' => 'Jl. Contoh No. 123, Samarinda'],
         ['key' => 'store_phone', 'value' => '081234567890'],
         ['key' => 'whatsapp_number', 'value' => '6281234567890'],
-        ['key' => 'wa_enabled', 'value' => ''],
-        ['key' => 'wa_gw_base', 'value' => 'http://127.0.0.1:3001'],
-        ['key' => 'wa_gw_key', 'value' => ''],
         ['key' => 'admin_email', 'value' => 'admin@rainbowprinting.com'],
         ['key' => 'qris_name', 'value' => ''],
         ['key' => 'qris_merchant_id', 'value' => ''],
         ['key' => 'qris_image', 'value' => ''],
+        ['key' => 'qris_api_mid', 'value' => ''],
+        ['key' => 'qris_api_nmid', 'value' => ''],
+        ['key' => 'qris_api_apikey', 'value' => ''],
         ['key' => 'sendgrid_api_key', 'value' => ''],
         ['key' => 'invoice_template', 'value' => 'classic'],
-        ['key' => 'invoice_footer', 'value' => 'Terima kasih telah berbelanja di Rainbow Printing'],
+        ['key' => 'invoice_footer', 'value' => 'Terima kasih telah berbelanja di Percetakan Rainbow'],
         ['key' => 'printer_options', 'value' => 'In-Fus/Solvent,Digital Printing,Offset,UV Printer,Sablon'],
         ['key' => 'footer_text', 'value' => 'Percetakan online terpercaya di Samarinda'],
         ['key' => 'social_facebook', 'value' => ''],
@@ -529,94 +571,6 @@ if (!function_exists('formatRupiah')) {
     }
 }
 
-if (!function_exists('wa_norm_nomor')) {
-    // Normalisasi nomor ke format 62... (tanpa +, spasi, strip).
-    function wa_norm_nomor($to) {
-        $d = preg_replace('/\D+/', '', (string)$to);
-        if ($d === '') {
-            return '';
-        }
-        if (substr($d, 0, 1) === '0') {
-            $d = '62' . substr($d, 1);
-        } elseif (substr($d, 0, 1) === '8') {
-            $d = '62' . $d;
-        }
-        return $d;
-    }
-}
-
-if (!function_exists('waGatewayStatus')) {
-    // Status WA Gateway Baileys (server lokal, sama dengan kasir).
-    function waGatewayStatus($timeout = 5) {
-        $base = rtrim((string)getSetting('wa_gw_base'), '/');
-        $st = ['ok' => false, 'status' => 'unconfigured', 'connected' => false, 'me' => null, 'hasQr' => false, 'base' => $base];
-        if ($base === '') {
-            return $st;
-        }
-        $ch = curl_init($base . '/status');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => $timeout,
-        ]);
-        $res = curl_exec($ch);
-        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($code === 200 && is_string($res) && $res !== '') {
-            $j = json_decode($res, true);
-            if (is_array($j)) {
-                $st['ok'] = true;
-                $st['status'] = (string)($j['status'] ?? 'unknown');
-                $st['connected'] = !empty($j['connected']);
-                $st['me'] = $j['me'] ?? null;
-                $st['hasQr'] = !empty($j['hasQr']);
-            }
-        }
-        return $st;
-    }
-}
-
-if (!function_exists('waSend')) {
-    // Kirim WA via WA Gateway Baileys lokal (bukan provider pihak ke-3).
-    function waSend($to, $message) {
-        if (!getSetting('wa_enabled')) {
-            return false;
-        }
-        $base = rtrim((string)getSetting('wa_gw_base'), '/');
-        $key = (string)getSetting('wa_gw_key');
-        if ($base === '') {
-            return false;
-        }
-        $to = wa_norm_nomor($to);
-        if ($to === '') {
-            return false;
-        }
-        $ch = curl_init($base . '/send');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode(['to' => $to, 'message' => (string)$message]),
-            CURLOPT_HTTPHEADER => array_merge(
-                ['Content-Type: application/json'],
-                $key !== '' ? ['X-Api-Key: ' . $key] : []
-            ),
-            CURLOPT_TIMEOUT => 15,
-        ]);
-        $res = curl_exec($ch);
-        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err = curl_error($ch);
-        curl_close($ch);
-        $ok = false;
-        if ($err === '' && $code >= 200 && $code < 300 && is_string($res) && $res !== '') {
-            $j = json_decode($res, true);
-            $ok = is_array($j) && !empty($j['ok']);
-        }
-        if (!$ok) {
-            error_log('WA notif gagal: gateway | code ' . $code . ' | ' . ($err !== '' ? $err : mb_substr((string)$res, 0, 120)));
-        }
-        return $ok;
-    }
-}
-
 if (!function_exists('getSetting')) {
     function getSetting($key) {
         global $db;
@@ -631,16 +585,149 @@ if (!function_exists('getSetting')) {
     }
 }
 
+if (!function_exists('setting')) {
+    function setting($key, $default = '') {
+        $v = getSetting($key);
+        return ($v === null || (string)$v === '') ? $default : $v;
+    }
+}
+
+// 🔥 Shorten URL via CSLINK (shortener sendiri)
+if (!function_exists('cs_shorten')) {
+    function cs_shorten($longUrl) {
+        global $db;
+        $CSLINK_KEY = '291eae854f11f5f3a53a5d39940dfe7944683ab70f23e438';
+        try {
+            $short = null;
+            $stmt = $db->prepare("SELECT short_url FROM link_cache WHERE long_url = ?");
+            $stmt->execute([$longUrl]);
+            $r = $stmt->fetch();
+            if ($r && !empty($r['short_url'])) return $r['short_url'];
+
+            $ch = curl_init('https://cslink.web.id/api/shorten');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'X-Api-Key: ' . $CSLINK_KEY],
+                CURLOPT_POSTFIELDS     => json_encode(['url' => $longUrl]),
+                CURLOPT_TIMEOUT        => 12,
+                CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+            $res = curl_exec($ch);
+            $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($http >= 200 && $http < 300 && $res) {
+                $j = json_decode($res, true);
+                if (is_array($j) && !empty($j['short_code'])) {
+                    $short = 'https://cslink.web.id/' . $j['short_code'];
+                }
+            }
+            if ($short) {
+                $db->prepare("INSERT OR REPLACE INTO link_cache (long_url, short_url, created_at) VALUES (?, ?, ?)")
+                   ->execute([$longUrl, $short, date('Y-m-d H:i:s')]);
+                return $short;
+            }
+        } catch (Exception $e) {}
+        return $longUrl;
+    }
+}
+
+// 🔥 Shorten tautan yang ada di dalam teks pesan
+if (!function_exists('cs_shorten_links')) {
+    function cs_shorten_links($text) {
+        return preg_replace_callback('#(https?://[^\s<]+)#i', function ($m) {
+            return cs_shorten(trim($m[1], ".',\""));
+        }, $text);
+    }
+}
+
+// 🔥 Ubah teks polos jadi blok HTML (baris "label: nilai" -> row)
+if (!function_exists('cs_text_to_rows')) {
+    function cs_text_to_rows($plain) {
+        $lines = array_filter(array_map('trim', explode("\n", $plain)));
+        $rows = '';
+        foreach ($lines as $line) {
+            $esc = cs_autolink_plain(htmlspecialchars($line, ENT_QUOTES, 'UTF-8'));
+            if (preg_match('/^([^:]{1,60}):\s*(.+)$/', $esc, $m)) {
+                $rows .= '<tr><td class="k">' . $m[1] . '</td><td class="v">' . $m[2] . '</td></tr>';
+            } else {
+                $rows .= '<tr><td colspan="2" class="full">' . $esc . '</td></tr>';
+            }
+        }
+        return $rows;
+    }
+}
+
+// 🔥 Autolink URL murni di teks
+if (!function_exists('cs_autolink_plain')) {
+    function cs_autolink_plain($escaped) {
+        return preg_replace('#(https?://[^\s<]+)#i', '<a href="$1" style="color:#0d9488;">$1</a>', $escaped);
+    }
+}
+
+// 🔥 Template HTML email
+if (!function_exists('email_html_template')) {
+    function email_html_template($title, $bodyRows) {
+        $html = <<<'HTML'
+<!DOCTYPE html>
+<html lang="id">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    td.k{width:38%;padding:8px 10px;border:1px solid #eef1f6;background:#f8fafc;font-size:13px;color:#475569;vertical-align:top;}
+    td.v{padding:8px 10px;border:1px solid #eef1f6;font-size:13px;color:#0f172a;font-weight:600;vertical-align:top;word-break:break-word;}
+    td.full{padding:8px 0;font-size:13.5px;color:#334155;line-height:1.6;padding-bottom:4px;}
+    @media screen and (max-width:480px){ td.k{width:32%;} }
+  </style></head>
+<body style="margin:0;padding:0;background:#f4f6fa;font-family:'Segoe UI',Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(23,32,51,0.12);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#172033 0%,#0e7490 60%,#14b8a6 100%);padding:28px 32px;text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">Percetakan <span style="color:#2dd4bf;">Rainbow</span></div>
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.8);margin-top:4px;">{{TITLE}}</div>
+          </td>
+        </tr>
+        <tr><td style="padding:28px 32px;">
+          <div style="font-size:15px;font-weight:700;color:#172033;margin-bottom:16px;">{{TITLE}}</div>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">
+            {{BODY}}
+          </table>
+        </td></tr>
+        <tr><td style="border-top:1px solid #eef1f6;padding:20px 32px;text-align:center;">
+          <div style="font-size:11.5px;color:#64748b;line-height:1.7;">
+            Percetakan Rainbow — Jl. Gerilya Gg. Masjid Blok B No. 38c, Samarinda<br>
+            Kasir &amp; notifikasi otomatis — email ini tidak perlu dibalas.
+          </div>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+HTML;
+        return str_replace(['{{TITLE}}','{{BODY}}'], [$title, $bodyRows], $html);
+    }
+}
 if (!function_exists('sendEmail')) {
     function sendEmail($to, $subject, $message, $contentType = 'text/plain') {
+        // Link panjang (bekas tracking) diubah jadi versi pendek via CSLINK
+        $message = cs_shorten_links($message);
+
         $apiKey = getSetting('sendgrid_api_key');
         if ($apiKey) {
-            $fromEmail = 'admin@rainbowprinting.web.id';
+            $fromEmail = 'noreply@rainbowprinting.web.id';
+            if ($contentType === 'text/html' || stripos($message, '<html') !== false) {
+                $body = $message;
+            } else {
+                $body = email_html_template($subject, cs_text_to_rows(html_entity_decode($message, ENT_QUOTES, 'UTF-8')));
+            }
             $data = [
                 'personalizations' => [['to' => [['email' => $to]]]],
-                'from' => ['email' => $fromEmail, 'name' => 'Rainbow Printing'],
+                'from' => ['email' => $fromEmail, 'name' => 'Percetakan Rainbow'],
                 'subject' => $subject,
-                'content' => [['type' => $contentType, 'value' => $message]],
+                'content' => [['type' => 'text/html', 'value' => $body]],
             ];
             $ch = curl_init('https://api.sendgrid.com/v3/mail/send');
             curl_setopt_array($ch, [
@@ -658,10 +745,10 @@ if (!function_exists('sendEmail')) {
             curl_close($ch);
             return $httpCode >= 200 && $httpCode < 300;
         }
-        $headers = "From: admin@rainbowprinting.web.id\r\n";
-        $headers .= "Reply-To: admin@rainbowprinting.web.id\r\n";
-        $headers .= "Content-Type: $contentType; charset=UTF-8\r\n";
-        return @mail($to, $subject, $message, $headers);
+        $headers = "From: noreply@rainbowprinting.web.id\r\n";
+        $headers .= "Reply-To: noreply@rainbowprinting.web.id\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        return @mail($to, $subject, email_html_template($subject, cs_text_to_rows(html_entity_decode($message, ENT_QUOTES, 'UTF-8'))), $headers);
     }
 }
 

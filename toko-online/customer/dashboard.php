@@ -51,7 +51,7 @@ include '../includes/header.php';
 .dashboard-header h1 {
     margin: 0;
     font-size: 24px;
-    color: #2c3e50;
+    color: var(--primary);
 }
 .dashboard-header .subtitle {
     color: #6c757d;
@@ -84,11 +84,11 @@ include '../includes/header.php';
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-.stat-item .number.total { color: #2c3e50; }
-.stat-item .number.pending { color: #f39c12; }
-.stat-item .number.paid { color: #27ae60; }
-.stat-item .number.dp { color: #f39c12; }
-.stat-item .number.verification { color: #3498db; }
+.stat-item .number.total { color: var(--primary); }
+.stat-item .number.pending { color: var(--warning); }
+.stat-item .number.paid { color: var(--success); }
+.stat-item .number.dp { color: var(--warning); }
+.stat-item .number.verification { color: var(--info); }
 
 /* 🔥 ORDER CARD */
 .order-card {
@@ -101,7 +101,7 @@ include '../includes/header.php';
 }
 .order-card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border-color: #f39c12;
+    border-color: var(--warning);
 }
 .order-card .order-header {
     display: flex;
@@ -114,11 +114,11 @@ include '../includes/header.php';
 .order-card .order-code {
     font-size: 16px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--primary);
     text-decoration: none;
 }
 .order-card .order-code:hover {
-    color: #f39c12;
+    color: var(--warning);
 }
 .order-card .order-date {
     font-size: 13px;
@@ -165,7 +165,7 @@ include '../includes/header.php';
 .progress-bar .fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #f39c12, #27ae60);
+    background: linear-gradient(90deg, var(--warning), var(--success));
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -185,15 +185,15 @@ include '../includes/header.php';
     font-weight: 600;
 }
 .status-pending { background: #fff3cd; color: #856404; }
-.status-desain { background: #e8daef; color: #6c3483; }
+.status-desain { background: #e8daef; color: var(--secondary-dark); }
 .status-processed { background: #cce5ff; color: #004085; }
 .status-printing { background: #d4edda; color: #155724; }
 .status-done { background: #d1ecf1; color: #0c5460; }
 .status-cancelled { background: #f8d7da; color: #721c24; }
 .status-unpaid { background: #e9ecef; color: #495057; }
 .status-pending_verification { background: #fff3cd; color: #856404; }
-.status-dp { background: #f39c12; color: #fff; }
-.status-paid { background: #27ae60; color: #fff; }
+.status-dp { background: var(--warning); color: #fff; }
+.status-paid { background: var(--success); color: #fff; }
 
 /* 🔥 EMPTY STATE */
 .empty-state {
@@ -336,10 +336,10 @@ include '../includes/header.php';
                             <span style="color:#e67e22;font-size:12px;">(+ Jasa Desain)</span>
                         <?php endif; ?>
                         <?php if ($item['design_result_file']): ?>
-                            <span style="color:#27ae60;font-size:12px;">✅ Hasil desain siap</span>
+                            <span style="color:var(--success);font-size:12px;">✅ Hasil desain siap</span>
                         <?php endif; ?>
                         <?php if ($item['design_file']): ?>
-                            <span style="color:#3498db;font-size:12px;">📎 File diupload</span>
+                            <span style="color:var(--info);font-size:12px;">📎 File diupload</span>
                         <?php endif; ?>
                         × <?= $item['quantity'] ?>
                     </span>
@@ -382,7 +382,7 @@ include '../includes/header.php';
                 <?php endif; ?>
                 
                 <?php if ($o['payment_status'] === 'dp' && $sisa > 0): ?>
-                    <a href="/payment/confirm.php?order=<?= urlencode($o['order_code']) ?>" class="btn btn-warning btn-sm" style="background:#f39c12;color:#fff;border-color:#f39c12;">
+                    <a href="/payment/confirm.php?order=<?= urlencode($o['order_code']) ?>" class="btn btn-warning btn-sm" style="background:var(--warning);color:#fff;border-color:var(--warning);">
                         <i class="fas fa-money-bill-wave"></i> Bayar Sisa (<?= formatRupiah($sisa) ?>)
                     </a>
                 <?php endif; ?>
@@ -394,7 +394,7 @@ include '../includes/header.php';
                 <?php endif; ?>
                 
                 <?php if ($o['status'] === 'desain'): ?>
-                    <span style="display:inline-block;padding:6px 12px;background:#e8daef;border-radius:6px;font-size:12px;color:#6c3483;">
+                    <span style="display:inline-block;padding:6px 12px;background:#e8daef;border-radius:6px;font-size:12px;color:var(--secondary-dark);">
                         <i class="fas fa-paint-brush"></i> Proses Desain
                     </span>
                 <?php endif; ?>

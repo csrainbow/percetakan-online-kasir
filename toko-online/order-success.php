@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/qris.php';
+require_once __DIR__ . '/includes/payment_autocheck.php';
 
 $orderCode = $_GET['order'] ?? '';
 if (empty($orderCode)) {
@@ -31,9 +33,10 @@ $isPendingVerification = $order['payment_status'] === 'pending_verification';
 
 // 🔥 CEK METODE PEMBAYARAN
 $methodLabels = [
-    'transfer' => 'Transfer Bank',
+    'transfer' => 'Transfer Bank (Cek Manual)',
     'cod' => 'Bayar di Tempat (COD)',
-    'qris' => 'QRIS',
+    'qris' => 'QRIS (Cek Manual)',
+    'qris_dinamis' => 'QRIS (Cek Otomatis / API)',
     'midtrans' => 'Midtrans Online'
 ];
 $methodLabel = $methodLabels[$order['payment_method']] ?? ucfirst($order['payment_method']);
@@ -41,7 +44,7 @@ $methodLabel = $methodLabels[$order['payment_method']] ?? ucfirst($order['paymen
 // 🔥 CEK APAKAH CUSTOMER LOGIN
 $isLoggedIn = isset($_SESSION['customer_id']);
 
-$pageTitle = 'Pesanan Berhasil - Rainbow Printing';
+$pageTitle = 'Pesanan Berhasil - Percetakan Rainbow';
 include 'includes/header.php';
 ?>
 
@@ -65,7 +68,7 @@ include 'includes/header.php';
 }
 .order-success h1 {
     font-size: 26px;
-    color: #2c3e50;
+    color: #111111;
     margin-bottom: 8px;
 }
 .order-success .subtitle {
@@ -83,7 +86,7 @@ include 'includes/header.php';
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 10px;
-    border-left: 4px solid #f39c12;
+    border-left: 4px solid var(--danger);
 }
 .payment-summary .item {
     text-align: center;
@@ -97,11 +100,11 @@ include 'includes/header.php';
 .payment-summary .item .value {
     font-size: 16px;
     font-weight: bold;
-    color: #2c3e50;
+    color: #111111;
 }
-.payment-summary .item .value.success { color: #27ae60; }
-.payment-summary .item .value.danger { color: #e74c3c; }
-.payment-summary .item .value.warning { color: #f39c12; }
+.payment-summary .item .value.success { color: var(--success); }
+.payment-summary .item .value.danger { color: var(--danger); }
+.payment-summary .item .value.warning { color: var(--danger); }
 
 /* 🔥 PROGRESS BAR */
 .progress-container {
@@ -116,7 +119,7 @@ include 'includes/header.php';
 .progress-bar .fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #f39c12, #27ae60);
+    background: linear-gradient(90deg, var(--danger), var(--success));
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -140,7 +143,7 @@ include 'includes/header.php';
     font-size: 14px;
 }
 .order-detail-card strong {
-    color: #2c3e50;
+    color: #111111;
 }
 
 /* 🔥 STATUS BADGE */
@@ -152,9 +155,9 @@ include 'includes/header.php';
     font-weight: 600;
 }
 .status-unpaid { background: #95a5a6; color: #fff; }
-.status-pending_verification { background: #f39c12; color: #fff; }
-.status-dp { background: #f39c12; color: #fff; }
-.status-paid { background: #27ae60; color: #fff; }
+.status-pending_verification { background: var(--danger); color: #fff; }
+.status-dp { background: var(--danger); color: #fff; }
+.status-paid { background: var(--success); color: #fff; }
 
 /* 🔥 INFO BOX */
 .info-box {
@@ -166,14 +169,14 @@ include 'includes/header.php';
 }
 .info-box-warning {
     background: #fff3cd;
-    border-color: #f39c12;
+    border-color: var(--danger);
     color: #856404;
 }
 .info-box-warning strong { color: #b7950b; }
 .info-box-warning a { color: #856404; font-weight: bold; }
 .info-box-success {
     background: #d4edda;
-    border-color: #27ae60;
+    border-color: var(--success);
     color: #155724;
 }
 .info-box-success strong { color: #1e8449; }
@@ -197,30 +200,30 @@ include 'includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: #111111;
     color: #fff;
 }
 .btn-primary:hover {
-    background: #1a252f;
+    background: #000000;
 }
 .btn-success {
-    background: #27ae60;
+    background: var(--success);
     color: #fff;
 }
 .btn-success:hover {
     background: #1e8449;
 }
 .btn-warning {
-    background: #f39c12;
+    background: var(--danger);
     color: #fff;
 }
 .btn-warning:hover {
-    background: #d68910;
+    background: #c62828;
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: #111111;
+    border: 1px solid #111111;
 }
 .btn-outline:hover {
     background: #f8f9fa;
@@ -350,12 +353,63 @@ include 'includes/header.php';
         </p>
         <p><strong>🏦 Metode:</strong> <?= htmlspecialchars($methodLabel) ?></p>
         <?php if ($isDp && $sisaPembayaran > 0): ?>
-            <p style="color:#f39c12;font-weight:bold;margin-top:5px;">
+            <p style="color:var(--danger);font-weight:bold;margin-top:5px;">
                 💰 Sisa pembayaran: <?= formatRupiah($sisaPembayaran) ?>
             </p>
         <?php endif; ?>
     </div>
 
+    <?php if ($isUnpaid && !empty($order['unique_amount']) && in_array($order['payment_method'] ?? '', ['transfer', 'qris', 'qris_dinamis'])): ?>
+        <?php $pb = pay_breakdown($order); ?>
+        <div class="info-box info-box-warning" style="text-align:center;">
+            <strong>💳 Bayar Tepat: <?= formatRupiah($pb['unique']) ?></strong>
+            <p style="font-size:13px;margin:4px 0 0;">
+                Total <?= formatRupiah($pb['total']) ?>
+                + kode unik <strong><?= htmlspecialchars($pb['code']) ?></strong>.
+                Pembayaran otomatis terkonfirmasi (LUNAS) saat nominal yang masuk cocok.
+            </p>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($isUnpaid && ($order['payment_method'] ?? '') === 'qris_dinamis' && !empty($order['qris_content'])): ?>
+        <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
+            <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 Scan QRIS untuk membayar</p>
+            <img src="<?= qris_png_datauri($order['qris_content']) ?>" alt="QRIS" style="max-width:220px;width:100%;display:block;margin:0 auto 8px;border:1px solid #e2e8f0;border-radius:8px;">
+            <?php if (!empty($order['qris_nmid'])): ?>
+                <p style="margin:0;font-size:12px;color:#666;">NMID: <strong><?= htmlspecialchars($order['qris_nmid']) ?></strong></p>
+            <?php endif; ?>
+            <?php if (!empty($order['qris_invid'])): ?>
+                <p style="margin:0;font-size:12px;color:#666;">INV: <strong><?= htmlspecialchars($order['qris_invid']) ?></strong></p>
+            <?php endif; ?>
+            <p style="margin:0;font-size:12px;color:#666;">Berlaku s/d <strong><?= htmlspecialchars($order['qris_expiry'] ?: qris_expiry_str($order)) ?></strong></p>
+            <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">QRIS berlaku 30 menit. Klik tombol di bawah untuk periksa status.</p>
+            <button type="button" class="btn btn-warning" onclick="tampilQris('<?= addslashes($order['order_code']) ?>','<?= addslashes($order['customer_phone']) ?>')">
+                🔄 Periksa Status Pembayaran
+            </button>
+        </div>
+    <?php elseif ($isUnpaid && ($order['payment_method'] ?? '') === 'qris_dinamis' && qris_api_ready()): ?>
+        <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
+            <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 QRIS Dinamis</p>
+            <p style="font-size:14px;color:#666;">QRIS sedang diproses. Klik tombol di bawah untuk mendapatkan QRIS.</p>
+            <button type="button" class="btn btn-warning" onclick="tampilQris('<?= addslashes($order['order_code']) ?>','<?= addslashes($order['customer_phone']) ?>')">
+                🔄 Dapatkan QRIS & Periksa Status
+            </button>
+        </div>
+    <?php elseif ($isUnpaid && ($order['payment_method'] ?? '') === 'qris'): ?>
+        <?php $qrisImg = getSetting('qris_image'); ?>
+        <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
+            <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 Scan QRIS Statis untuk bayar (Cek Manual)</p>
+            <?php if ($qrisImg): ?>
+                <img src="/uploads/<?= htmlspecialchars($qrisImg) ?>" alt="QRIS" style="max-width:220px;width:100%;display:block;margin:0 auto 8px;border:1px solid #e2e8f0;border-radius:8px;">
+            <?php else: ?>
+                <p style="color:var(--danger);">⚠️ QRIS belum dikonfigurasi.</p>
+            <?php endif; ?>
+            <?php if (getSetting('qris_name')): ?>
+                <p style="margin:0;font-size:13px;color:#666;">a.n. <strong><?= htmlspecialchars(getSetting('qris_name')) ?></strong></p>
+            <?php endif; ?>
+            <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">Bayar tepat nominal unik agar otomatis LUNAS, atau upload bukti untuk cek manual.</p>
+        </div>
+    <?php endif; ?>
     <!-- 🔥 🔥 TOMBOL AKSI 🔥 🔥 -->
     <div class="btn-group">
         <?php if ($isUnpaid || $isDp): ?>
@@ -407,9 +461,16 @@ include 'includes/header.php';
             </a>
         <?php endif; ?>
     </div>
-</div>
-
-<script>
+<div id="modalQris" class="modal hidden">
+        <div class="modal-box">
+            <h3>QRIS Pembayaran</h3>
+            <div id="qrisBox">
+                <p class="muted">Menyiapkan QRIS...</p>
+            </div>
+            <button type="button" class="btn" id="btnTutupQris">Tutup</button>
+        </div>
+    </div>
+    </div>
 /**
  * 🔥 SAVE LAST ORDER
  */
@@ -449,6 +510,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
 });
+function tampilQris(orderCode, phone) {
+    var modal = document.getElementById('modalQris');
+    var box = document.getElementById('qrisBox');
+    if (!modal || !box) return;
+    modal.classList.remove('hidden');
+    box.innerHTML = '<p class="muted">Mengambil QRIS...</p>';
+    document.getElementById('btnTutupQris').onclick = function() { modal.classList.add('hidden'); };
+    fetch('/qris-status.php?order_code=' + encodeURIComponent(orderCode) + '&phone=' + encodeURIComponent(phone))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.ok) { box.innerHTML = '<p class="bahaya">' + String(d.error || 'Gagal').replace(/</g,'&lt;') + '</p>'; return; }
+            var html = '';
+            if (d.qris_image) html += '<img class="qris-dinamis" src="' + d.qris_image + '" alt="QRIS">';
+            html += '<p class="muted">' + String(d.status_teks || '') + '</p>';
+            if (d.nmid) html += '<p class="muted kecil">NMID: <b>' + String(d.nmid) + '</b></p>';
+            if (d.invid) html += '<p class="muted kecil">INV: ' + String(d.invid) + '</p>';
+            if (d.expiry) html += '<p class="muted kecil">Berlaku s/d <b>' + String(d.expiry) + '</b></p>';
+            if (d.paid) {
+                html += '<p class="badge ok">' + String(d.status_teks) + '</p>';
+                html += '<p><a href="/invoice.php?order=' + encodeURIComponent(orderCode) + '" class="btn btn-success">🧾 Lihat Invoice</a></p>';
+            } else if (!d.paid && !d.expired) {
+                html += '<p><button type="button" class="btn" onclick="tampilQris(\'' + orderCode + '\',\'' + phone + '\')">🔄 Periksa Lagi</button></p>';
+            }
+            box.innerHTML = html;
+        })
+        .catch(function() { box.innerHTML = '<p class="bahaya">Gagal menghubungi server.</p>'; });
+}
+    document.getElementById('btnTutupQris')?.addEventListener('click', function() { modal.classList.add('hidden'); });
 </script>
 
 <?php include 'includes/footer.php'; ?>

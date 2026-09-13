@@ -86,7 +86,7 @@ include __DIR__ . '/../includes/header.php';
 
 .admin-sidebar {
     width: 220px;
-    background: #2c3e50;
+    background: var(--primary);
     padding: 20px 15px;
     border-radius: 8px;
     flex-shrink: 0;
@@ -96,7 +96,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .admin-sidebar h2 {
-    color: #f39c12;
+    color: var(--warning);
     font-size: 16px;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -128,7 +128,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .admin-sidebar ul li a.active {
-    background: #f39c12;
+    background: var(--warning);
     color: #fff;
 }
 
@@ -139,7 +139,7 @@ include __DIR__ . '/../includes/header.php';
 
 .admin-main h1 {
     font-size: 24px;
-    color: #2c3e50;
+    color: var(--primary);
     margin-bottom: 20px;
 }
 
@@ -176,7 +176,7 @@ include __DIR__ . '/../includes/header.php';
     display: block;
     font-weight: 600;
     margin-bottom: 5px;
-    color: #2c3e50;
+    color: var(--primary);
     font-size: 14px;
 }
 
@@ -190,7 +190,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .form-group .form-control:focus {
-    border-color: #f39c12;
+    border-color: var(--warning);
     outline: none;
 }
 
@@ -225,7 +225,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .btn-primary {
-    background: #2c3e50;
+    background: var(--primary);
     color: #fff;
 }
 
@@ -235,8 +235,8 @@ include __DIR__ . '/../includes/header.php';
 
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: var(--primary);
+    border: 1px solid var(--primary);
 }
 
 .btn-outline:hover {
@@ -244,7 +244,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 .btn-success {
-    background: #27ae60;
+    background: var(--success);
     color: #fff;
 }
 
@@ -267,19 +267,19 @@ include __DIR__ . '/../includes/header.php';
     cursor: pointer;
     font-size: 13px;
     text-decoration: none;
-    color: #2c3e50;
+    color: var(--primary);
     transition: all 0.3s;
 }
 
 .page-selector .page-btn:hover {
-    border-color: #f39c12;
+    border-color: var(--warning);
     background: #fef9e7;
 }
 
 .page-selector .page-btn.active {
-    background: #f39c12;
+    background: var(--warning);
     color: #fff;
-    border-color: #f39c12;
+    border-color: var(--warning);
 }
 
 /* 🔥 TOGGLE SWITCH */
@@ -321,7 +321,7 @@ include __DIR__ . '/../includes/header.php';
 }
 
 input:checked + .slider {
-    background: #27ae60;
+    background: var(--success);
 }
 
 input:checked + .slider:before {
@@ -382,9 +382,9 @@ input:checked + .slider:before {
 }
 
 .toolbar button:hover {
-    background: #2c3e50;
+    background: var(--primary);
     color: #fff;
-    border-color: #2c3e50;
+    border-color: var(--primary);
 }
 </style>
 
@@ -497,7 +497,7 @@ input:checked + .slider:before {
         </form>
 
         <!-- 🔥 LIVE PREVIEW -->
-        <div id="livePreview" style="display:none;margin-top:20px;background:#fff;padding:25px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:2px solid #f39c12;">
+        <div id="livePreview" style="display:none;margin-top:20px;background:#fff;padding:25px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:2px solid var(--warning);">
             <h3 style="display:flex;justify-content:space-between;align-items:center;">
                 <span>📱 Live Preview</span>
                 <button onclick="document.getElementById('livePreview').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">&times;</button>

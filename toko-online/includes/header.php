@@ -3,30 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? 'Rainbow Printing - Percetakan Online Samarinda') ?></title>
+    <title><?= htmlspecialchars($pageTitle ?? 'Percetakan Rainbow - Percetakan Online Samarinda') ?></title>
+
+    <!-- 🔥 Favicon / Logo Tab Browser -->
+    <link rel="icon" type="image/png" href="/favicon-v2.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v2.png">
+    <link rel="icon" type="image/x-icon" href="/favicon-v2.png">
     
     <!-- 🔥 Meta Tags SEO -->
-    <meta name="description" content="Percetakan & digital printing Samarinda: cetak spanduk, banner, stiker, kartu nama, brosur, undangan & lainnya. Cepat, murah, berkualitas, free konsultasi desain.">
-    <meta name="keywords" content="percetakan online samarinda, percetakan murah samarinda, cetak undangan samarinda, cetak stiker samarinda, cetak banner samarinda, cetak spanduk samarinda, cetak kartu nama samarinda, cetak brosur samarinda, cetak kalender samarinda, digital printing samarinda, percetakan terpercaya samarinda, rainbow printing samarinda, cetak foto samarinda, cetak flyer samarinda, percetakan offset samarinda, sablon samarinda, uv printer samarinda, percetakan terdekat samarinda">
-    <?php
-    $noindexPages = ['login.php','register.php','cart.php','cek-pesanan.php','upload-design.php','checkout.php','confirm.php','dashboard.php','finish.php','invoice.php','orders.php','order-success.php','pesanan-saya.php','logout.php'];
-    $currentScript = basename($_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF'] ?? '');
-    $seoRobots = in_array($currentScript, $noindexPages, true) ? 'noindex, follow' : 'index, follow';
-    ?>
-    <meta name="robots" content="<?= $seoRobots ?>">
-    <meta name="author" content="Rainbow Printing">
-    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, spanduk, dan kebutuhan percetakan lainnya. Harga terjangkau, kualitas terbaik.">
+    <meta name="keywords" content="percetakan online samarinda, percetakan murah samarinda, cetak undangan samarinda, cetak stiker samarinda, cetak banner samarinda, cetak spanduk samarinda, cetak kartu nama samarinda, cetak brosur samarinda, cetak kalender samarinda, digital printing samarinda, percetakan terpercaya samarinda, percetakan rainbow, rainbow printing samarinda, cetak foto samarinda, cetak flyer samarinda, percetakan offset samarinda, sablon samarinda, uv printer samarinda, percetakan terdekat samarinda, percetakan 24 jam samarinda">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Percetakan Rainbow">
+    <meta name="theme-color" content="#172033">
     
     <!-- 🔥 Open Graph / Social Media -->
-    <meta property="og:title" content="<?= htmlspecialchars($pageTitle ?? 'Rainbow Printing') ?>">
-    <meta property="og:description" content="Percetakan & digital printing Samarinda: cetak spanduk, banner, stiker, kartu nama, brosur, undangan & lainnya. Cepat, murah, berkualitas, free konsultasi desain.">
+    <meta property="og:title" content="<?= htmlspecialchars($pageTitle ?? 'Percetakan Rainbow') ?>">
+    <meta property="og:description" content="Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, dan kebutuhan percetakan lainnya.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rainbowprinting.web.id">
-    <meta property="og:image" content="https://rainbowprinting.web.id/og-image.jpg">
-    
-    <!-- 🔥 Favicon -->
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
     <!-- 🔥 CSS Utama -->
     <link rel="stylesheet" href="/css/style.css?v=<?= filemtime(__DIR__ . '/../css/style.css') ?: time() ?>">
@@ -47,12 +42,10 @@
            CSS DASAR UNTUK HEADER
            ============================================ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        .ads-slot { width: 100%; max-width: 100%; overflow: hidden; display: block; box-sizing: border-box; }
-        .ads-slot-global { margin: 0; }
         
         body { 
             font-family: 'Poppins', sans-serif; 
-            background: #f8f9fa; 
+            background: var(--light); 
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -74,13 +67,14 @@
            NAVBAR
            ============================================ */
         .navbar { 
-            background: #2c3e50; 
+            background: linear-gradient(90deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%);
             padding: 12px 0; 
             color: #fff;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+            border-bottom: 1px solid rgba(45,212,191,0.22);
         }
         
         .navbar .container { 
@@ -95,11 +89,40 @@
             font-weight: 700; 
             color: #fff; 
             text-decoration: none;
-            transition: color 0.3s;
+            transition: all 0.3s;
             letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+            gap: 10px;
+            line-height: 1.15;
         }
-        .navbar-brand:hover { color: #f39c12; }
-        .navbar-brand span { color: #f39c12; }
+        .navbar-brand .brand-logo {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            flex-shrink: 0;
+            border-radius: 8px;
+        }
+        .navbar-brand .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar-brand:hover { opacity: 0.9; }
+        .navbar-brand .brand-gradient { 
+            background: linear-gradient(135deg, var(--accent1) 0%, var(--accent2) 60%, var(--accent3) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .navbar-brand .brand-tagline {
+            font-size: 10.5px;
+            font-weight: 400;
+            color: rgba(255,255,255,0.72);
+            letter-spacing: 0.3px;
+            margin-top: 2px;
+        }
         
         .navbar-nav { 
             display: flex; 
@@ -110,7 +133,7 @@
         }
         
         .navbar-nav a { 
-            color: rgba(255,255,255,0.85); 
+            color: rgba(255,255,255,0.82); 
             text-decoration: none; 
             font-size: 14px; 
             transition: all 0.3s;
@@ -120,19 +143,19 @@
         }
         
         .navbar-nav a:hover { 
-            color: #f39c12; 
-            border-bottom-color: #f39c12;
+            color: var(--accent1); 
+            border-bottom-color: var(--accent1);
         }
         
         .navbar-nav a.active { 
-            color: #f39c12; 
+            color: var(--accent1); 
             font-weight: 600;
-            border-bottom-color: #f39c12;
+            border-bottom-color: var(--accent1);
         }
         
         /* 🔥 Cart Badge */
         .cart-badge { 
-            background: #e74c3c; 
+            background: linear-gradient(135deg, var(--accent1), var(--accent2)); 
             color: #fff; 
             border-radius: 50%; 
             padding: 2px 8px; 
@@ -195,7 +218,7 @@
             }
             .navbar-nav a.active {
                 border-bottom: none;
-                background: rgba(243,156,18,0.15);
+                background: rgba(45,212,191,0.14);
             }
             .navbar-nav a i {
                 width: 20px;
@@ -206,6 +229,13 @@
         @media (max-width: 480px) {
             .navbar-brand {
                 font-size: 18px;
+            }
+            .navbar-brand .brand-logo {
+                width: 32px;
+                height: 32px;
+            }
+            .navbar-brand .brand-tagline {
+                font-size: 9px;
             }
             .navbar-nav a {
                 font-size: 13px;
@@ -245,24 +275,25 @@
            FOOTER STICKY
            ============================================ */
         .footer {
-            background: #2c3e50;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: #fff;
             padding: 30px 0 15px;
             margin-top: auto;
-            border-top: 4px solid #f39c12;
+            border-top: 3px solid;
+            border-image: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3)) 1;
         }
-        .footer a { color: #f39c12; text-decoration: none; }
+        .footer a { color: var(--accent2); text-decoration: none; }
         .footer a:hover { text-decoration: underline; }
         .footer .container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
-        .footer h4 { margin-bottom: 10px; color: #f39c12; font-size: 16px; }
+        .footer h4 { margin-bottom: 10px; color: var(--accent2); font-size: 16px; }
         .footer ul { list-style: none; padding: 0; }
         .footer ul li { margin-bottom: 6px; }
         .footer ul li a { color: #ccc; font-size: 13px; transition: color 0.3s; }
-        .footer ul li a:hover { color: #f39c12; text-decoration: none; }
+        .footer ul li a:hover { color: var(--accent1); text-decoration: none; }
         .footer-bottom {
             grid-column: 1 / -1;
             text-align: center;
@@ -302,70 +333,32 @@
             font-size: 12px;
             font-weight: 600;
         }
-        .status-pending { background: #f39c12; color: #fff; }
-        .status-desain { background: #8e44ad; color: #fff; }
-        .status-processed { background: #3498db; color: #fff; }
-        .status-printing { background: #2c3e50; color: #fff; }
-        .status-done { background: #27ae60; color: #fff; }
-        .status-cancelled { background: #e74c3c; color: #fff; }
-        .status-failed { background: #e74c3c; color: #fff; }
+        .status-pending { background: var(--danger); color: #fff; }
+        .status-desain { background: var(--secondary); color: #fff; }
+        .status-processed { background: var(--info); color: #fff; }
+        .status-printing { background: #111111; color: #fff; }
+        .status-done { background: var(--success); color: #fff; }
+        .status-cancelled { background: var(--danger); color: #fff; }
+        .status-failed { background: var(--danger); color: #fff; }
         .status-unpaid { background: #95a5a6; color: #fff; }
-        .status-dp { background: #f39c12; color: #fff; }
-        .status-paid { background: #27ae60; color: #fff; }
-        .status-pending_verification { background: #3498db; color: #fff; }
-        .status-verified { background: #27ae60; color: #fff; }
-        .status-rejected { background: #e74c3c; color: #fff; }
+        .status-dp { background: var(--danger); color: #fff; }
+        .status-paid { background: var(--success); color: #fff; }
+        .status-pending_verification { background: var(--info); color: #fff; }
+        .status-verified { background: var(--success); color: #fff; }
+        .status-rejected { background: var(--danger); color: #fff; }
     </style>
-    <?php if (getSetting('google_analytics_id')): ?>
-    <!-- Google Analytics (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=<?= htmlspecialchars(getSetting('google_analytics_id')) ?>"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '<?= htmlspecialchars(getSetting('google_analytics_id')) ?>');
-    </script>
-    <?php endif; ?>
-    <?php
-    $seoCanonical = $canonicalUrl ?? ('https://rainbowprinting.web.id' . (parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/'));
-    $seoPhone = trim(getSetting('store_phone') ?: getSetting('whatsapp_number') ?: '6282252569185');
-    $seoAddress = trim(getSetting('store_address') ?: 'Jl. Gerilya Gg. Masjid Blok B. Nomor 38c');
-    $seoName = trim(getSetting('store_name') ?: 'Rainbow Printing');
-    ?>
-    <?php if ($seoRobots === 'index, follow'): ?>
-    <link rel="canonical" href="<?= htmlspecialchars($seoCanonical) ?>">
-    <?php endif; ?>
-    <!-- SEO Schema LocalBusiness -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      "name": "<?= htmlspecialchars($seoName) ?>",
-      "description": "Percetakan Rainbow Printing adalah jasa percetakan dan digital printing terpercaya di Samarinda, Kalimantan Timur. Kami melayani cetak spanduk, banner, stiker outdoor (Ritrama & Bontax), kartu nama, brosur, pamflet, undangan pernikahan, buku menu, kalender, hingga cetak foto. Didukung mesin modern dan bahan berkualitas, hasil cetak tajam dengan warna akurat dan harga terjangkau untuk UMKM, sekolah, instansi, dan perorangan. Kami juga menyediakan jasa desain grafis untuk logo, banner, dan kebutuhan promosi. Proses cepat 1-3 hari kerja, free konsultasi, dan pemesanan mudah via WhatsApp atau langsung ke workshop kami di Jl. Gerilya Gg. Masjid Blok B No. 38c, Samarinda.",
-      "url": "https://rainbowprinting.web.id",
-      "telephone": "+<?= htmlspecialchars(preg_replace('/^0/', '62', $seoPhone)) ?>",
-      "image": "https://rainbowprinting.web.id/favicon.svg",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "<?= htmlspecialchars($seoAddress) ?>",
-        "addressLocality": "Samarinda",
-        "addressRegion": "Kalimantan Timur",
-        "addressCountry": "ID"
-      },
-      "priceRange": "Rp"
-    }
-    </script>
 </head>
 <body>
-<?php if (getSetting('ads_global_aktif') === '1' && trim((string)getSetting('ads_global')) !== ''): ?>
-<div class="ads-slot ads-slot-global"><?= getSetting('ads_global') ?></div>
-<?php endif; ?>
 
 <!-- 🔥 NAVBAR -->
 <nav class="navbar" role="navigation" aria-label="Menu Utama">
     <div class="container">
-        <a href="/" class="navbar-brand" aria-label="Rainbow Printing Beranda">
-            Rainbow <span>Printing</span>
+        <a href="/" class="navbar-brand" aria-label="Percetakan Rainbow Beranda">
+            <img src="/logo.png?v=2" alt="Logo Percetakan Rainbow" class="brand-logo">
+            <span class="brand-text">
+                <span class="brand-title">Percetakan <span class="brand-gradient">Rainbow</span></span>
+                <span class="brand-tagline">Solusi cetak cepat, murah, dan berkualitas untuk kebutuhanmu</span>
+            </span>
         </a>
         
         <button class="navbar-toggle" 
@@ -394,6 +387,11 @@
             <li role="none">
                 <a href="/tentang-kami.php" role="menuitem" class="<?= strpos($_SERVER['REQUEST_URI'], 'tentang') !== false ? 'active' : '' ?>">
                     <i class="fas fa-info-circle"></i> Tentang Kami
+                </a>
+            </li>
+            <li role="none">
+                <a href="/panduan-pemesanan.php" role="menuitem" class="<?= strpos($_SERVER['REQUEST_URI'], 'panduan') !== false ? 'active' : '' ?>">
+                    <i class="fas fa-book-open"></i> Panduan Pesan
                 </a>
             </li>
             

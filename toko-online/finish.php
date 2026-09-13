@@ -188,7 +188,7 @@ include '../includes/header.php';
 }
 .order-success h1 {
     font-size: 28px;
-    color: #2c3e50;
+    color: var(--primary);
     margin-bottom: 10px;
 }
 .order-success .subtitle {
@@ -208,7 +208,7 @@ include '../includes/header.php';
     margin: 8px 0;
 }
 .order-detail-card strong {
-    color: #2c3e50;
+    color: var(--primary);
 }
 .status-badge {
     display: inline-block;
@@ -217,14 +217,14 @@ include '../includes/header.php';
     font-size: 13px;
     font-weight: 600;
 }
-.status-paid { background: #27ae60; color: #fff; }
-.status-dp { background: #f39c12; color: #fff; }
-.status-pending_verification { background: #f39c12; color: #fff; }
+.status-paid { background: var(--success); color: #fff; }
+.status-dp { background: var(--warning); color: #fff; }
+.status-pending_verification { background: var(--warning); color: #fff; }
 .status-unpaid { background: #95a5a6; color: #fff; }
 .status-failed { background: #e74c3c; color: #fff; }
-.status-desain { background: #8e44ad; color: #fff; }
-.status-processed { background: #3498db; color: #fff; }
-.status-done { background: #27ae60; color: #fff; }
+.status-desain { background: var(--secondary); color: #fff; }
+.status-processed { background: var(--info); color: #fff; }
+.status-done { background: var(--success); color: #fff; }
 
 .payment-summary {
     display: grid;
@@ -246,7 +246,7 @@ include '../includes/header.php';
 .payment-summary .item .value {
     font-size: 16px;
     font-weight: bold;
-    color: #2c3e50;
+    color: var(--primary);
 }
 .btn-group {
     display: flex;
@@ -266,7 +266,7 @@ include '../includes/header.php';
     transition: all 0.3s;
 }
 .btn-primary {
-    background: #2c3e50;
+    background: var(--primary);
     color: #fff;
 }
 .btn-primary:hover {
@@ -274,21 +274,21 @@ include '../includes/header.php';
 }
 .btn-outline {
     background: #fff;
-    color: #2c3e50;
-    border: 1px solid #2c3e50;
+    color: var(--primary);
+    border: 1px solid var(--primary);
 }
 .btn-outline:hover {
     background: #f8f9fa;
 }
 .btn-success {
-    background: #27ae60;
+    background: var(--success);
     color: #fff;
 }
 .btn-success:hover {
     background: #1e8449;
 }
 .btn-warning {
-    background: #f39c12;
+    background: var(--warning);
     color: #fff;
 }
 .btn-warning:hover {
@@ -303,7 +303,7 @@ include '../includes/header.php';
 }
 .midtrans-error {
     background: #fef9e7;
-    border: 1px solid #f39c12;
+    border: 1px solid var(--warning);
     padding: 12px 16px;
     border-radius: 6px;
     color: #856404;
@@ -321,7 +321,7 @@ include '../includes/header.php';
 .progress-bar-fill {
     height: 100%;
     border-radius: 10px;
-    background: linear-gradient(90deg, #f39c12, #27ae60);
+    background: linear-gradient(90deg, var(--warning), var(--success));
     transition: width 0.5s ease;
 }
 .progress-label {
@@ -416,11 +416,11 @@ include '../includes/header.php';
         </div>
         <div class="item">
             <div class="label">Sudah Dibayar</div>
-            <div class="value" style="color:#27ae60;"><?= formatRupiah($totalPaid) ?></div>
+            <div class="value" style="color:var(--success);"><?= formatRupiah($totalPaid) ?></div>
         </div>
         <div class="item">
             <div class="label">Sisa</div>
-            <div class="value" style="color:<?= $sisaPembayaran > 0 ? '#e74c3c' : '#27ae60' ?>;">
+            <div class="value" style="color:<?= $sisaPembayaran > 0 ? '#e74c3c' : 'var(--success)' ?>;">
                 <?= $sisaPembayaran > 0 ? formatRupiah($sisaPembayaran) : '✅ LUNAS' ?>
             </div>
         </div>
@@ -461,7 +461,7 @@ include '../includes/header.php';
             </span>
         </p>
         <?php if ($order['payment_status'] === 'dp' && $sisaPembayaran > 0): ?>
-            <p style="color:#f39c12;font-weight:bold;margin-top:5px;">
+            <p style="color:var(--warning);font-weight:bold;margin-top:5px;">
                 💰 Sisa pembayaran: <?= formatRupiah($sisaPembayaran) ?>
             </p>
         <?php endif; ?>
