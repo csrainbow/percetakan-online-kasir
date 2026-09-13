@@ -18,6 +18,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 - **`waOrderStatus()`**: normalisasi nomor pakai `wa_norm_nomor()` (handle prefix 0/8 → 62…).
 - **Midtrans `order_id` unik per percobaan**: `create.php`, `finish.php`, `notification.php` disinkronkan dari server ke repo (fix status query salah karena suffix timestamp).
 - **Template invoice web sama seperti kasir**: `invoice.php` dipakai ulang layout nota A5 kasir (`a5-invoice.php`: logo, No. Pesanan, Status Pembayaran, tabel item + catatan, Jumlah Pelunasan, tanda tangan); info ukuran/bahan/jasa desain jadi catatan kecil per item. Print A5 landscape.
+- **Input logo di Pengaturan → tab Invoice** (pola kasir): upload logo nota (`uploads/logo-nota.*`, JPG/PNG/WEBP maks 2 MB) + pengatur lebar logo mm (10–45, default 24); dipakai di invoice A5.
 - **WA notifikasi saat auto-payment Midtrans** di `payment/notification.php`: pelanggan dapat WA `paid`/`dp` via antrean kasir begitu webhook sukses.
 
 ### Kasir & Web utama bersamaan

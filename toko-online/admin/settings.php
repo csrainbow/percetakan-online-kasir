@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'qris_api_mid', 'qris_api_nmid', 'qris_api_apikey',
         'midtrans_server_key', 'midtrans_client_key',
         'invoice_template', 'invoice_footer', 'printer_options',
+        'logo_nota_size',
         'whatsapp_number', 'footer_text'
     ];
     
@@ -55,6 +56,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } else {
                 $error = "❌ Format gambar QRIS tidak didukung! (JPG, PNG, GIF, WEBP)";
+            }
+        }
+        
+        // 🔥 UPLOAD LOGO NOTA (dipakai di invoice A5, seperti kasir)
+        if (isset($_FILES['logo_image']) && $_FILES['logo_image']['error'] === UPLOAD_ERR_OK) {
+            $ext = strtolower(pathinfo($_FILES['logo_image']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (in_array($ext, $allowed)) {
+                $uploadDir = __DIR__ . '/../uploads/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                
+                $filename = 'logo-nota.' . $ext;
+                if (move_uploaded_file($_FILES['logo_image']['tmp_name'], $uploadDir . $filename)) {
+                    // Hapus logo lama jika beda
+                    $oldLogo = $db->query("SELECT value FROM settings WHERE key='logo_image'")->fetch();
+                    if ($oldLogo && $oldLogo['value'] && strpos($oldLogo['value'], 'uploads/') === 0) {
+                        $oldPath = $uploadDir . basename($oldLogo['value']);
+                        if ($oldPath !== $uploadDir . $filename && file_exists($oldPath)) unlink($oldPath);
+                    }
+                    
+                    $stmt->execute(['logo_image', 'uploads/' . $filename]);
+                } else {
+                    $error = "❌ Gagal upload logo!";
+                }
+            } else {
+                $error = "❌ Format logo tidak didukung! (JPG, PNG, GIF, WEBP)";
             }
         }
         
@@ -508,6 +535,42 @@ include '../includes/header.php';
             <!-- 🔥 TAB 5: INVOICE -->
             <div class="tab-section" id="tab-invoice">
                 <div class="settings-section">
+                    <h2>🖼️ Logo Nota (A5 / Invoice)</h2>
+                    <div class="form-group">
+                        <label>Gambar Logo</label>
+                        <input type="file" name="logo_image" accept=".png,.jpg,.jpeg,.webp" id="logoInput">
+                        <div class="helper-text">Format: JPG, PNG, WEBP (maks 2 MB). Kosongkan jika tidak ingin mengganti. Belum diunggah = memakai logo bawaan <code>/logo.png</code>.</div>
+
+                        <?php 
+                        $logoVal = $settings['logo_image'] ?? '';
+                        if ($logoVal): 
+                            $logoSrc = (strpos($logoVal, 'data:') === 0 || strpos($logoVal, 'http') === 0) ? $logoVal : BASE_URL . ltrim($logoVal, '/');
+                        ?>
+                        <div class="qris-preview" id="logoPreview">
+                            <img src="<?= htmlspecialchars($logoSrc) ?>" alt="Logo Nota" id="logoPreviewImg">
+                            <div class="qris-info">
+                                <strong>Logo saat ini</strong><br>
+                                <span style="font-size:12px;color:#999;">Klik "Choose File" untuk mengganti</span>
+                            </div>
+                        </div>
+                        <?php else: ?>
+                        <div class="qris-preview" id="logoPreview">
+                            <img src="<?= BASE_URL ?>logo.png?v=2" alt="Logo Nota (bawaan)">
+                            <div class="qris-info">
+                                <strong>Logo bawaan aktif</strong><br>
+                                <span style="font-size:12px;color:#999;">Unggah logo Anda untuk dipakai di invoice A5.</span>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="form-group">
+                        <label>Lebar Logo di Invoice (mm)</label>
+                        <input type="number" name="logo_nota_size" min="10" max="45" step="1" value="<?= htmlspecialchars($settings['logo_nota_size'] ?? '24') ?>" style="width:120px;">
+                        <div class="helper-text">Min 10 mm – maks 45 mm (default 24 mm)</div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
                     <h2>🧾 Invoice & Cetakan</h2>
                     
                     <div class="form-group">
@@ -587,7 +650,21 @@ document.getElementById('qrisInput')?.addEventListener('change', function(e) {
     reader.readAsDataURL(file);
 });
 
-// 🔥 CONFIRM SAVE
+// 🔥 LOGO PREVIEW
+document.getElementById('logoInput')?.addEventListener('change', function(e) {
+    const file = this.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = document.getElementById('logoPreviewImg');
+        if (img) {
+            img.src = e.target.result;
+            img.style.borderColor = 'var(--success)';
+        }
+    };
+    reader.readAsDataURL(file);
+});
 function confirmSave() {
     // Validasi form
     const form = document.getElementById('settingsForm');

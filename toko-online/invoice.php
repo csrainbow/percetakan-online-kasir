@@ -66,6 +66,8 @@ $logoImg = setting('logo_image', '/logo.png?v=2');
 if ($logoImg && strpos($logoImg, 'data:') !== 0 && strpos($logoImg, 'http') !== 0) {
     $logoImg = BASE_URL . ltrim($logoImg, '/');
 }
+// 🔥 Lebar logo nota (mm, sama pola kasir)
+$logoW = max(10, min(45, (float)setting('logo_nota_size', 24)));
 
 $pageTitle = 'Invoice ' . $order['order_code'];
 include 'includes/header.php';
@@ -127,7 +129,7 @@ foreach ($items as $item) {
 .invoice-head-right { text-align:right;font-size:8px;color:#555; }
 .invoice-head-right .inv-no { font-size:9px;font-weight:bold;color:#2c3e50;margin-top:2px; }
 .invoice-head-right p,.invoice-head-left p { font-size:8px!important;margin:0!important;line-height:1.2!important; }
-.logo-nota { float:left;width:24mm;height:auto;max-width:30%;object-fit:contain;margin:0 8px 4px 0; }
+.logo-nota { float:left;width:<?= $logoW ?>mm;height:auto;max-width:30%;object-fit:contain;margin:0 8px 4px 0; }
 .invoice-mid { width:100%;border-collapse:collapse;margin-bottom:6px;padding:4px 6px;background:#f8f9fa;border-radius:4px;font-size:8px; }
 .invoice-mid td { padding:4px; }
 .invoice-table { width:100%;border-collapse:collapse;margin-bottom:4px; }
