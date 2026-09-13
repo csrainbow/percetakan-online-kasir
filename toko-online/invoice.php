@@ -76,11 +76,11 @@ $grandTotal = floatval($order['total']);
 $sisaAmount = $sisaPembayaran; // 🔥 Sisa pembayaran yang sebenarnya
 $totalDibayar = $totalPaid;
 
-// 🔥 Status pembayaran ala kasir (LUNAS / DP / BELUM BAYAR)
+// 🔥 Status pembayaran ala kasir (LUNAS / DOWN PAYMENT / BELUM BAYAR)
 if ($sisaAmount <= 0) {
     $payLabel = 'LUNAS';
 } elseif ($totalDibayar > 0) {
-    $payLabel = 'DP';
+    $payLabel = 'DOWN PAYMENT';
 } else {
     $payLabel = 'BELUM BAYAR';
 }

@@ -240,8 +240,13 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
                 $message .= "Status: " . $paymentLabel . "\n";
                 $message .= "Jumlah: Rp " . number_format($amount, 0, ',', '.') . "\n";
                 if ($newPaymentStatus === 'dp' && $newTotalPaid < $order['total']) {
-                    $message .= "Sisa pembayaran: Rp " . number_format($order['total'] - $newTotalPaid, 0, ',', '.') . "\n";
-                    $message .= "Silakan lunasi sisa pembayaran melalui halaman pesanan Anda.\n\n";
+                    $sisaEmail = $order['total'] - $newTotalPaid;
+                    $message .= "Sisa pembayaran: Rp " . number_format($sisaEmail, 0, ',', '.') . "\n";
+                    if (function_exists('wa_web_pay_point_url')) {
+                        $message .= "Bayar sisa melalui Payment Point (QRIS & rekening):\n" . wa_web_pay_point_url($order['order_code'], $order['customer_phone']) . "\n\n";
+                    } else {
+                        $message .= "Silakan lunasi sisa pembayaran melalui halaman pesanan Anda.\n\n";
+                    }
                 }
                 $message .= "Terima kasih telah berbelanja di Percetakan Rainbow!\n";
                 $message .= "Link: https://rainbowprinting.web.id/customer/order-detail.php?order=" . $order['order_code'];

@@ -44,6 +44,9 @@ define('WHATSAPP_NUMBER', '6281234567890');
 define('ADMIN_USERNAME', 'admin');
 define('ADMIN_PASSWORD_HASH', '$2y$10$/QhFH0S5hbJZbxJiSqbqPuGM0Trmx3mpq3rZLEo8kcQ5uBEnuxuri');
 
+// 🔥 Salt untuk token Payment Point (halaman bayar publik)
+define('PAYPOINT_SALT', 'e9f2d81a5c07b4639a1c8e4f20d15b73');
+
 // ============================================
 // LOGS FOLDER
 // ============================================

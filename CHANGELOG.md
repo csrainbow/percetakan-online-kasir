@@ -20,6 +20,11 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 - **Template invoice web sama seperti kasir**: `invoice.php` dipakai ulang layout nota A5 kasir (`a5-invoice.php`: logo, No. Pesanan, Status Pembayaran, tabel item + catatan, Jumlah Pelunasan, tanda tangan); info ukuran/bahan/jasa desain jadi catatan kecil per item. Print A5 landscape.
 - **Input logo di Pengaturan → tab Invoice** (pola kasir): upload logo nota (`uploads/logo-nota.*`, JPG/PNG/WEBP maks 2 MB) + pengatur lebar logo mm (10–45, default 24); dipakai di invoice A5.
 - **WA notifikasi saat auto-payment Midtrans** di `payment/notification.php`: pelanggan dapat WA `paid`/`dp` via antrean kasir begitu webhook sukses.
+- **Payment Point web** (`pay-point.php` publik, pola kasir `n.php …/pay`): halaman bayar menampilkan QRIS + daftar rekening + ringkasan & sisa tagihan; akses via token (`?order=&t=`, salt `PAYPOINT_SALT`) sehingga link WA/email tidak menampilkan nomor HP.
+- **WA `dp` kini lengkap**: nominal DP diterima, sisa tagihan, dan link Payment Point (sebelumnya hanya ajakan cek status). `paid`/`dp` otomatis menyertakan URL via `wa_web_pay_point_url()`.
+- **Popup DP di admin Pesanan**: saat memilih status `DP`, muncul popup untuk mengisi nominal DP yang dibayarkan → dicatat ke tabel `payments` (status `verified`, type `dp`), `payment_status` otomatis DP/Lunas, lalu WA + email pelanggan (nominal, sisa, link Payment Point). Handler baru `record_dp`.
+- **Email pelanggan saat DP** (`payment/notification.php`): menyertakan link Payment Point.
+- **Label invoice**: status pembayaran DP ditampilkan **DOWN PAYMENT** di invoice A5.
 
 ### Kasir & Web utama bersamaan
 - **Midtrans mode production dikonfirmasi aktif** (`midtrans_is_production=1`); tidak ada sandbox tersisa.

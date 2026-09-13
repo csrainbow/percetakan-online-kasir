@@ -109,6 +109,29 @@ if (!function_exists('wa_web_notify_admin')) {
     }
 }
 // ============================================
+// Payment Point web: halaman bayar publik berisi
+// QRIS + rekening + sisa tagihan (pola kasir).
+// Token memakai salt PAYPOINT_SALT agar URL tidak
+// menampilkan nomor HP / kode order sebagai query.
+// ============================================
+if (!function_exists('wa_web_pay_token')) {
+    function wa_web_pay_token($orderCode, $phone) {
+        return substr(hash('sha256', (string)$orderCode . ':' . (string)$phone . ':' . PAYPOINT_SALT), 0, 16);
+    }
+}
+
+if (!function_exists('wa_web_pay_point_url')) {
+    function wa_web_pay_point_url($orderCode, $phone) {
+        $base = rtrim(getSetting('site_url') ?: 'https://rainbowprinting.web.id', '/');
+        if ($orderCode === '' || $phone === '') {
+            return $base . '/cek-pesanan.php';
+        }
+        $tok = wa_web_pay_token($orderCode, $phone);
+        return $base . '/pay-point.php?order=' . rawurlencode($orderCode) . '&t=' . $tok;
+    }
+}
+
+// ============================================
 // waOrderStatus: status pesanan -> WA pelanggan
 // dipanggil admin/orders.php (via antrean kasir)
 // ============================================
@@ -123,9 +146,16 @@ if (!function_exists('waOrderStatus')) {
         $name = $order['customer_name'];
         $code = $order['order_code'];
         $total = isset($order['total']) ? (float)$order['total'] : 0;
+
+        // Total terbayar & sisa tagihan
+        $paidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
+        $paidStmt->execute([(int)$order['id']]);
+        $totalPaid = (float)$paidStmt->fetchColumn();
+        $sisa = max(0, $total - $totalPaid);
+
         $msgs = [
             'paid'      => "\u{2705} *PEMBAYARAN DITERIMA*\n\nHalo $name, pembayaran pesanan *$code* sebesar *" . formatRupiah($total) . "* sudah kami terima.\n\nPesanan Anda akan segera kami kerjakan. Terima kasih \u{1F64F}",
-            'dp'        => "\u{1F4B5} *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sudah kami terima.\n\nStatus pesanan bisa dicek di https://rainbowprinting.web.id/cek-pesanan.php\n\nTerima kasih \u{1F64F}",
+            'dp'        => "\u{1F4B5} *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sebesar *" . formatRupiah($totalPaid) . "* sudah kami terima.\n\nSisa tagihan: *" . formatRupiah($sisa) . "*\n\n\u{1F4B3} *Silakan lunasi melalui Payment Point berikut:*\n" . wa_web_pay_point_url($order['order_code'], $order['customer_phone']) . "\n\n*Nilai bayar:* " . formatRupiah($sisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: " . wa_web_admin_number() . "\n\nTerima kasih \u{1F64F}",
             'processed' => "\u{1F528} *PESANAN DIPROSES*\n\nHalo $name, pesanan *$code* sedang dikerjakan oleh tim kami.\n\nKami akan kabari lagi jika sudah selesai. Terima kasih \u{1F64F}",
             'printing'  => "\u{1F5A8}\u{FE0F} *PESANAN DICETAK*\n\nHalo $name, pesanan *$code* sedang dalam proses cetak.\n\nMohon ditunggu ya \u{1F64F}",
             'done'      => "\u{1F389} *PESANAN SELESAI*\n\nHalo $name, pesanan *$code* sudah selesai dan siap untuk diambil / dikirim.\n\nTerima kasih sudah mempercayakan kami \u{1F64F}",
