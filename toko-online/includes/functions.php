@@ -607,29 +607,41 @@ if (!function_exists('cs_shorten')) {
             $r = $stmt->fetch();
             if ($r && !empty($r['short_url'])) return $r['short_url'];
 
+            // Prioritas: gateway lokal (127.0.0.1:4000 — tanpa hairpin Cloudflare
+            // yang bisa gagal sesaat & memaksa fallback ke URL panjang),
+            // baru publik https://cslink.web.id.
+            $endpoints = [
+                'http://127.0.0.1:4000/api/shorten',
+                'https://cslink.web.id/api/shorten',
+            ];
             $short = '';
-            for ($attempt = 0; $attempt < 3 && $short === ''; $attempt++) {
-                $ch = curl_init('https://cslink.web.id/api/shorten');
-                curl_setopt_array($ch, [
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_POST           => true,
-                    CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'X-Api-Key: ' . $CSLINK_KEY],
-                    CURLOPT_POSTFIELDS     => json_encode(['url' => $longUrl]),
-                    CURLOPT_TIMEOUT        => 12,
-                    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
-                    CURLOPT_SSL_VERIFYPEER => true,
-                ]);
-                $res = curl_exec($ch);
-                $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
-                if ($http >= 200 && $http < 300 && $res) {
-                    $j = json_decode($res, true);
-                    if (is_array($j) && !empty($j['short_code'])) {
-                        $short = 'https://cslink.web.id/' . $j['short_code'];
+            foreach ($endpoints as $endpoint) {
+                for ($attempt = 0; $attempt < 3 && $short === ''; $attempt++) {
+                    $ch = curl_init($endpoint);
+                    curl_setopt_array($ch, [
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_POST           => true,
+                        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'X-Api-Key: ' . $CSLINK_KEY],
+                        CURLOPT_POSTFIELDS     => json_encode(['url' => $longUrl]),
+                        CURLOPT_TIMEOUT        => 12,
+                        CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
+                        CURLOPT_SSL_VERIFYPEER => true,
+                    ]);
+                    $res = curl_exec($ch);
+                    $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    if ($http >= 200 && $http < 300 && $res) {
+                        $j = json_decode($res, true);
+                        if (is_array($j) && !empty($j['short_code'])) {
+                            $short = 'https://cslink.web.id/' . $j['short_code'];
+                        }
+                    }
+                    if ($short === '') {
+                        usleep(300000);
                     }
                 }
-                if ($short === '') {
-                    usleep(300000);
+                if ($short !== '') {
+                    break;
                 }
             }
             if ($short !== '') {
