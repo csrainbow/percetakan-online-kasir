@@ -127,7 +127,11 @@ if (!function_exists('wa_web_pay_point_url')) {
             return $base . '/cek-pesanan.php';
         }
         $tok = wa_web_pay_token($orderCode, $phone);
-        return $base . '/pay-point.php?order=' . rawurlencode($orderCode) . '&t=' . $tok;
+        $url = $base . '/pay-point.php?order=' . rawurlencode($orderCode) . '&t=' . $tok;
+        if (function_exists('cs_shorten')) {
+            return cs_shorten($url);
+        }
+        return $url;
     }
 }
 
