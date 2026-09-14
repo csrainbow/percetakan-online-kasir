@@ -379,21 +379,26 @@ function wa_pelanggan_msg($ps, $event, $extra = '') {
     $metode = trim((string)($ps['metode'] ?? ''));
     $cash = in_array(strtolower($metode), ['tunai', 'cash']);
     $mid = strtolower($metode) === 'midtrans';
+    $duitku = strtolower($metode) === 'duitku';
+    $auto = $mid || $duitku;
+    $gwName = $mid ? 'Midtrans' : ($duitku ? 'Duitku' : '');
     $link = nota_link('pesanan', (int)$ps['id'], 'struk');
+    // 🔥 Order SELESAI -> kirim nota A5 saja (bukan struk).
+    $linkA5 = nota_link('pesanan', (int)$ps['id'], 'a5');
     $linkBayar = nota_link('pesanan', (int)$ps['id'], 'pay');
     $bayarSisa = max(0, $sisaVal);
     $waAdmin = setting('wa_admin_number', '') !== '' ? setting('wa_admin_number') : setting('telp');
-    $noteBayar = $mid
-        ? "\u{1F4A1} *Nilai bayar:* " . rp($bayarSisa) . "\nPembayaran via *Midtrans* terverifikasi otomatis — tidak perlu kirim bukti bayar."
+    $noteBayar = $auto
+        ? "\u{1F4A1} *Nilai bayar:* " . rp($bayarSisa) . "\nPembayaran via *$gwName* terverifikasi otomatis — tidak perlu kirim bukti bayar."
         : "\u{1F4A1} *Nilai bayar:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin";
-    $noteDp = $mid
-        ? "\u{1F4A1} *Sisa tagihan:* " . rp($bayarSisa) . "\nPembayaran via *Midtrans* terverifikasi otomatis — tidak perlu kirim bukti bayar."
+    $noteDp = $auto
+        ? "\u{1F4A1} *Sisa tagihan:* " . rp($bayarSisa) . "\nPembayaran via *$gwName* terverifikasi otomatis — tidak perlu kirim bukti bayar."
         : "\u{1F4A1} *Sisa tagihan:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin";
     $msgs = [
         'baru'   => "\u{1F6E8}\u{FE0F} *PESANAN DITERIMA*\n\nHalo $name, pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nStatus pesanan: *BELUM LUNAS*\n\n" . ($cash ? "Silakan lunasi pada saat pengambilan atau kirim bukti bayar ke: $waAdmin" : "\u{1F4B3} *Silakan bayar melalui Payment Point berikut:*\n$linkBayar\n\n$noteBayar") . "\n\nTerima kasih \u{1F64F}",
         'dp'     => "\u{1F4B5} *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sebesar " . rp($dpVal) . (($metode !== '') ? " ($metode)" : '') . " sudah kami terima.\n\nSisa tagihan: " . rp($sisaVal) . "\n\n" . ($cash ? "Silakan lunasi sisa tagihan pada saat pengambilan atau kirim bukti bayar ke: $waAdmin" : "\u{1F4B3} *Silakan lunasi melalui Payment Point berikut:*\n$linkBayar\n\n$noteDp") . "\n\nTerima kasih \u{1F64F}",
         'lunas'  => "\u{2705} *" . ($cash ? "PEMBAYARAN TUNAI LUNAS" : "PEMBAYARAN LUNAS") . "*\n\nHalo $name, pembayaran pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nPesanan akan segera kami proses.\n\n\u{1F4C4} *Struk:* $link\n\nTerima kasih \u{1F64F}",
-        'selesai' => "\u{1F389} *PESANAN SELESAI*\n\nHalo $name, pesanan *$code* sudah selesai dan siap untuk diambil / dikirim.\n\nBerikut struk dengan *barcode nota A5* untuk diunduh:\n$link\n\nTerima kasih sudah mempercayakan kami \u{1F64F}",
+        'selesai' => "\u{1F389} *PESANAN SELESAI*\n\nHalo $name, pesanan *$code* sudah selesai dan siap untuk diambil / dikirim.\n\nBerikut *nota A5* digital Anda (bisa dibuka, diunduh, atau dicetak):\n$linkA5\n\nTerima kasih sudah mempercayakan kami \u{1F64F}",
         'batal'  => "\u{2139}\u{FE0F} *PESANAN DIBATALKAN*\n\nHalo $name, pesanan *$code* telah dibatalkan. Jika ada kendala, silakan hubungi kami kembali.\n\nTerima kasih \u{1F64F}",
     ];
     $message = $msgs[$event] ?? '';

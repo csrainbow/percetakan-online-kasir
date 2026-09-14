@@ -49,6 +49,9 @@ function nota_data($ref, $id) {
         $ps['dp'] = (float)$ps['dp'];
         $ps['sisa'] = max(0, (float)$ps['sisa']);
         $totalBayar = max(0, $ps['total'] - $ps['sisa']);
+        // 🔥 Webhook Midtrans/Duitku/QRIS hanya update `sisa`, kolom `dp` bisa basi (0).
+        // Samakan tampilan DP struk dengan realisasi bayar agar struk & A5 angkanya sama.
+        $ps['dp'] = max($ps['dp'], $totalBayar);
         $ps['pembayaran_status'] = pembayaran_status_label($totalBayar, $ps['total'], $ps['status']);
         $pitems = DB::q('SELECT nama, qty, harga, subtotal FROM pesanan_item WHERE pesanan_id = ? ORDER BY id', [$id]);
         if ($pitems) {

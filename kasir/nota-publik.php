@@ -45,6 +45,10 @@ if ($ref === 'pesanan') {
 } elseif ($ref === 'penjualan') {
     $ppSisaRedirect = ((string)($ps['status'] ?? '') === 'Menunggu QRIS') ? max(0, (float)$ps['total']) : 0.0;
 }
+// 🔥 Order Selesai/Batal selalu tampil nota (A5/struk) — jangan lempar ke payment-point.
+if (in_array((string)($ps['status'] ?? ''), ['Selesai', 'Batal'], true)) {
+    $ppSisaRedirect = 0.0;
+}
 if ($template === 'pay' && $ppSisaRedirect <= 0) {
     header('Location: ' . rtrim(setting('url_publik', 'https://rainbowprinting.web.id/kasir'), '/')
         . '/n.php/' . rawurlencode($ref) . '/' . (int)$id . '/struk/' . rawurlencode($k), true, 302);
