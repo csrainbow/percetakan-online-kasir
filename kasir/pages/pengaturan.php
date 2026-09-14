@@ -86,6 +86,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    if (!empty($_POST['simpan_duitku'])) {
+        if (!is_superadmin()) {
+            flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
+        } else {
+            set_setting('duitku_sandbox', !empty($_POST['duitku_sandbox']) ? '1' : '0');
+            set_setting('duitku_merchant_code', trim($_POST['duitku_merchant_code'] ?? ''));
+            set_setting('duitku_api_key', trim($_POST['duitku_api_key'] ?? ''));
+            flash_set('success', 'Pengaturan Duitku disimpan.');
+        }
+        header('Location: index.php?p=pengaturan');
+        exit;
+    }
+
     if (!empty($_POST['simpan_qris_api'])) {
         if (!is_superadmin()) {
             flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
@@ -452,6 +465,31 @@ require __DIR__ . '/../layout/header.php';
             <button type="submit" class="btn" name="simpan_midtrans" value="1">Simpan Midtrans</button>
         </form>
         <p class="muted kecil">Daftar di <b>midtrans.com</b>. Masukkan Server Key & Client Key dari dashboard Merchant. Mode Sandbox untuk uji coba (transaksi tidak diproses benar). URL notifikasi: <code><?= e(setting('url_publik', 'https://rainbowprinting.web.id/kasir')) ?>/midtrans-webhook.php</code></p>
+    </div>
+
+    <div class="panel">
+        <h3>Payment Gateway — Duitku</h3>
+        <?php if (setting('duitku_merchant_code') && setting('duitku_api_key')): ?>
+            <p class="muted kecil">✅ DUITKU AKTIF (<?= setting('duitku_sandbox', '1') === '0' ? 'PRODUCTION' : 'SANDBOX' ?>)</p>
+        <?php else: ?>
+            <p class="muted kecil">⚠️ DUITKU BELUM AKTIF — isi Merchant Code & API Key.</p>
+        <?php endif; ?>
+        <form method="post">
+            <label>Mode
+                <select name="duitku_sandbox">
+                    <option value="1" <?= setting('duitku_sandbox', '1') === '1' ? 'selected' : '' ?>>Sandbox (Uji Coba)</option>
+                    <option value="0" <?= setting('duitku_sandbox') === '0' ? 'selected' : '' ?>>Production</option>
+                </select>
+            </label>
+            <label>Merchant Code
+                <input type="text" name="duitku_merchant_code" value="<?= e(setting('duitku_merchant_code')) ?>" placeholder="cth: DS35378">
+            </label>
+            <label>API Key
+                <input type="password" name="duitku_api_key" value="<?= e(setting('duitku_api_key')) ?>" placeholder="API Key dari dashboard Duitku">
+            </label>
+            <button type="submit" class="btn" name="simpan_duitku" value="1">Simpan Duitku</button>
+        </form>
+        <p class="muted kecil">Daftar di <b>duitku.com</b>. Masukkan Merchant Code & API Key dari Project Settings. URL callback: <code><?= e(setting('url_publik', 'https://rainbowprinting.web.id/kasir')) ?>/duitku-webhook.php</code> (dikirim otomatis per transaksi).</p>
     </div>
 
     <?php endif; ?>
