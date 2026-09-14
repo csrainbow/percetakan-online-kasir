@@ -209,7 +209,9 @@ function initKasir() {
     }
 
     function isM2(p) {
-        return p.satuan === 'm2' ||
+        // 🔥 Case-insensitive: admin bisa isi M2/m2/M² — semua dianggap meter persegi.
+        var sat = String(p.satuan || '').trim().toLowerCase();
+        return sat === 'm2' || sat === 'm²' || sat === 'meter persegi' ||
             (p.kategori && p.kategori.toLowerCase().indexOf('banner') > -1) ||
             (p.kategori && p.kategori.toLowerCase().indexOf('spanduk') > -1);
     }
