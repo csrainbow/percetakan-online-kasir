@@ -13,6 +13,7 @@ ini_set('display_errors', 1);
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/qris.php';
+require_once __DIR__ . '/includes/duitku.php';
 
 header('Content-Type: application/json');
 
@@ -60,6 +61,7 @@ $phone = trim($input['phone'] ?? '');
 $address = trim($input['address'] ?? '');
 $notes = trim($input['notes'] ?? '');
 $paymentMethod = $input['payment_method'] ?? '';
+$email = trim($input['email'] ?? '');
 $items = $input['items'] ?? [];
 
 // 🔥 Validasi wajib
@@ -191,6 +193,27 @@ if ($paymentMethod === 'cod') {
     }
 }
 
+// 🔥 🔥 CEK DUITKU SIAP (sebelum order dibuat) 🔥 🔥
+if ($paymentMethod === 'duitku' && !duitku_ready()) {
+    logOrder("Duitku dipilih tapi belum dikonfigurasi");
+    echo json_encode([
+        'success' => false,
+        'message' => 'Pembayaran online (Duitku) belum aktif. Silakan pilih Transfer Bank atau QRIS.',
+        'code' => 'duitku_not_ready'
+    ]);
+    exit;
+}
+
+// 🔥 Validasi email (opsional — wajib valid bila diisi; dipakai struk Duitku)
+if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Format email tidak valid.',
+        'code' => 'invalid_email'
+    ]);
+    exit;
+}
+
 // 🔥 🔥 CEK TOTAL MINIMUM 🔥 🔥
 if ($total < 1000) {
     echo json_encode([
@@ -318,6 +341,39 @@ try {
         }
     }
 
+    // 🔥 🔥 DUITKU (buat invoice online + dapatkan paymentUrl) 🔥 🔥
+    $duitkuInfo = null;
+    if ($paymentMethod === 'duitku') {
+        // Email struk: isian form -> email akun (bila login) -> email admin (fallback)
+        $duitkuEmail = $email;
+        if ($duitkuEmail === '' && $customerId > 0) {
+            $c = $db->prepare("SELECT email FROM customers WHERE id = ?");
+            $c->execute([$customerId]);
+            $crow = $c->fetch();
+            if ($crow && !empty($crow['email'])) $duitkuEmail = $crow['email'];
+        }
+        $inv = duitku_create_invoice(
+            ['id' => $orderId, 'order_code' => $orderCode, 'total' => $total, 'customer_name' => $name, 'customer_phone' => $phoneClean],
+            ['name' => $name, 'email' => $duitkuEmail, 'phone' => $phoneClean]
+        );
+        if (!$inv['ok']) {
+            logOrder("Duitku invoice gagal", ['order_code' => $orderCode, 'error' => $inv['error']]);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Pesanan ' . $orderCode . ' tersimpan, tapi gagal membuat pembayaran Duitku: ' . $inv['error'] . ' — coba lagi via tombol Bayar di halaman pesanan.',
+                'code' => 'duitku_invoice_failed',
+                'order_code' => $orderCode,
+                'order_id' => $orderId,
+            ]);
+            exit;
+        }
+        $duitkuInfo = [
+            'payment_url' => $inv['paymentUrl'],
+            'reference' => $inv['reference'],
+        ];
+        logOrder("Duitku invoice OK", ['order_code' => $orderCode, 'reference' => $inv['reference']]);
+    }
+
     // 🔥 🔥 NOMINAL PEMBAYARAN (Jalur B — auto-check pembayaran)
     // Pembayaran manual (transfer / QRIS cek manual) disarankan sebesar TOTAL persis;
     // pencocokan otomatis dilakukan terhadap total pesanan.
@@ -368,6 +424,8 @@ try {
         'has_custom_size' => $hasCustomSize,
         'qris' => $qrisInfo,
         'qris_api_ready' => qris_api_ready(),
+        'duitku' => $duitkuInfo,
+        'duitku_ready' => duitku_ready(),
     ]);
     
 } catch (PDOException $e) {

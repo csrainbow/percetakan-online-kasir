@@ -127,6 +127,17 @@ function initDatabase() {
         $db->exec("ALTER TABLE orders ADD COLUMN qris_check_count INTEGER DEFAULT 0");
     } catch (Exception $e) {}
 
+    // 🔥 TAMBAH KOLOM DUITKU (jika belum ada — idempotent)
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN duitku_order_id TEXT DEFAULT ''");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN duitku_reference TEXT DEFAULT ''");
+    } catch (Exception $e) {}
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN duitku_payment_url TEXT DEFAULT ''");
+    } catch (Exception $e) {}
+
     // 🔥 TAMBAH KOLOM NOMINAL UNIK (auto-check pembayaran)
     try {
         $db->exec("ALTER TABLE orders ADD COLUMN pay_code INTEGER DEFAULT 0");

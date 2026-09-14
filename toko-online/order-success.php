@@ -37,6 +37,7 @@ $methodLabels = [
     'cod' => 'Bayar di Tempat (COD)',
     'qris' => 'QRIS (Cek Manual)',
     'qris_dinamis' => 'QRIS (Cek Otomatis / API)',
+    'duitku' => 'Duitku Online (VA/QRIS/E-Wallet)',
     'midtrans' => 'Midtrans Online'
 ];
 $methodLabel = $methodLabels[$order['payment_method']] ?? ucfirst($order['payment_method']);
@@ -396,6 +397,14 @@ include 'includes/header.php';
                 <p style="margin:0;font-size:13px;color:#666;">a.n. <strong><?= htmlspecialchars(getSetting('qris_name')) ?></strong></p>
             <?php endif; ?>
             <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">Bayar sesuai total pesanan <?= formatRupiah($order['total']) ?> pada metode yang Anda pilih, lalu upload bukti untuk cek manual.</p>
+        </div>
+    <?php elseif ($isUnpaid && ($order['payment_method'] ?? '') === 'duitku'): ?>
+        <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
+            <p style="font-weight:600;margin-bottom:10px;color:#111111;">💳 Bayar via Duitku (Otomatis)</p>
+            <p style="font-size:14px;color:#666;">Virtual Account, QRIS, e-wallet, atau gerai retail. Terverifikasi otomatis tanpa upload bukti.</p>
+            <a href="/payment/duitku-pay.php?order=<?= urlencode($order['order_code']) ?>" class="btn btn-primary btn-lg" style="margin-top:8px;">
+                💳 Bayar Sekarang (<?= formatRupiah($order['total']) ?>)
+            </a>
         </div>
     <?php endif; ?>
     <!-- 🔥 🔥 TOMBOL AKSI 🔥 🔥 -->
