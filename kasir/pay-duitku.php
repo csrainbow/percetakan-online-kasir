@@ -47,7 +47,10 @@ DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterang
     ['pesanan', $id, $now, $jumlah, 'Duitku', 'Pembayaran via Payment Point (Duitku)', 'Menunggu Duitku', 0, '']);
 $pm_id = DB::lastId();
 
-$inv = duitku_kasir_create_invoice($ps, $jumlah);
+// Kembali ke halaman pay pesanan ini (lunas -> otomatis jadi struk; belum -> tetap pay).
+$returnUrl = rtrim(setting('url_publik', 'https://rainbowprinting.web.id/kasir'), '/')
+    . '/n.php/' . rawurlencode($ref) . '/' . $id . '/pay/' . $k;
+$inv = duitku_kasir_create_invoice($ps, $jumlah, $returnUrl);
 if (!$inv['ok']) {
     DB::run("UPDATE pembayaran SET status='Gagal', keterangan=? WHERE id=?", ['Duitku: ' . $inv['error'], $pm_id]);
     duitku_kasir_log('pay-duitku GAGAL', ['pesanan' => $ps['no_pesanan'], 'error' => $inv['error']]);

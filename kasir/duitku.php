@@ -88,7 +88,8 @@ function duitku_kasir_merchant_order_id($noPesanan) {
 
 // Buat invoice Duitku untuk sisa tagihan pesanan kasir.
 // $pesanan: row pesanan (no_pesanan, pelanggan, telepon, total). $jumlah: nominal (sisa).
-function duitku_kasir_create_invoice($pesanan, $jumlah) {
+// $returnUrl: URL kembali setelah bayar (wajib lengkap ref/id/t/k — n.php polos = 404).
+function duitku_kasir_create_invoice($pesanan, $jumlah, $returnUrl = '') {
     if (!duitku_kasir_ready()) {
         return ['ok' => false, 'error' => 'Duitku belum dikonfigurasi di menu Pengaturan kasir.'];
     }
@@ -102,6 +103,10 @@ function duitku_kasir_create_invoice($pesanan, $jumlah) {
     $phone = preg_replace('/[^0-9]/', '', (string)($pesanan['telepon'] ?? ''));
 
     $baseUrl = rtrim(setting('url_publik', 'https://rainbowprinting.web.id/kasir'), '/');
+    if ($returnUrl === '') {
+        // Jangan pernah pakai /n.php polos (tanpa segmen ref/id/t/k = 404 "Nota tidak ditemukan").
+        $returnUrl = $baseUrl . '/';
+    }
     $params = [
         'paymentAmount' => $amount,
         'merchantOrderId' => $merchantOrderId,
@@ -110,7 +115,7 @@ function duitku_kasir_create_invoice($pesanan, $jumlah) {
         'email' => 'cs@rainbowprinting.web.id',
         'phoneNumber' => $phone,
         'callbackUrl' => $baseUrl . '/duitku-webhook.php',
-        'returnUrl' => $baseUrl . '/n.php',
+        'returnUrl' => $returnUrl,
         'expiryPeriod' => KASIR_DUITKU_EXPIRY_MINUTES,
     ];
 
