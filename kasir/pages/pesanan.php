@@ -402,12 +402,19 @@ foreach (DB::q('SELECT id, username FROM users') as $u) {
 $produkHitung = DB::q('SELECT p.id, p.nama, p.satuan, p.harga_jual, k.nama AS kategori
                        FROM produk p LEFT JOIN kategori k ON k.id = p.kategori_id
                        WHERE p.harga_jual > 0 ORDER BY p.nama');
+$normNama = function ($s) {
+    $s = trim((string)$s);
+    return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
+};
 $produkM2 = [];
+$namaM2 = [];
 foreach ($produkHitung as $ph) {
     $sat = strtolower((string)$ph['satuan']);
     $kat = strtolower((string)$ph['kategori']);
     if ($sat === 'm2' || strpos($kat, 'banner') !== false || strpos($kat, 'spanduk') !== false) {
         $produkM2[(int)$ph['id']] = true;
+        // 🔥 Fallback nama: baris lama/impor tanpa produk_id tetap dikenali sebagai M2.
+        $namaM2[$normNama($ph['nama'])] = true;
     }
 }
 
@@ -759,7 +766,7 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
                                 <tbody class="ej-tbody">
                                 <?php $itemsPesan = $itemsByPesanan[$ps['id']] ?? []; ?>
                                 <?php foreach ($itemsPesan as $it): ?>
-                                    <?php $itM2 = isset($produkM2[(int)($it['produk_id'] ?? 0)]); ?>
+                                    <?php $itM2 = isset($produkM2[(int)($it['produk_id'] ?? 0)]) || isset($namaM2[$normNama($it['nama'] ?? '')]); ?>
                                     <?php // Baris lama tanpa dimensi tersimpan: anggap seluruh qty sebagai Panjang x 1. ?>
                                     <?php $itP = (float)($it['panjang'] ?? 0); $itL = (float)($it['lebar'] ?? 0); ?>
                                     <?php if ($itM2 && $itP <= 0 && $itL <= 0) { $itP = (float)$it['qty']; $itL = 1; } ?>
@@ -886,6 +893,14 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
             var kat = String(p.kategori || '').toLowerCase();
             return sat === 'm2' || kat.indexOf('banner') > -1 || kat.indexOf('spanduk') > -1;
         }
+        function idByName(nm) {
+            nm = String(nm || '').trim().toLowerCase();
+            if (!nm) return null;
+            for (var i = 0; i < produk.length; i++) {
+                if (String(produk[i].nama || '').trim().toLowerCase() === nm) return produk[i].id;
+            }
+            return null;
+        }
         function syncJson() {
             var arr = [];
             tbody.querySelectorAll('.ei-item').forEach(function (tr) {
@@ -899,7 +914,13 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
                     var l2 = parseFloat(tr.querySelector('.ei-l').value) || 0;
                     q = q * p2 * l2;
                 }
-                arr.push({ produk_id: tr.dataset.pid || null, nama: nama, qty: q, harga: h,
+                // 🔥 Sembuhkan produk_id yang kosong dari nama (baris lama/impor).
+                var pid = tr.dataset.pid || null;
+                if (!pid) {
+                    var found = idByName(nama);
+                    if (found) { pid = found; tr.dataset.pid = found; }
+                }
+                arr.push({ produk_id: pid, nama: nama, qty: q, harga: h,
                     panjang: m2 ? p2 : 0, lebar: m2 ? l2 : 0 });
             });
             jsonInput.value = JSON.stringify(arr);
