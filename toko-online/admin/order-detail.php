@@ -447,9 +447,14 @@ include '../includes/header.php';
                     <div style="margin-bottom:6px;font-size:12px;color:#666;"><?= $paymentTypeLabel ?></div>
                 <?php endif; ?>
                 
-                <a href="/admin/proof-stream.php?f=<?= urlencode($p['proof_image']) ?>" target="_blank">
-                    <img src="/admin/proof-stream.php?f=<?= urlencode($p['proof_image']) ?>" style="width:100%;border-radius:6px;margin-bottom:8px;border:1px solid #eee;">
-                </a>
+                <?php $proofFile = !empty($p['proof_image']) ? basename($p['proof_image']) : ''; ?>
+                <?php if ($proofFile !== '' && is_file(__DIR__ . '/../uploads/proofs/' . $proofFile)): ?>
+                    <a href="/admin/proof-stream.php?f=<?= urlencode($proofFile) ?>" target="_blank">
+                        <img src="/admin/proof-stream.php?f=<?= urlencode($proofFile) ?>" style="width:100%;border-radius:6px;margin-bottom:8px;border:1px solid #eee;">
+                    </a>
+                <?php else: ?>
+                    <div style="margin-bottom:8px;padding:10px;background:#f8f9fa;border:1px dashed #dee2e6;border-radius:6px;font-size:12px;color:#999;text-align:center;">📄 Tanpa bukti (input manual / otomatis)</div>
+                <?php endif; ?>
                 <p><strong><?= htmlspecialchars($p['bank_name']) ?></strong> — <?= htmlspecialchars($p['account_number']) ?></p>
                 <p>a.n. <?= htmlspecialchars($p['account_name']) ?></p>
                 <p><strong>Jumlah:</strong> <?= formatRupiah($p['amount']) ?></p>
