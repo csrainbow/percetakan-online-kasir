@@ -6,8 +6,8 @@
 // Kredensial (sandbox dulu): admin > Pengaturan > tab Duitku
 //   - duitku_merchant_code, duitku_api_key, duitku_sandbox (1 = sandbox, 0 = production)
 
-define('DUITKU_SANDBOX_BASE', 'https://sandbox.duitku.com/webapi/api/merchant');
-define('DUITKU_PROD_BASE', 'https://passport.duitku.com/webapi/api/merchant');
+define('DUITKU_SANDBOX_BASE', 'https://api-sandbox.duitku.com');
+define('DUITKU_PROD_BASE', 'https://api-prod.duitku.com');
 define('DUITKU_EXPIRY_MINUTES', 120); // masa berlaku invoice (menit)
 
 function duitku_sandbox() {
@@ -34,17 +34,38 @@ function duitku_log($message, $data = null) {
     file_put_contents($dir . '/duitku.log', $line . PHP_EOL, FILE_APPEND);
 }
 
-function duitku_http_post($url, $params, $timeout = 25) {
+// Auth header Duitku POP (sesuai SDK resmi): SHA256(merchantCode + timestamp_ms + apiKey)
+function duitku_headers($timestamp) {
+    $merchantCode = setting('duitku_merchant_code', '');
+    $apiKey = setting('duitku_api_key', '');
+    $sig = hash('sha256', $merchantCode . $timestamp . $apiKey);
+    return [
+        'Content-Type: application/json',
+        'x-duitku-signature: ' . $sig,
+        'x-duitku-timestamp: ' . $timestamp,
+        'x-duitku-merchantcode: ' . $merchantCode,
+    ];
+}
+
+function duitku_timestamp_ms() {
+    return (string)(int)(microtime(true) * 1000);
+}
+
+function duitku_http_post($url, $params, $timeout = 25, $headers = null) {
+    $body = json_encode($params);
+    if ($headers === null) {
+        $headers = array_merge(duitku_headers(duitku_timestamp_ms()), ['Content-Length: ' . strlen($body)]);
+    }
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => http_build_query($params),
+        CURLOPT_POSTFIELDS => $body,
         CURLOPT_TIMEOUT => $timeout,
         CURLOPT_CONNECTTIMEOUT => 10,
         CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_USERAGENT => 'Percetakan-Rainbow/1.0',
-        CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+        CURLOPT_HTTPHEADER => $headers,
     ]);
     $res = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -110,23 +131,22 @@ function duitku_create_invoice($order, $customer) {
     $phone = preg_replace('/[^0-9]/', '', (string)($customer['phone'] ?? $order['customer_phone'] ?? ''));
 
     $baseUrl = rtrim(BASE_URL, '/');
+    // Auth lewat header (x-duitku-*); signature TIDAK dikirim di body (dok terbaru).
     $params = [
-        'merchantCode' => $merchantCode,
         'paymentAmount' => $amount,
         // paymentMethod dikosongkan -> Duitku tampilkan semua kanal aktif merchant
         'merchantOrderId' => $merchantOrderId,
         'productDetails' => 'Pesanan ' . ($order['order_code'] ?? $merchantOrderId),
-        'customerVaName' => substr($name, 0, 50),
+        'customerVaName' => substr($name, 0, 20),
         'email' => $email,
         'phoneNumber' => $phone,
         'callbackUrl' => $baseUrl . '/payment/duitku-callback.php',
         'returnUrl' => $baseUrl . '/payment/duitku-finish.php?order=' . urlencode($order['order_code'] ?? ''),
         'expiryPeriod' => DUITKU_EXPIRY_MINUTES,
-        'signature' => md5($merchantCode . $merchantOrderId . $amount . $apiKey),
     ];
 
     duitku_log('create invoice', ['merchantOrderId' => $merchantOrderId, 'amount' => $amount, 'sandbox' => duitku_sandbox() ? 1 : 0]);
-    $r = duitku_http_post(duitku_base() . '/v2/invoice', $params, 25);
+    $r = duitku_http_post(duitku_base() . '/api/merchant/createInvoice', $params, 25);
     if (!$r['ok']) {
         duitku_log('create invoice GAGAL (http)', $r);
         return $r;
@@ -152,8 +172,8 @@ function duitku_create_invoice($order, $customer) {
     return ['ok' => true, 'error' => '', 'paymentUrl' => $paymentUrl, 'reference' => $reference, 'merchantOrderId' => $merchantOrderId];
 }
 
-// Verifikasi callback server-to-server dari Duitku (POST form).
-// signature = md5(merchantCode + amount + merchantOrderId + apiKey)
+// Verifikasi callback server-to-server dari Duitku (POST form), sesuai SDK resmi.
+// signature = MD5(merchantCode + amount + merchantOrderId + apiKey)
 function duitku_verify_callback($post) {
     $merchantCode = (string)($post['merchantCode'] ?? '');
     $amount = (string)($post['amount'] ?? '');
@@ -175,7 +195,9 @@ function duitku_verify_callback($post) {
 }
 
 // Cek status transaksi ke Duitku (dipakai halaman finish + tombol bayar ulang).
-// signature = md5(merchantCode + merchantOrderId + apiKey)
+// Sesuai SDK resmi Duitku POP: base + /api/merchant/transactionStatus,
+// signature = MD5(merchantCode + merchantOrderId + apiKey) di body, tanpa header x-duitku.
+// statusCode: 00 = lunas, 01 = pending, selain itu gagal/expired.
 function duitku_check_status($merchantOrderId) {
     if (!duitku_ready()) {
         return ['ok' => false, 'error' => 'Duitku belum dikonfigurasi.'];
@@ -186,7 +208,7 @@ function duitku_check_status($merchantOrderId) {
         'merchantOrderId' => (string)$merchantOrderId,
         'signature' => md5($merchantCode . (string)$merchantOrderId . setting('duitku_api_key', '')),
     ];
-    $r = duitku_http_post(duitku_base() . '/transactionStatus', $params, 25);
+    $r = duitku_http_post(duitku_base() . '/api/merchant/transactionStatus', $params, 25, ['Content-Type: application/json']);
     if (!$r['ok']) return $r;
     $j = $r['json'];
     $code = (string)($j['statusCode'] ?? $j['status_code'] ?? '');
