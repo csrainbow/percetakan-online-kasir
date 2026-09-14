@@ -121,9 +121,12 @@ include 'includes/header.php';
     text-align: center;
     margin-bottom: 20px;
 }
-.register-box .logo-icon .icon {
-    font-size: 48px;
+.register-box .logo-icon .logo-image {
+    max-height: 68px;
+    max-width: 150px;
     display: block;
+    margin: 0 auto 12px;
+    object-fit: contain;
 }
 .register-box h1 {
     font-size: 22px;
@@ -365,7 +368,7 @@ include 'includes/header.php';
 <div class="register-container">
     <div class="register-box">
         <div class="logo-icon">
-            <span class="icon">🌈</span>
+            <img src="/logostruk.png" alt="Logo Percetakan Rainbow" class="logo-image">
             <h1>Daftar Akun</h1>
             <p class="subtitle">Mulai belanja dengan akun Percetakan Rainbow</p>
         </div>
