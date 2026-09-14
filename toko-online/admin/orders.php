@@ -596,7 +596,7 @@ include '../includes/header.php';
                         Sisa tagihan: <strong id="dpSisaLabel" style="color:var(--danger);">Rp 0</strong>
                     </div>
                     <label for="dpAmount" style="display:block;font-weight:bold;font-size:13px;margin-bottom:5px;">Nominal DP Dibayar (Rp)</label>
-                    <input type="number" name="dp_amount" id="dpAmount" min="1" step="1000" required
+                    <input type="number" name="dp_amount" id="dpAmount" min="1" step="1" required inputmode="numeric"
                            style="width:100%;padding:10px 14px;border:2px solid #ddd;border-radius:8px;font-size:16px;margin-bottom:15px;">
                     <div style="display:flex;gap:10px;">
                         <button type="button" class="btn btn-outline" style="flex:1;" onclick="closeDpModal()">Batal</button>
@@ -676,16 +676,37 @@ function openDpModal(sel, form) {
     var rt = form.elements['return_to'];
     document.getElementById('dpReturnTo').value = rt ? rt.value : 'orders.php';
     var sisa = parseFloat(String(sel.getAttribute('data-sisa')).replace(/[^\d.-]/g, '')) || 0;
+    if (sisa <= 0) {
+        alert('✅ Pesanan ini sudah lunas / tidak ada sisa tagihan.');
+        return;
+    }
     document.getElementById('dpSisaLabel').textContent = 'Rp ' + (sisa.toLocaleString ? sisa.toLocaleString('id-ID') : sisa);
     var amt = document.getElementById('dpAmount');
     amt.value = sisa;
     amt.max = sisa;
+    amt.min = 1;
     document.getElementById('dpModal').style.display = 'flex';
     setTimeout(function() { amt.focus(); }, 100);
 }
 function closeDpModal() {
     document.getElementById('dpModal').style.display = 'none';
 }
+document.getElementById('dpForm').addEventListener('submit', function(e) {
+    var val = parseFloat(document.getElementById('dpAmount').value);
+    var maxS = parseFloat(document.getElementById('dpAmount').max);
+    if (isNaN(val) || val <= 0) {
+        e.preventDefault();
+        alert('❌ Masukkan nominal DP yang valid (lebih dari 0).');
+        document.getElementById('dpAmount').focus();
+        return;
+    }
+    if (!isNaN(maxS) && val > maxS) {
+        e.preventDefault();
+        alert('❌ Nominal DP melebihi sisa tagihan.');
+        document.getElementById('dpAmount').focus();
+        return;
+    }
+});
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.order-checkbox').forEach(function(cb) { cb.addEventListener('change', updateSelectedCount); });
 });

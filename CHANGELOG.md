@@ -25,6 +25,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 - **Popup DP di admin Pesanan**: saat memilih status `DP`, muncul popup untuk mengisi nominal DP yang dibayarkan → dicatat ke tabel `payments` (status `verified`, type `dp`), `payment_status` otomatis DP/Lunas, lalu WA + email pelanggan (nominal, sisa, link Payment Point). Handler baru `record_dp`.
 - **Email pelanggan saat DP** (`payment/notification.php`): menyertakan link Payment Point.
 - **Label invoice**: status pembayaran DP ditampilkan **DOWN PAYMENT** di invoice A5.
+- **Popup DP diperbaiki**: field nominal tidak lagi memakai `step=1000` (DP yang bukan kelipatan 1000 memblokir submit), ada guard bila sisa tagihan ≤ 0, dan validasi klien (nominal > 0 & ≤ sisa) sebelum submit.
 - **Staging disinkronkan penuh dari live**: seluruh kode web utama, `database.sqlite`, dan `uploads/` live disalin ke `/var/www/html` (nginx lokal, tidak publik) via rsync — backup DB staging di `database.sqlite.bak-20260914-dbsync`. Staging kini cermin lengkap live (sebelumnya tertinggal versi lama tanpa stack WA).
 
 ### Kasir & Web utama bersamaan
