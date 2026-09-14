@@ -6,12 +6,45 @@ function rp(n) {
     return 'Rp ' + (Number(n) || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    qsa('form.confirm').forEach(function (f) {
-        f.addEventListener('submit', function (ev) {
-            if (!window.confirm(f.dataset.confirm || 'Yakin?')) ev.preventDefault();
-        });
+var appConfirmForm = null;
+function appEnsureConfirmModal() {
+    var m = qs('#appConfirmModal');
+    if (m) return m;
+    m = document.createElement('div');
+    m.id = 'appConfirmModal';
+    m.className = 'modal hidden';
+    m.innerHTML = '<div class="modal-box">'
+        + '<p id="appConfirmMsg" style="margin:0 0 16px;font-size:15px;"></p>'
+        + '<div style="display:flex;gap:10px;justify-content:center;">'
+        + '<button type="button" class="btn abu" id="appConfirmNo">Batal</button>'
+        + '<button type="button" class="btn bahaya" id="appConfirmYes">Ya, Lanjutkan</button>'
+        + '</div></div>';
+    document.body.appendChild(m);
+    qs('#appConfirmNo', m).addEventListener('click', function () { m.classList.add('hidden'); appConfirmForm = null; });
+    qs('#appConfirmYes', m).addEventListener('click', function () {
+        m.classList.add('hidden');
+        var f = appConfirmForm; appConfirmForm = null;
+        // form.submit() tidak memicu event submit -> tidak loop.
+        if (f) f.submit();
     });
+    m.addEventListener('click', function (ev) {
+        if (ev.target === m) { m.classList.add('hidden'); appConfirmForm = null; }
+    });
+    return m;
+}
+// 🔥 Delegasi di document (bukan per-form saat DOMContentLoaded): kebal terhadap
+// timing, form dinamis, dan browser/WebView yang memblokir window.confirm() bawaan.
+document.addEventListener('submit', function (ev) {
+    var f = ev.target;
+    if (!f || !f.matches || !f.matches('form.confirm')) return;
+    ev.preventDefault();
+    appConfirmForm = f;
+    var m = appEnsureConfirmModal();
+    qs('#appConfirmMsg', m).textContent = f.dataset.confirm || 'Yakin?';
+    m.classList.remove('hidden');
+}, true);
+
+document.addEventListener('DOMContentLoaded', function () {
 
     var filter = qs('#filterTabel');
     if (filter) {
