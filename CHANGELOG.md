@@ -27,6 +27,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
 - **Label invoice**: status pembayaran DP ditampilkan **DOWN PAYMENT** di invoice A5.
 - **Popup DP diperbaiki**: field nominal tidak lagi memakai `step=1000` (DP yang bukan kelipatan 1000 memblokir submit), ada guard bila sisa tagihan ≤ 0, dan validasi klien (nominal > 0 & ≤ sisa) sebelum submit.
 - **Link Payment Point di WA & email pakai shortener CSLINK**: `wa_web_pay_point_url()` kini mengembalikan `https://cslink.web.id/XXXXXXXX` (tidak lagi URL panjang `pay-point.php?...`); `cs_shorten()` diperbaiki agar membuat tabel `link_cache` otomatis (kasir tdk bisa dipakai web — sebelumnya gagal diam-diam di email), retry 3x, dan tidak memendekkan URL cslink yang sudah pendek (hindari double-shorten di `sendEmail`).
+- **Bukti bayar dibuat privat**: folder `/uploads/proofs/` diblokir untuk publik di `router.php` (sebelumnya file screenshot transfer bisa diakses siapa pun via URL langsung). Admin melihat bukti lewat endpoint baru `admin/proof-stream.php?f=…` (wajib login admin, anti path traversal, MIME sesuai, `no-store`) — `admin/order-detail.php` diperbarui memakainya.
 - **Staging disinkronkan penuh dari live**: seluruh kode web utama, `database.sqlite`, dan `uploads/` live disalin ke `/var/www/html` (nginx lokal, tidak publik) via rsync — backup DB staging di `database.sqlite.bak-20260914-dbsync`. Staging kini cermin lengkap live (sebelumnya tertinggal versi lama tanpa stack WA).
 
 ### Kasir & Web utama bersamaan

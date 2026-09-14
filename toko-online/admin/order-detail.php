@@ -447,8 +447,8 @@ include '../includes/header.php';
                     <div style="margin-bottom:6px;font-size:12px;color:#666;"><?= $paymentTypeLabel ?></div>
                 <?php endif; ?>
                 
-                <a href="/uploads/proofs/<?= htmlspecialchars($p['proof_image']) ?>" target="_blank">
-                    <img src="/uploads/proofs/<?= htmlspecialchars($p['proof_image']) ?>" style="width:100%;border-radius:6px;margin-bottom:8px;border:1px solid #eee;">
+                <a href="/admin/proof-stream.php?f=<?= urlencode($p['proof_image']) ?>" target="_blank">
+                    <img src="/admin/proof-stream.php?f=<?= urlencode($p['proof_image']) ?>" style="width:100%;border-radius:6px;margin-bottom:8px;border:1px solid #eee;">
                 </a>
                 <p><strong><?= htmlspecialchars($p['bank_name']) ?></strong> — <?= htmlspecialchars($p['account_number']) ?></p>
                 <p>a.n. <?= htmlspecialchars($p['account_name']) ?></p>

@@ -5,6 +5,7 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
 $protected = [
     '/database.sqlite',
     '/kasir/data',
+    '/uploads/proofs',
 ];
 
 foreach ($protected as $p) {
