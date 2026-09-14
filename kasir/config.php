@@ -144,7 +144,10 @@ function midtrans_is_ready() {
 }
 
 function wa_href($phone, $text) {
-    $p = preg_replace('/\D+/', '', (string)$phone);
+    // 🔥 Bila diisi beberapa nomor (pisah / , ; |), pakai nomor PERTAMA saja
+    // agar digitnya tidak tersambung menjadi nomor raksasa yang tidak valid.
+    $first = preg_split('/[\/,;|]+/', (string)$phone, 2);
+    $p = preg_replace('/\D+/', '', $first[0] ?? '');
     if ($p === '') {
         return '';
     }
