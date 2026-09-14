@@ -7,7 +7,7 @@
 //   HTTP: https://rainbowprinting.web.id/cron-pembayaran.php?token=<API_KEY>
 //
 // Yang dilakukan: mencocokkan notifikasi mutasi (payment_hits status 'new')
-// dengan nominal unik order -> menandai LUNAS otomatis + notifikasi email admin.
+// dengan total pesanan -> menandai LUNAS otomatis + notifikasi email admin.
 // ============================================
 
 require_once __DIR__ . '/config.php';

@@ -36,7 +36,7 @@ if (!$order) {
 $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
 $totalPaidStmt->execute([$order['id']]);
 $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-$sisaPembayaran = $order['total'] - $totalPaid;
+$sisaPembayaran = max(0, $order['total'] - $totalPaid);
 $persentaseDibayar = $order['total'] > 0 ? round(($totalPaid / $order['total']) * 100) : 0;
 
 // 🔥 CEK JASA DESAIN
@@ -95,7 +95,7 @@ if ($serverKey && $orderCode) {
                     // 💰 DP
                     $newPaymentStatus = 'dp';
                     $newOrderStatus = $hasJasa ? 'desain' : 'processed';
-                    $_SESSION['success'] = "💰 DP berhasil dibayar! Sisa pembayaran: " . formatRupiah($order['total'] - $newTotalPaid);
+                    $_SESSION['success'] = "💰 DP berhasil dibayar! Sisa pembayaran: " . formatRupiah(max(0, $order['total'] - $newTotalPaid));
                 }
                 
                 // 🔥 UPDATE ORDER

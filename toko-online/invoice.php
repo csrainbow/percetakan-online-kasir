@@ -20,7 +20,7 @@ if (!$order) {
 $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
 $totalPaidStmt->execute([$order['id']]);
 $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-$sisaPembayaran = $order['total'] - $totalPaid;
+$sisaPembayaran = max(0, $order['total'] - $totalPaid);
 
 // Cek apakah pesanan pakai jasa desain
 $hasJasaStmt = $db->prepare("SELECT COUNT(*) as c FROM order_items WHERE order_id=? AND design_service='jasa'");

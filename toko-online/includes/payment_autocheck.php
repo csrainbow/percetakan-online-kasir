@@ -1,9 +1,8 @@
 <?php
 // ============================================
 // PAYMENT AUTO-CHECK — Jalur B (self-hosted)
-// 1) Nominal unik per pesanan (unique_amount)
-// 2) Notifikasi mutasi masuk (API / paste admin / cron)
-// 3) Pencocokan otomatis nominal -> tandai lunas + notifikasi
+// 1) Notifikasi mutasi masuk (API / paste admin / cron)
+// 2) Pencocokan otomatis nominal (total persis) -> tandai lunas + notifikasi
 // ============================================
 
 // 🔥 Kunci proses agar tidak berjalan dobel (cron + web)
@@ -28,23 +27,6 @@ function pm_unlock($f) {
     }
 }
 
-// 🔥 Generate kode unik 3 digit (100-999) yang tidak sedang dipakai order aktif
-function paygen_unique_code($db) {
-    $used = [];
-    try {
-        $rows = $db->query("SELECT pay_code FROM orders WHERE payment_status IN ('unpaid','dp') AND pay_code > 0")
-                   ->fetchAll();
-        foreach ($rows as $r) {
-            $used[(int)$r['pay_code']] = true;
-        }
-    } catch (Exception $e) { /* kolom belum ada */ }
-    for ($i = 0; $i < 300; $i++) {
-        $c = random_int(100, 999);
-        if (!isset($used[$c])) return $c;
-    }
-    return 0;
-}
-
 // QRIS statis tidak membebankan biaya penyedia layanan
 
 function qris_fee_percent() {
@@ -60,11 +42,10 @@ function pm_pct_str($pct) {
         : number_format($rounded, 1, ',', '.') . '%';
 }
 
-// 🔥 Hitung breakdown nominal unik: Total + kode unik
+// 🔥 Breakdown nominal pembayaran manual (total persis, tanpa kode unik)
 function pay_breakdown($order) {
     $total = (int)round((float)($order['total'] ?? 0));
     $unique = (int)($order['unique_amount'] ?? 0);
-    $code = (int)($order['pay_code'] ?? 0);
     $fee = (int)($order['service_fee'] ?? 0);
     $pct = ($total > 0 && $fee > 0) ? ($fee / $total) * 100 : qris_fee_percent();
     return [
@@ -72,23 +53,9 @@ function pay_breakdown($order) {
         'fee_pct' => $pct,
         'fee' => $fee,
         'base' => $total + $fee,
-        'code' => $code,
+        'code' => 0,
         'unique' => $unique,
     ];
-}
-
-// 🔥 Tempelkan nomor unik ke order (panggil setelah order disimpan)
-// Nominal unik untuk semua pembayaran manual = total + kode unik
-function pay_attach_order($db, $orderId, $total, $method = 'transfer') {
-    $total = (int)round((float)$total);
-    if ($total <= 0) return 0;
-    $code = paygen_unique_code($db);
-    $fee = 0;
-    $base = $total + $fee;
-    $unique = $code > 0 ? $base + $code : $base;
-    $db->prepare("UPDATE orders SET pay_code=?, unique_amount=?, service_fee=? WHERE id=?")
-       ->execute([$code, $unique, $fee, $orderId]);
-    return $unique;
 }
 
 // 🔥 Ukuran unik untuk order (untuk tampilan)
@@ -196,12 +163,12 @@ function pm_match_hits($db, &$log = [], $limit = 50) {
         return ['matched' => 0, 'unmatched' => 0, 'ambiguous' => 0, 'duplicate' => 0, 'processed' => 0];
     }
     $sum = ['matched' => 0, 'unmatched' => 0, 'ambiguous' => 0, 'duplicate' => 0, 'processed' => count($rows)];
-    // Cocokkan nominal unik (total + kode) atau total persis untuk transfer lama.
-    $find = $db->prepare("SELECT * FROM orders WHERE payment_status IN ('unpaid','dp') AND payment_method IN ('transfer','qris','qris_dinamis') AND total > 0 AND (unique_amount = ? OR (total = ? AND payment_method = 'transfer') OR (total + COALESCE(service_fee,0) = ? AND payment_method IN ('qris','qris_dinamis')))");
+    // Cocokkan nominal total persis untuk transfer/QRIS manual.
+    $find = $db->prepare("SELECT * FROM orders WHERE payment_status IN ('unpaid','dp') AND payment_method IN ('transfer','qris','qris_dinamis') AND total > 0 AND total = ?");
 
     foreach ($rows as $h) {
         $amount = (int)$h['amount'];
-        $find->execute([$amount, $amount, $amount]);
+        $find->execute([$amount]);
         $rows2 = $find->fetchAll();
         $cands = [];
         $seen = [];

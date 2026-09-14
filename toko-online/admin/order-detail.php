@@ -20,8 +20,8 @@ $payments = $payments->fetchAll();
 $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
 $totalPaidStmt->execute([$id]);
 $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-$sisaPembayaran = $order['total'] - $totalPaid;
-$persentaseDibayar = $order['total'] > 0 ? round(($totalPaid / $order['total']) * 100) : 0;
+$sisaPembayaran = max(0, $order['total'] - $totalPaid);
+$persentaseDibayar = $order['total'] > 0 ? min(100, round(($totalPaid / $order['total']) * 100)) : 0;
 
 // 🔥 Ambil payment_type terakhir untuk informasi
 $lastPaymentType = $db->prepare("SELECT payment_type FROM payments WHERE order_id=? AND status IN ('verified','approved','paid') ORDER BY created_at DESC LIMIT 1");
@@ -457,12 +457,12 @@ include '../includes/header.php';
                 <?php if ($p['status'] === 'verified' || $p['status'] === 'approved' || $p['status'] === 'paid'): ?>
                     <?php if ($isDpPayment): ?>
                         <p style="font-size:12px;color:var(--danger);margin-top:-5px;">
-                            <strong>Sisa:</strong> <?= formatRupiah($order['total'] - $runningTotal) ?>
-                            <br><small>(<?= round(($runningTotal/$order['total'])*100) ?>% dari total)</small>
+                            <strong>Sisa:</strong> <?= formatRupiah(max(0, $order['total'] - $runningTotal)) ?>
+                            <br><small>(<?= min(100, round(($runningTotal/$order['total'])*100)) ?>% dari total)</small>
                         </p>
                     <?php else: ?>
                         <p style="font-size:12px;color:var(--success);margin-top:-5px;">
-                            <strong>✅ Lunas</strong> — <?= round(($runningTotal/$order['total'])*100) ?>% dari total
+                            <strong>✅ Lunas</strong> — <?= min(100, round(($runningTotal/$order['total'])*100)) ?>% dari total
                         </p>
                     <?php endif; ?>
                 <?php endif; ?>

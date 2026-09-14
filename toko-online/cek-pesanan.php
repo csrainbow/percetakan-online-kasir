@@ -30,8 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
             $totalPaidStmt->execute([$result['id']]);
             $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-            $sisaPembayaran = $result['total'] - $totalPaid;
-            $persentaseDibayar = $result['total'] > 0 ? round(($totalPaid / $result['total']) * 100) : 0;
+            $sisaPembayaran = max(0, $result['total'] - $totalPaid);
+            $persentaseDibayar = $result['total'] > 0 ? min(100, round(($totalPaid / $result['total']) * 100)) : 0;
             
             // 🔥 SIMPAN KE SESSION UNTUK LAST ORDER
             $_SESSION['last_order_code'] = $result['order_code'];
@@ -55,8 +55,8 @@ if (!$result && isset($_SESSION['last_order_code']) && isset($_SESSION['last_ord
         $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
         $totalPaidStmt->execute([$result['id']]);
         $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-        $sisaPembayaran = $result['total'] - $totalPaid;
-        $persentaseDibayar = $result['total'] > 0 ? round(($totalPaid / $result['total']) * 100) : 0;
+        $sisaPembayaran = max(0, $result['total'] - $totalPaid);
+        $persentaseDibayar = $result['total'] > 0 ? min(100, round(($totalPaid / $result['total']) * 100)) : 0;
     }
 }
 
@@ -339,8 +339,8 @@ include 'includes/header.php';
         $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
         $totalPaidStmt->execute([$result['id']]);
         $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-        $sisaPembayaran = $result['total'] - $totalPaid;
-        $persentaseDibayar = $result['total'] > 0 ? round(($totalPaid / $result['total']) * 100) : 0;
+        $sisaPembayaran = max(0, $result['total'] - $totalPaid);
+        $persentaseDibayar = $result['total'] > 0 ? min(100, round(($totalPaid / $result['total']) * 100)) : 0;
         ?>
 
         <!-- 🔥 PAYMENT SUMMARY -->
@@ -415,17 +415,6 @@ include 'includes/header.php';
                 ?>
             </p>
             <p><strong>Tanggal:</strong> <?= date('d/m/Y H:i', strtotime($result['created_at'])) ?></p>
-            <?php if (($result['payment_status'] ?? '') === 'unpaid' && !empty($result['unique_amount']) && in_array($result['payment_method'] ?? '', ['transfer', 'qris', 'qris_dinamis'])): ?>
-                <?php $pb = pay_breakdown($result); ?>
-                <p style="margin-top:8px;padding:10px 12px;background:#fff3cd;border-left:4px solid var(--danger);border-radius:6px;font-size:13px;">
-                    💳 Bayar tepat <strong><?= formatRupiah($pb['unique']) ?></strong>
-                    (Total <?= formatRupiah($pb['total']) ?>
-                    <?php if ($pb['fee'] > 0): ?>
-                        + Biaya penyedia layanan <?= pm_pct_str($pb['fee_pct']) ?> (<?= formatRupiah($pb['fee']) ?>)
-                    <?php endif; ?>
-                    + kode unik <strong><?= htmlspecialchars($pb['code']) ?></strong>) — otomatis LUNAS saat nominal cocok.
-                </p>
-            <?php endif; ?>
         </div>
 
         <!-- 🔥 ITEMS -->
@@ -530,7 +519,7 @@ include 'includes/header.php';
                     <?php if (getSetting('qris_name')): ?>
                         <p style="margin:0;font-size:13px;color:#666;">a.n. <strong><?= htmlspecialchars(getSetting('qris_name')) ?></strong></p>
                     <?php endif; ?>
-                    <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">Bayar tepat nominal unik agar otomatis LUNAS, lalu upload bukti pembayaran di bawah.</p>
+                    <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">Bayar sesuai total pesanan <?= formatRupiah($result['total']) ?>, lalu upload bukti pembayaran di bawah.</p>
                 </div>
             <?php endif; ?>
         <?php endif; ?>

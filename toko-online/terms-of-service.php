@@ -39,7 +39,7 @@ include __DIR__ . '/includes/header.php';
         <ul>
             <li><strong>DP 50%</strong> dari total pesanan untuk memulai produksi; sisa pelunasan dibayarkan sebelum barang dikirim/diambil.</li>
             <li><strong>Transfer penuh</strong> sekaligus juga dapat dilakukan dan langsung mempercepat proses produksi.</li>
-            <li>Setiap pesanan mendapat <strong>nominal unik</strong> (total + kode, contoh Rp 1.000.437). Bayar sesuai nominal tersebut agar pembayaran otomatis terkonfirmasi (LUNAS).</li>
+            <li>Pembayaran ditransfer sesuai <strong>total pesanan</strong> (atau DP 70%) ke rekening/QRIS yang tersedia, lalu bukti pembayaran diunggah untuk dikonfirmasi.</li>
             <li>Pembayaran dikonfirmasi setelah dana benar-benar masuk ke rekening kami. Simpan bukti transfer untuk rekonsiliasi bila diperlukan.</li>
         </ul>
 

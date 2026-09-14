@@ -22,7 +22,7 @@ if (!$order) {
 $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
 $totalPaidStmt->execute([$order['id']]);
 $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-$sisaPembayaran = $order['total'] - $totalPaid;
+$sisaPembayaran = max(0, $order['total'] - $totalPaid);
 $persentaseDibayar = $order['total'] > 0 ? round(($totalPaid / $order['total']) * 100) : 0;
 
 // 🔥 CEK STATUS PEMBAYARAN
@@ -359,18 +359,6 @@ include 'includes/header.php';
         <?php endif; ?>
     </div>
 
-    <?php if ($isUnpaid && !empty($order['unique_amount']) && in_array($order['payment_method'] ?? '', ['transfer', 'qris', 'qris_dinamis'])): ?>
-        <?php $pb = pay_breakdown($order); ?>
-        <div class="info-box info-box-warning" style="text-align:center;">
-            <strong>💳 Bayar Tepat: <?= formatRupiah($pb['unique']) ?></strong>
-            <p style="font-size:13px;margin:4px 0 0;">
-                Total <?= formatRupiah($pb['total']) ?>
-                + kode unik <strong><?= htmlspecialchars($pb['code']) ?></strong>.
-                Pembayaran otomatis terkonfirmasi (LUNAS) saat nominal yang masuk cocok.
-            </p>
-        </div>
-    <?php endif; ?>
-
     <?php if ($isUnpaid && ($order['payment_method'] ?? '') === 'qris_dinamis' && !empty($order['qris_content'])): ?>
         <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
             <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 Scan QRIS untuk membayar</p>
@@ -407,7 +395,7 @@ include 'includes/header.php';
             <?php if (getSetting('qris_name')): ?>
                 <p style="margin:0;font-size:13px;color:#666;">a.n. <strong><?= htmlspecialchars(getSetting('qris_name')) ?></strong></p>
             <?php endif; ?>
-            <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">Bayar tepat nominal unik agar otomatis LUNAS, atau upload bukti untuk cek manual.</p>
+            <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">Bayar sesuai total pesanan <?= formatRupiah($order['total']) ?> pada metode yang Anda pilih, lalu upload bukti untuk cek manual.</p>
         </div>
     <?php endif; ?>
     <!-- 🔥 🔥 TOMBOL AKSI 🔥 🔥 -->

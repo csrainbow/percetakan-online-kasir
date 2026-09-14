@@ -96,8 +96,8 @@ include 'includes/header.php';
         $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
         $totalPaidStmt->execute([$order['id']]);
         $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-        $sisa = $order['total'] - $totalPaid;
-        $persen = $order['total'] > 0 ? round(($totalPaid / $order['total']) * 100) : 0;
+        $sisa = max(0, $order['total'] - $totalPaid);
+        $persen = $order['total'] > 0 ? min(100, round(($totalPaid / $order['total']) * 100)) : 0;
 
         // 🔥 Bank tujuan dari settings (bank1..bank3)
         $bankList = [];

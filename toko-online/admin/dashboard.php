@@ -408,7 +408,7 @@ include '../includes/header.php';
             </thead>
             <tbody>
                 <?php foreach ($recentOrders as $o): 
-                    $sisa = $o['total'] - $o['total_paid'];
+                    $sisa = max(0, $o['total'] - $o['total_paid']);
                 ?>
                 <tr>
                     <td><?= htmlspecialchars($o['order_code']) ?></td>

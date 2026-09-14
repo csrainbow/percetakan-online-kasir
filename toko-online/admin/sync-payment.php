@@ -123,7 +123,7 @@ summary-help { display:block; }
 
     <main class="admin-main">
         <h1>🔁 Cek Pembayaran Otomatis</h1>
-        <p class="subtitle">Sistem nominal unik + API key sendiri — cocokkan transfer/QRIS yang masuk, tandai LUNAS otomatis.</p>
+        <p class="subtitle">Pencocokan otomatis berdasarkan total pesanan + API key sendiri — cocokkan transfer/QRIS yang masuk, tandai LUNAS otomatis.</p>
 
         <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
         <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
@@ -156,7 +156,7 @@ summary-help { display:block; }
 
         <div class="card">
             <h2>📋 Sync Cepat — Tempel Mutasi e-Banking / Notif QRIS</h2>
-            <p>Tidak pakai IMAP: buka m-banking / aplikasi QRIS, salin (copy) teks notifikasi atau riwayat mutasi masuk, tempel di bawah, sistem langsung cocokkan nominal unik dan menandai pesanan LUNAS.</p>
+            <p>Tidak pakai IMAP: buka m-banking / aplikasi QRIS, salin (copy) teks notifikasi atau riwayat mutasi masuk, tempel di bawah, sistem langsung cocokkan nominal dengan total pesanan dan menandai pesanan LUNAS.</p>
             <div class="howto">
                 <strong>Contoh format yang dikenali:</strong><br>
                 <code>10/09 10:00 BCA 158317 TRF DARI Bpk ACHE<br>
@@ -176,15 +176,15 @@ summary-help { display:block; }
 
         <div class="card">
             <h2>💳 QRIS Static — Alur Forward Notifikasi</h2>
-            <p>QRIS static (QR cetak/tempel) tidak punya API status resmi. Notifikasi datang ke aplikasi merchant (MyProfit), SMS, atau email. Cukup <strong>forward/salin teksnya</strong> ke kotak tempel di atas — nominal unik yang memberitahu pesanan mana yang harus dikonfirmasi.</p>
+            <p>QRIS static (QR cetak/tempel) tidak punya API status resmi. Notifikasi datang ke aplikasi merchant (MyProfit), SMS, atau email. Cukup <strong>forward/salin teksnya</strong> ke kotak tempel di atas — nominal yang sama dengan total pesanan yang memberitahu pesanan mana yang harus dikonfirmasi.</p>
             <ol style="font-size:13px;color:#444;line-height:1.9;margin:0;padding-left:20px;">
-                <li><strong>Wajib nominal unik:</strong> saat checkout, pelanggan QRIS diminta membayar <em>total + kode</em> (mis. Rp 750.000 → Rp 750.318).</li>
-                <li>Customer scan QR, lalu ketik nominal unik itu & bayar.</li>
+                <li><strong>Bayar sesuai total pesanan</strong> — saat checkout, pelanggan diminta membayar <em>total pesanan</em> (mis. Rp 750.000).</li>
+                <li>Customer scan QR, lalu bayar sesuai total pesanan.</li>
                 <li>Notifikasi QRIS masuk (MyProfit/SMS/email) — buka, pilih "Copy", tempel di kotak <strong>Sync Cepat</strong>.</li>
                 <li>Tekan <strong>Cocokkan & Konfirmasi</strong> → nominal cocok → pesanan <strong>LUNAS otomatis</strong>.</li>
             </ol>
             <p style="font-size:12.5px;color:#6c757d;margin-top:10px;">
-                ⚡ Kalau pelanggan lupa menambahkan kode unik dan transfer pas total (tanpa kode), sistem tetap cocokkan — konfirmasi mengikuti nominal total.
+                ⚡ Nominal masuk yang sama dengan total pesanan langsung cocok — konfirmasi otomatis LUNAS.
             </p>
             <p style="font-size:12.5px;color:#6c757d;margin:8px 0 0;">
                 🔑 Automatis penuh: pasang notifikasi/skrip bank/gateway untuk mengirim teks ke

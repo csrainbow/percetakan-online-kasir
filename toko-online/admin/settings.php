@@ -459,7 +459,7 @@ include '../includes/header.php';
                     <div class="form-group">
                         <label>Biaya QRIS Statis</label>
                         <input type="hidden" name="qris_fee_percent" value="0">
-                        <div class="helper-text">Tidak ada biaya penyedia layanan. Pelanggan hanya membayar total pesanan ditambah kode unik.</div>
+                        <div class="helper-text">Tidak ada biaya penyedia layanan. Pelanggan membayar total pesanan.</div>
                     </div>
                     <div class="form-group">
                         <label>Merchant ID <span class="badge" style="font-size:10px;">Opsional</span></label>

@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $db->prepare("UPDATE orders SET payment_status='dp', status='processed' WHERE id=?")->execute([$_POST['order_id']]);
             }
-            $_SESSION['success'] = "💰 Pembayaran DP berhasil diverifikasi! Sisa: " . formatRupiah($total - $totalPaid);
+            $_SESSION['success'] = "💰 Pembayaran DP berhasil diverifikasi! Sisa: " . formatRupiah(max(0, $total - $totalPaid));
         }
         
         waOrderStatus($db, intval($_POST['order_id']), $totalPaid >= $total ? 'paid' : 'dp');
@@ -149,7 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $paidStmt = $db->prepare("SELECT COALESCE(SUM(amount),0) as p FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
         $paidStmt->execute([$orderId]);
         $alreadyPaid = floatval($paidStmt->fetch()['p']);
-        $sisa = floatval($order['total']) - $alreadyPaid;
+        $sisa = max(0, floatval($order['total']) - $alreadyPaid);
 
         if ($amount <= 0) {
             $_SESSION['error'] = "❌ Nominal DP harus lebih dari 0!";
@@ -231,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ")->fetchAll();
         
         foreach ($exportOrders as $o) {
-            $sisa = $o['total'] - $o['total_paid'];
+            $sisa = max(0, $o['total'] - $o['total_paid']);
             fputcsv($output, [
                 $o['order_code'],
                 $o['customer_name'],
@@ -448,7 +448,7 @@ include '../includes/header.php';
                 </thead>
                 <tbody>
                     <?php foreach ($orders as $o): 
-                        $sisa = $o['total'] - $o['total_paid'];
+                        $sisa = max(0, $o['total'] - $o['total_paid']);
                         $paymentData = $paymentIds[$o['id']] ?? null;
                         $payment_id = $paymentData ? $paymentData['id'] : null;
                         $payment_type = $paymentData ? $paymentData['payment_type'] : null;

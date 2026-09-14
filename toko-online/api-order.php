@@ -318,19 +318,12 @@ try {
         }
     }
 
-    // 🔥 🔥 NOMINAL UNIK (Jalur B — auto-check pembayaran) 🔥 🔥
-    // Dipakai untuk transfer & QRIS statis (cek manual): total + kode unik, dicocokkan otomatis.
+    // 🔥 🔥 NOMINAL PEMBAYARAN (Jalur B — auto-check pembayaran)
+    // Pembayaran manual (transfer / QRIS cek manual) disarankan sebesar TOTAL persis;
+    // pencocokan otomatis dilakukan terhadap total pesanan.
     $payCode = 0;
-    $uniqueAmount = 0;
-    $isSoapQris = ($paymentMethod === 'qris_dinamis' && $qrisInfo !== null);
-    if ($paymentMethod !== 'cod' && $paymentMethod !== 'midtrans' && !$isSoapQris) {
-        require_once __DIR__ . '/includes/payment_autocheck.php';
-        $uniqueAmount = pay_attach_order($db, $orderId, $total, $paymentMethod);
-        $pc = $db->prepare("SELECT pay_code FROM orders WHERE id=?");
-        $pc->execute([$orderId]);
-        $payCode = (int)$pc->fetchColumn();
-    }
-    logOrder("Unique amount computed", ['order_code' => $orderCode, 'pay_code' => $payCode, 'unique_amount' => $uniqueAmount]);
+    $uniqueAmount = $total;
+    logOrder("Payment amount", ['order_code' => $orderCode, 'unique_amount' => $uniqueAmount]);
     
     // 🔥 🔥 KIRIM NOTIFIKASI KE ADMIN 🔥 🔥
     try {
@@ -344,9 +337,6 @@ try {
             $message .= "Total: Rp " . number_format($total, 0, ',', '.') . "\n";
             $message .= "Metode: " . $paymentMethod . "\n";
             $message .= "Item: " . count($validItems) . " item\n\n";
-if ($uniqueAmount > 0) {
-                $message .= "Nominal unik: Rp " . number_format($uniqueAmount, 0, ',', '.') . " (kode " . $payCode . ")\n";
-                }
             $message .= "Link: https://rainbowprinting.web.id/admin/order-detail.php?id=" . $orderId;
             sendEmail($adminEmail, $subject, $message);
             logOrder("Admin notification sent", ['email' => $adminEmail]);

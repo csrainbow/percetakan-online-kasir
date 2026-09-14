@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $db->prepare("UPDATE orders SET payment_status='dp', status='processed' WHERE id=?")->execute([$_POST['order_id']]);
             }
-            $_SESSION['success'] = "💰 Pembayaran DP berhasil diverifikasi! Sisa: " . formatRupiah($total - $totalPaid);
+            $_SESSION['success'] = "💰 Pembayaran DP berhasil diverifikasi! Sisa: " . formatRupiah(max(0, $total - $totalPaid));
         }
         
         header('Location: ' . $returnTo);

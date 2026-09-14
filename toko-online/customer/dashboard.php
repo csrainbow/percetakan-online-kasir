@@ -280,7 +280,7 @@ include '../includes/header.php';
             $items->execute([$o['id']]);
             $orderItems = $items->fetchAll();
             
-            $sisa = $o['total'] - $o['total_paid'];
+            $sisa = max(0, $o['total'] - $o['total_paid']);
             $persentaseDibayar = $o['total'] > 0 ? round(($o['total_paid'] / $o['total']) * 100) : 0;
             
             // 🔥 CEK APAKAH ADA HASIL DESAIN

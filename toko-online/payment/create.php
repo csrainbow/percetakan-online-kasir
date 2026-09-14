@@ -68,7 +68,7 @@ if ($order['payment_status'] === 'paid') {
 $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
 $totalPaidStmt->execute([$order['id']]);
 $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-$sisaPembayaran = $order['total'] - $totalPaid;
+$sisaPembayaran = max(0, $order['total'] - $totalPaid);
 
 // 🔥 JIKA SUDAH LUNAS
 if ($sisaPembayaran <= 0) {

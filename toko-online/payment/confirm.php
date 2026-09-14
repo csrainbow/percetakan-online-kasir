@@ -69,7 +69,7 @@ try {
 $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
 $totalPaidStmt->execute([$order['id']]);
 $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-$sisaPembayaran = $order['total'] - $totalPaid;
+$sisaPembayaran = max(0, $order['total'] - $totalPaid);
 
 // Cek apakah sudah lunas
 if ($sisaPembayaran <= 0) {
@@ -83,9 +83,8 @@ if ($sisaPembayaran <= 0) {
 $isDp = ($totalPaid == 0);
 $isPelunasan = ($totalPaid > 0 && $sisaPembayaran > 0);
 
-// 🔥 Nominal unik: kalau belum ada bayaran, anjurkan bayar TEPAT nominal unik (auto-konfirmasi)
-$uniqueAmount = !empty($order['unique_amount']) ? (int)$order['unique_amount'] : 0;
-$maxPembayaran = ($totalPaid == 0 && $uniqueAmount > 0) ? $uniqueAmount : $sisaPembayaran;
+// Nominal maks yang boleh dibayar = sisa (non-negatif)
+$maxPembayaran = $sisaPembayaran;
 
 // Ambil daftar bank dari settings (disimpan per-bank di admin)
 $bankList = [];
@@ -518,11 +517,6 @@ include '../includes/header.php';
             <!-- 🔥 Tombol Cepat -->
             <div style="margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;">
                 <?php if ($isDp): ?>
-                    <?php if ($uniqueAmount > 0): ?>
-                        <button type="button" onclick="setAmount(<?= $uniqueAmount ?>)" class="btn btn-sm btn-primary" style="font-size:12px;">
-                            ⚡ Bayar Tepat & Otomatis Lunas (<?= formatRupiah($uniqueAmount) ?>)
-                        </button>
-                    <?php endif; ?>
                     <button type="button" onclick="setAmount(<?= round($order['total'] * 0.7) ?>)" class="btn btn-sm btn-outline" style="font-size:12px;">
                         70% (<?= formatRupiah($order['total'] * 0.7) ?>)
                     </button>

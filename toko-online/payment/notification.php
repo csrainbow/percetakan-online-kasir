@@ -142,7 +142,7 @@ $newOrderStatus = null;
 $totalPaidStmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
 $totalPaidStmt->execute([$order['id']]);
 $totalPaid = floatval($totalPaidStmt->fetch()['total']);
-$sisaPembayaran = $order['total'] - $totalPaid;
+$sisaPembayaran = max(0, $order['total'] - $totalPaid);
 
 // 🔥 CEK APAKAH ADA JASA DESAIN
 $stmt = $db->prepare("SELECT COUNT(*) as c FROM order_items WHERE order_id=? AND design_service='jasa'");
@@ -225,7 +225,7 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
                 $message .= "Status: " . $paymentLabel . "\n";
                 $message .= "Jumlah: Rp " . number_format($amount, 0, ',', '.') . "\n";
                 $message .= "Total dibayar: Rp " . number_format($newTotalPaid, 0, ',', '.') . "\n";
-                $message .= "Sisa: Rp " . number_format($order['total'] - $newTotalPaid, 0, ',', '.') . "\n\n";
+                $message .= "Sisa: Rp " . number_format(max(0, $order['total'] - $newTotalPaid), 0, ',', '.') . "\n\n";
                 $message .= "Link: https://rainbowprinting.web.id/admin/order-detail.php?id=" . $order['id'];
                 sendEmail($adminEmail, $subject, $message);
                 logMidtrans("📧 Admin email sent to: $adminEmail");
@@ -240,7 +240,7 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
                 $message .= "Status: " . $paymentLabel . "\n";
                 $message .= "Jumlah: Rp " . number_format($amount, 0, ',', '.') . "\n";
                 if ($newPaymentStatus === 'dp' && $newTotalPaid < $order['total']) {
-                    $sisaEmail = $order['total'] - $newTotalPaid;
+                    $sisaEmail = max(0, $order['total'] - $newTotalPaid);
                     $message .= "Sisa pembayaran: Rp " . number_format($sisaEmail, 0, ',', '.') . "\n";
                     if (function_exists('wa_web_pay_point_url')) {
                         $message .= "Bayar sisa melalui Payment Point (QRIS & rekening):\n" . wa_web_pay_point_url($order['order_code'], $order['customer_phone']) . "\n\n";
