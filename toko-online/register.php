@@ -51,18 +51,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
     } elseif (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password)) {
         $error = '❌ Password harus mengandung huruf besar, huruf kecil, dan angka.';
     } else {
-        // 🔥 CEK EMAIL DUPLIKAT
-        $stmt = $db->prepare("SELECT id FROM customers WHERE email = ?");
-        $stmt->execute([$email]);
-        if ($stmt->fetch()) {
-            $error = '❌ Email sudah terdaftar. Silakan <a href="login.php">login</a>.';
-        } else {
-            // 🔥 CEK NOMOR DUPLIKAT
-            $stmt = $db->prepare("SELECT id FROM customers WHERE phone = ?");
-            $stmt->execute([$phone]);
-            if ($stmt->fetch()) {
-                $error = '❌ Nomor WhatsApp sudah terdaftar. Silakan <a href="login.php">login</a>.';
-            } else {
+                    // 🔥 CEK EMAIL DUPLIKAT — email WAJIB unik (login & reset pakai email)
+                    $stmt = $db->prepare("SELECT id FROM customers WHERE email = ?");
+                    $stmt->execute([$email]);
+                    if ($stmt->fetch()) {
+                        $error = '❌ Email sudah terdaftar. Silakan <a href="lupa-password.php">Lupa password</a> atau gunakan email lain.';
+                    } else {
+                        // ✅ Nomor WhatsApp BOLEH dipakai beberapa akun (tidak wajib unik);
+                        // identitas unik cukup email. Lanjut langsung ke registrasi.
                 // ✅ REGISTRASI BERHASIL
                 $hash = password_hash($password, PASSWORD_DEFAULT);
                 $stmt = $db->prepare("INSERT INTO customers (name, email, phone, password, address) VALUES (?, ?, ?, ?, ?)");
@@ -83,7 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
                 header('Location: ' . $redirectAfterRegister);
                 exit;
             }
-        }
     }
 
     // 🔥 SIMPAN ATTEMPT GAGAL
