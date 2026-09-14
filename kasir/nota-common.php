@@ -53,10 +53,16 @@ function nota_data($ref, $id) {
         // Samakan tampilan DP struk dengan realisasi bayar agar struk & A5 angkanya sama.
         $ps['dp'] = max($ps['dp'], $totalBayar);
         $ps['pembayaran_status'] = pembayaran_status_label($totalBayar, $ps['total'], $ps['status']);
-        $pitems = DB::q('SELECT nama, qty, harga, subtotal FROM pesanan_item WHERE pesanan_id = ? ORDER BY id', [$id]);
+        $pitems = DB::q('SELECT nama, qty, harga, subtotal, COALESCE(panjang,0) AS panjang, COALESCE(lebar,0) AS lebar FROM pesanan_item WHERE pesanan_id = ? ORDER BY id', [$id]);
         if ($pitems) {
             $viewItems = array_map(function ($i) {
-                return ['nama' => $i['nama'], 'qty' => qty($i['qty']), 'harga' => rp($i['harga']), 'total' => rp($i['subtotal'])];
+                $nm = $i['nama'];
+                $pj = (float)($i['panjang'] ?? 0);
+                $lb = (float)($i['lebar'] ?? 0);
+                if ($pj > 0 && $lb > 0) {
+                    $nm .= ' (' . rtrim(rtrim(number_format($pj, 2, ',', '.'), '0'), ',') . '×' . rtrim(rtrim(number_format($lb, 2, ',', '.'), '0'), ',') . ' m)';
+                }
+                return ['nama' => $nm, 'qty' => qty($i['qty']), 'harga' => rp($i['harga']), 'total' => rp($i['subtotal'])];
             }, $pitems);
         } else {
             $lines = array_values(array_filter(array_map('trim', explode("\n", str_replace("\r", "", $ps['deskripsi'])))));

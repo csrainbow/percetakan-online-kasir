@@ -228,6 +228,22 @@ class DB {
             self::run("ALTER TABLE pembayaran ADD COLUMN token TEXT DEFAULT ''");
         }
 
+        // 🔥 Dimensi M2 per item pesanan (panjang & lebar meter) — agar ukuran
+        // tersimpan permanen & tampil di nota (sebelumnya hilang saat simpan).
+        $cols = self::q('PRAGMA table_info(pesanan_item)');
+        $hasPL = ['panjang' => false, 'lebar' => false];
+        foreach ($cols as $c) {
+            if (isset($hasPL[$c['name']])) {
+                $hasPL[$c['name']] = true;
+            }
+        }
+        if (!$hasPL['panjang']) {
+            self::run("ALTER TABLE pesanan_item ADD COLUMN panjang REAL DEFAULT 0");
+        }
+        if (!$hasPL['lebar']) {
+            self::run("ALTER TABLE pesanan_item ADD COLUMN lebar REAL DEFAULT 0");
+        }
+
         foreach (['penjualan' => 'status', 'pembayaran' => 'status'] as $tbl => $colDep) {
             $cols = self::q("PRAGMA table_info($tbl)");
             $existing = [];

@@ -55,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if ($q <= 0 || $h < 0) {
                             continue;
                         }
-                        DB::run('INSERT INTO pesanan_item (pesanan_id, produk_id, nama, qty, harga, subtotal) VALUES (?,?,?,?,?,?)',
-                            [$pid, (int)($it['produk_id'] ?? 0) ?: null, $nama, $q, $h, $st]);
+                        DB::run('INSERT INTO pesanan_item (pesanan_id, produk_id, nama, qty, harga, subtotal, panjang, lebar) VALUES (?,?,?,?,?,?,?,?)',
+                            [$pid, (int)($it['produk_id'] ?? 0) ?: null, $nama, $q, $h, $st, (float)($it['panjang'] ?? 0), (float)($it['lebar'] ?? 0)]);
                     }
                 }
             }
@@ -305,8 +305,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if ($q <= 0 || $h < 0) {
                             continue;
                         }
-                        DB::run('INSERT INTO pesanan_item (pesanan_id, produk_id, nama, qty, harga, subtotal) VALUES (?,?,?,?,?,?)',
-                            [$id, (int)($it['produk_id'] ?? 0) ?: null, $nama, $q, $h, (float)$q * (float)$h]);
+                        DB::run('INSERT INTO pesanan_item (pesanan_id, produk_id, nama, qty, harga, subtotal, panjang, lebar) VALUES (?,?,?,?,?,?,?,?)',
+                            [$id, (int)($it['produk_id'] ?? 0) ?: null, $nama, $q, $h, (float)$q * (float)$h, (float)($it['panjang'] ?? 0), (float)($it['lebar'] ?? 0)]);
                     }
                 }
             }
@@ -360,7 +360,7 @@ $pesanan = DB::q("SELECT * FROM pesanan $where ORDER BY id DESC", $args);
 $itemsByPesanan = [];
 if ($pesanan) {
     $listId = implode(',', array_map('intval', array_column($pesanan, 'id')));
-    foreach (DB::q("SELECT id, pesanan_id, nama, qty, harga, subtotal FROM pesanan_item WHERE pesanan_id IN ($listId) ORDER BY pesanan_id, id") as $it) {
+    foreach (DB::q("SELECT id, pesanan_id, produk_id, nama, qty, harga, subtotal, COALESCE(panjang,0) AS panjang, COALESCE(lebar,0) AS lebar FROM pesanan_item WHERE pesanan_id IN ($listId) ORDER BY pesanan_id, id") as $it) {
         $itemsByPesanan[(int)$it['pesanan_id']][] = $it;
     }
 }
@@ -585,7 +585,8 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
         itemArr.forEach(function (it) { sum += it.subtotal; });
         if (totalEl && sum >= 0) totalEl.value = Math.round(sum * 100) / 100;
         jsonEl.value = JSON.stringify(itemArr.map(function (it) {
-            return { produk_id: it.produk_id, nama: it.nama, qty: it.qty, harga: it.harga, subtotal: it.subtotal };
+            return { produk_id: it.produk_id, nama: it.nama, qty: it.qty, harga: it.harga, subtotal: it.subtotal,
+                panjang: it.m2 ? (it.P || 0) : 0, lebar: it.m2 ? (it.L || 0) : 0 };
         }));
     }
     function render() {
@@ -759,16 +760,20 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
                                 <?php $itemsPesan = $itemsByPesanan[$ps['id']] ?? []; ?>
                                 <?php foreach ($itemsPesan as $it): ?>
                                     <?php $itM2 = isset($produkM2[(int)($it['produk_id'] ?? 0)]); ?>
+                                    <?php // Baris lama tanpa dimensi tersimpan: anggap seluruh qty sebagai Panjang x 1. ?>
+                                    <?php $itP = (float)($it['panjang'] ?? 0); $itL = (float)($it['lebar'] ?? 0); ?>
+                                    <?php if ($itM2 && $itP <= 0 && $itL <= 0) { $itP = (float)$it['qty']; $itL = 1; } ?>
+                                    <?php $itQ0 = ($itM2 && $itP > 0 && $itL > 0 && (float)$it['qty'] > 0) ? round((float)$it['qty'] / ($itP * $itL), 2) : 1; ?>
                                     <tr class="ei-item<?= $itM2 ? ' ei-m2' : '' ?>" data-pid="<?= (int)($it['produk_id'] ?? 0) ?>">
                                         <td><input type="text" class="ei-nama" value="<?= e($it['nama']) ?>"></td>
                                         <td style="text-align:center;">
-                                            <input type="number" class="ei-qty" min="0" step="0.01" style="width:50px;" value="<?= $itM2 ? '1' : (float)$it['qty'] ?>">
+                                            <input type="number" class="ei-qty" min="0" step="0.01" style="width:50px;" value="<?= $itM2 ? $itQ0 : (float)$it['qty'] ?>">
                                         </td>
                                         <td style="text-align:center;">
                                             <?php if ($itM2): ?>
-                                                <input type="number" class="ei-p" min="0" step="0.01" style="width:50px;" value="<?= (float)$it['qty'] ?>" title="Panjang (m)">
+                                                <input type="number" class="ei-p" min="0" step="0.01" style="width:50px;" value="<?= $itP ?>" title="Panjang (m)">
                                                 &times;
-                                                <input type="number" class="ei-l" min="0" step="0.01" style="width:50px;" value="1" title="Lebar (m)">
+                                                <input type="number" class="ei-l" min="0" step="0.01" style="width:50px;" value="<?= $itL ?>" title="Lebar (m)">
                                             <?php else: ?>
                                                 <span class="muted kecil">-</span>
                                             <?php endif; ?>
@@ -894,7 +899,8 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
                     var l2 = parseFloat(tr.querySelector('.ei-l').value) || 0;
                     q = q * p2 * l2;
                 }
-                arr.push({ produk_id: tr.dataset.pid || null, nama: nama, qty: q, harga: h });
+                arr.push({ produk_id: tr.dataset.pid || null, nama: nama, qty: q, harga: h,
+                    panjang: m2 ? p2 : 0, lebar: m2 ? l2 : 0 });
             });
             jsonInput.value = JSON.stringify(arr);
         }
