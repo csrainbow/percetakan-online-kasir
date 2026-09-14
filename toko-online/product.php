@@ -871,23 +871,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // dulu — arahkan ke register SEBELUM upload (upload-design.php menolak
             // tamu & tanpa redirect, pesan "Silakan login" mentok di sini).
             if (typeof isCustomerLoggedIn !== 'undefined' && !isCustomerLoggedIn) {
-                window.location.href = '/register.php?redirect=' + encodeURIComponent('/product.php?slug=' + encodeURIComponent(slug));
-                return;
-            }
-            // 🔥 Pilih "Upload File" tapi belum login → wajib daftar dulu.
-            // upload-design.php menolak guest jadi langsung arahkan ke daftar
-            // (sebelum sempat error "Silakan login" yang tak jelas & tak redirect).
-            if (typeof isCustomerLoggedIn !== 'undefined' && !isCustomerLoggedIn) {
                 var backNow = window.location.pathname + window.location.search;
                 window.location.href = '/register.php?redirect=' + encodeURIComponent(backNow);
-                return;
-            }
-            // 🔥 Cek login SEBELUM upload: guest yang pilih "Upload File"
-            // harus daftar dulu. Tandai want-list di intent (session) agar
-            // setelah login langsung kembali ke product ini.
-            if (typeof isCustomerLoggedIn !== 'undefined' && !isCustomerLoggedIn) {
-                var backUrl = window.location.pathname + window.location.search;
-                window.location.href = '/register.php?redirect=' + encodeURIComponent(backUrl);
                 return;
             }
             var fileInput = document.getElementById('design-file');
