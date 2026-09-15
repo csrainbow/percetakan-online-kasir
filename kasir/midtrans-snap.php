@@ -49,10 +49,17 @@ $snap_url = $is_prod
     ? 'https://app.midtrans.com/snap/v1/transactions'
     : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
+// 🔥 Samakan dengan pay-midtrans.php: override notifikasi per transaksi
+// agar webhook kasir = /kasir/midtrans-webhook.php (tidak tertimpa
+// Payment Notification URL global toko-online). Berlaku sandbox & production.
+$webhook_url = rtrim(setting('url_publik', 'https://rainbowprinting.web.id/kasir'), '/') . '/midtrans-webhook.php';
+
 $payload = json_encode([
     'transaction_details' => ['order_id' => $order_id, 'gross_amount' => (int)round($jumlah)],
     'customer_details' => ['first_name' => $ps['pelanggan'], 'phone' => $ps['telepon']],
-    'enabled_payments' => ['snap'],
+    // 🔥 enabled_payments DIHAPUS: nilai ['snap'] tidak valid di Midtrans
+    // (valid: credit_card, bca_va, qris, gopay, dst). Tanpa parameter ini
+    // Snap menampilkan SEMUA metode yang aktif di dashboard merchant.
     'expiry' => ['unit' => 'minute', 'duration' => 10],
     'credit_card' => ['secure' => true],
 ]);
@@ -61,7 +68,11 @@ $ch = curl_init($snap_url);
 curl_setopt_array($ch, [
     CURLOPT_POST => true, CURLOPT_POSTFIELDS => $payload,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Basic ' . base64_encode($server_key . ':')],
+    CURLOPT_HTTPHEADER => [
+        'Content-Type: application/json',
+        'Authorization: Basic ' . base64_encode($server_key . ':'),
+        'X-Override-Notification: ' . $webhook_url,
+    ],
     CURLOPT_TIMEOUT => 30, CURLOPT_SSL_VERIFYPEER => true
 ]);
 $response = curl_exec($ch);

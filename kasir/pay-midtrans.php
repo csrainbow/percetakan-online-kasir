@@ -65,7 +65,9 @@ $webhook_url = rtrim(setting('url_publik', 'https://rainbowprinting.web.id/kasir
 $payload = json_encode([
     'transaction_details' => ['order_id' => $order_id, 'gross_amount' => (int)round($jumlah)],
     'customer_details' => ['first_name' => $ps['pelanggan'] ?: 'Pelanggan', 'phone' => $ps['telepon']],
-    'enabled_payments' => ['snap'],
+    // 🔥 enabled_payments DIHAPUS: nilai ['snap'] tidak valid di Midtrans
+    // (valid: credit_card, bca_va, qris, gopay, dst). Tanpa parameter ini
+    // Snap menampilkan SEMUA metode yang aktif di dashboard merchant.
     'expiry' => ['unit' => 'minute', 'duration' => 10],
     'credit_card' => ['secure' => true],
 ]);
