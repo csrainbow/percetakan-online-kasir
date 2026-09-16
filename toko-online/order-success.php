@@ -46,6 +46,19 @@ $pageTitle = 'Pesanan Berhasil - Percetakan Rainbow';
 include 'includes/header.php';
 ?>
 
+<?php if (setting('meta_pixel_id') !== ''): ?>
+<!-- 🔥 Meta Pixel: Purchase (pelacakan konversi iklan) -->
+<script>
+fbq('track', 'Purchase', {
+    value: <?= (float)$order['total'] ?>,
+    currency: 'IDR',
+    content_ids: [<?= (int)$order['id'] ?>],
+    content_type: 'product',
+    order_code: <?= json_encode((string)$order['order_code']) ?>
+});
+</script>
+<?php endif; ?>
+
 <style>
 /* ============================================
    ORDER SUCCESS STYLES

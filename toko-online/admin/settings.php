@@ -20,7 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'midtrans_server_key', 'midtrans_client_key',
         'invoice_template', 'invoice_footer', 'printer_options',
         'logo_nota_size',
-        'whatsapp_number', 'footer_text'
+        'whatsapp_number', 'footer_text',
+        'meta_pixel_id', 'meta_fb_verify'
     ];
     
     try {
@@ -625,6 +626,24 @@ include '../includes/header.php';
                         <div class="helper-text">Teks yang muncul di bagian bawah invoice</div>
                     </div>
                 </div>
+
+                <div class="settings-section">
+                    <h2>📘 Integrasi Facebook / Meta</h2>
+                    <p style="font-size:12px;color:#888;margin-bottom:15px;">Diperlukan untuk katalog produk & pelacakan iklan di Facebook / Instagram.</p>
+
+                    <div class="form-group">
+                        <label>Meta Pixel ID</label>
+                        <input type="text" name="meta_pixel_id" value="<?= htmlspecialchars($settings['meta_pixel_id'] ?? '') ?>" placeholder="cth: 1234567890123456">
+                        <div class="helper-text">Dari Facebook Business Manager → Events Manager → Pixels. Kosongkan jika belum membuat Pixel.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Meta Domain Verification Token</label>
+                        <input type="text" name="meta_fb_verify" value="<?= htmlspecialchars($settings['meta_fb_verify'] ?? '') ?>" placeholder="cth: abc123def456">
+                        <div class="helper-text">Dari Facebook Business Manager → Brand Safety → Domains → meta tag content. Kosongkan jika belum verifikasi.</div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- 🔥 SUBMIT -->

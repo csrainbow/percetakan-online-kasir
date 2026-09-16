@@ -26,4 +26,10 @@ foreach (['/kasir', '/admin', '/uploads'] as $dirOnly) {
     }
 }
 
+// Feed katalog untuk Meta Commerce Manager (Dynamic Ads / Shop).
+if ($uri === '/facebook-feed.csv' || $uri === '/facebook-feed') {
+    require __DIR__ . '/facebook-feed.php';
+    return true;
+}
+
 return false;

@@ -61,6 +61,19 @@ $categoryIcon = $categoryIcons[$product['category']] ?? '📄';
 include 'includes/header.php';
 ?>
 
+<?php if (setting('meta_pixel_id') !== ''): ?>
+<!-- 🔥 Meta Pixel: ViewContent -->
+<script>
+fbq('track', 'ViewContent', {
+    content_ids: [<?= (int)$product['id'] ?>],
+    content_name: <?= json_encode((string)$product['name']) ?>,
+    content_type: 'product',
+    value: <?= (float)($product['price_per_m2'] > 0 ? $product['price_per_m2'] : $product['price']) ?>,
+    currency: 'IDR'
+});
+</script>
+<?php endif; ?>
+
 <style>
 /* ============================================
    PRODUCT DETAIL STYLES

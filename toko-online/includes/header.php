@@ -23,6 +23,26 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rainbowprinting.web.id">
     
+    <?php if (setting('meta_fb_verify') !== ''): ?>
+    <!-- 🔥 Verifikasi Domain Meta (Commerce Manager) -->
+    <meta property="fb:domain_verify" content="<?= htmlspecialchars(setting('meta_fb_verify')) ?>">
+    <?php endif; ?>
+    
+    <?php $pxId = setting('meta_pixel_id'); if ($pxId !== ''): ?>
+    <!-- 🔥 Meta Pixel -->
+    <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '<?= htmlspecialchars($pxId) ?>');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=<?= htmlspecialchars($pxId) ?>&ev=PageView&noscript=1"/></noscript>
+    <?php endif; ?>
+    
     <!-- 🔥 CSS Utama -->
     <link rel="stylesheet" href="/css/style.css?v=<?= filemtime(__DIR__ . '/../css/style.css') ?: time() ?>">
     
