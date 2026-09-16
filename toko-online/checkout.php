@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/qris.php';
-require_once __DIR__ . '/includes/duitku.php';
 require_once __DIR__ . '/includes/payment_autocheck.php';
 
 $pageTitle = 'Checkout';
@@ -20,7 +19,6 @@ $banks = array_filter($banks, function($b) {
 
 $qrisName = getSetting('qris_name');
 $qrisImage = getSetting('qris_image');
-$qrisApiReady = qris_api_ready();
 $storeName = getSetting('store_name') ?: 'Percetakan Rainbow';
 
 // 🔥 AMBIL DATA CUSTOMER JIKA LOGIN
@@ -31,7 +29,6 @@ if (isset($_SESSION['customer_id'])) {
     $data = $stmt->fetch();
     if ($data) $customerData = array_merge($customerData, $data);
 }
-$duitkuReady = duitku_ready();
 
 include 'includes/header.php';
 ?>
@@ -322,7 +319,7 @@ include 'includes/header.php';
                     <input type="email" name="email" id="email"
                            value="<?= htmlspecialchars($customerData['email']) ?>"
                            placeholder="nama@email.com">
-                    <div class="helper-text">Opsional — dipakai untuk struk pembayaran Duitku (VA, QRIS, e-wallet, dll).</div>
+                    <div class="helper-text">Opsional — untuk bukti pembayaran yang diverifikasi admin.</div>
                 </div>
 
                 <div class="form-group">
@@ -349,14 +346,8 @@ include 'includes/header.php';
                         <?php if ($qrisImage): ?>
                             <option value="qris">📱 QRIS (Cek Manual)</option>
                         <?php endif; ?>
-                        <?php if ($qrisApiReady): ?>
-                            <option value="qris_dinamis">⚡ QRIS (Cek Otomatis — API Integrasi)</option>
-                        <?php endif; ?>
-                        <?php if ($duitkuReady): ?>
-                            <option value="duitku">💳 Duitku — VA / QRIS / E-Wallet / Gerai (Otomatis)</option>
-                        <?php endif; ?>
                     </select>
-                    <?php if (empty($banks) && !$qrisImage && !$qrisApiReady): ?>
+                    <?php if (empty($banks) && !$qrisImage): ?>
                         <p style="color:var(--danger);font-size:13px;margin-top:6px;">⚠️ Belum ada metode pembayaran aktif. Hubungi admin.</p>
                     <?php endif; ?>
                     <div class="helper-text">Pilih metode pembayaran yang sesuai</div>
@@ -402,29 +393,6 @@ include 'includes/header.php';
                     <?php endif; ?>
 <p style="font-size:13px;color:#6c757d;margin-top:10px;text-align:center;">
                         Scan QRIS, lalu upload bukti pembayaran di halaman berikutnya untuk dicek manual oleh admin.
-                    </p>
-                </div>
-
-                <!-- 🔥 QRIS DINAMIS INFO -->
-                <div class="payment-info" id="qris_dinamis-info">
-                    <h4>⚡ QRIS (Cek Otomatis — API Integrasi)</h4>
-                    <p style="color:#555;font-size:14px;">
-                        QRIS Dinamis dibuat otomatis saat pesanan diproses (berlaku 30 menit).
-                    </p>
-                    <p style="color:#555;font-size:14px;">
-                        Pembayaran terverifikasi <strong>otomatis</strong> lewat integrasi API — tanpa perlu upload bukti.
-                    </p>
-                </div>
-
-                <!-- 🔥 DUITKU INFO -->
-                <div class="payment-info" id="duitku-info">
-                    <h4>💳 Duitku — Pembayaran Online (Otomatis)</h4>
-                    <p style="color:#555;font-size:14px;">
-                        Setelah pesanan dibuat, Anda diarahkan ke halaman bayar Duitku:
-                        Virtual Account bank, QRIS, e-wallet (OVO/DANA/LinkAja/ShopeePay), dan gerai retail.
-                    </p>
-                    <p style="color:#555;font-size:14px;">
-                        Pembayaran terverifikasi <strong>otomatis</strong> — tanpa perlu upload bukti.
                     </p>
                 </div>
             </div>
@@ -543,14 +511,6 @@ async function submitOrder(event) {
         if (result.success) {
             localStorage.removeItem('cart');
             updateCartBadge();
-            // 🔥 Duitku: langsung arahkan ke halaman bayar
-            if (result.duitku && result.duitku.payment_url) {
-                showNotification('✅ Pesanan berhasil! Mengalihkan ke pembayaran...', 'success');
-                setTimeout(function() {
-                    window.location.href = result.duitku.payment_url;
-                }, 1200);
-                return;
-            }
             showNotification('✅ Pesanan berhasil!', 'success');
             setTimeout(function() {
                 window.location.href = '/order-success.php?order=' + encodeURIComponent(result.order_code);

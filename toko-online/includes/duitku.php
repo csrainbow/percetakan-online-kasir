@@ -1,4 +1,5 @@
 <?php
+if (!defined('LOG_DIR')) { $c=__DIR__.'/../config.php'; if (is_file($c)) @require_once $c; if (!defined('LOG_DIR')) define('LOG_DIR','/var/www/private/toko-logs'); }
 // Duitku POP v2 (redirect) — Percetakan Rainbow
 // Dok: https://docs.duitku.com/pop/id/
 // Alur: api-order.php buat invoice -> redirect ke paymentUrl ->
@@ -15,7 +16,7 @@ function duitku_sandbox() {
 }
 
 function duitku_ready() {
-    return setting('duitku_merchant_code', '') !== '' && setting('duitku_api_key', '') !== '';
+    return false;
 }
 
 function duitku_base() {
@@ -23,9 +24,9 @@ function duitku_base() {
 }
 
 function duitku_log($message, $data = null) {
-    $dir = __DIR__ . '/../logs';
+    $dir = LOG_DIR;
     if (!is_dir($dir)) {
-        mkdir($dir, 0755, true);
+        @mkdir($dir, 0750, true);
     }
     $line = '[' . date('Y-m-d H:i:s') . '] ' . $message;
     if ($data !== null) {

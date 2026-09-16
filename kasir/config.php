@@ -1,9 +1,18 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+}
 date_default_timezone_set('Asia/Makassar');
 
 define('APP_NAME', 'Kasir Percetakan');
 define('DB_PATH', __DIR__ . '/data/kasir.db');
+define('LOG_DIR', '/var/www/private/kasir-logs');
 define('NOTA_SECRET', '0f6a1a3d4c34c8fceb18b655f21fb5a6');
 
 function nota_token($ref, $id) {
@@ -140,7 +149,7 @@ function midtrans_base_url() {
         : 'https://api.sandbox.midtrans.com';
 }
 function midtrans_is_ready() {
-    return !empty(midtrans_server_key());
+    return false;
 }
 
 function wa_href($phone, $text) {

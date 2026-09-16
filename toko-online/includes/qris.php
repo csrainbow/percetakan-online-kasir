@@ -6,7 +6,7 @@ define('QRIS_BASE', 'https://qris.interactive.co.id/restapi/qris');
 define('QRIS_TTL', 30 * 60);
 
 function qris_api_ready() {
-    return setting('qris_api_apikey', '') !== '' && setting('qris_api_mid', '') !== '';
+    return false;
 }
 
 function qris_http_get($url, $timeout = 15) {

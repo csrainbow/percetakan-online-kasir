@@ -12,6 +12,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once __DIR__ . '/config.php';
+if (!defined('LOG_DIR')) define('LOG_DIR','/var/www/private/toko-logs');
 require_once __DIR__ . '/includes/qris.php';
 require_once __DIR__ . '/includes/duitku.php';
 
@@ -19,10 +20,9 @@ header('Content-Type: application/json');
 
 // 🔥 🔥 LOGGING FUNCTION 🔥 🔥
 function logOrder($message, $data = null) {
-    $logFile = __DIR__ . '/logs/orders.log';
-    if (!is_dir(__DIR__ . '/logs')) {
-        mkdir(__DIR__ . '/logs', 0755, true);
-    }
+    $logFile = LOG_DIR . '/orders.log';
+    if (!is_dir(LOG_DIR)) {
+        @mkdir(LOG_DIR, 0750, true); }
     $timestamp = date('Y-m-d H:i:s');
     $logMessage = "[$timestamp] " . $message;
     if ($data) {
@@ -193,18 +193,18 @@ if ($paymentMethod === 'cod') {
     }
 }
 
-// 🔥 🔥 CEK DUITKU SIAP (sebelum order dibuat) 🔥 🔥
-if ($paymentMethod === 'duitku' && !duitku_ready()) {
-    logOrder("Duitku dipilih tapi belum dikonfigurasi");
+// 🔥 🔥 CEK METODE PEMBAYARAN 🔥 🔥
+if (!in_array($paymentMethod, ['transfer', 'qris', 'cod'])) {
+    logOrder("Metode pembayaran tidak tersedia", ['payment_method' => $paymentMethod]);
     echo json_encode([
         'success' => false,
-        'message' => 'Pembayaran online (Duitku) belum aktif. Silakan pilih Transfer Bank atau QRIS.',
-        'code' => 'duitku_not_ready'
+        'message' => 'Metode pembayaran tidak tersedia. Silakan pilih Transfer Bank atau QRIS.',
+        'code' => 'payment_method_unavailable'
     ]);
     exit;
 }
 
-// 🔥 Validasi email (opsional — wajib valid bila diisi; dipakai struk Duitku)
+// 🔥 Validasi email (opsional — wajib valid bila diisi)
 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     echo json_encode([
         'success' => false,

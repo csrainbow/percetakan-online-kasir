@@ -6,10 +6,9 @@
 //  - Metode yang ditampilkan mengikuti metode yang dipilih admin saat membuat
 //    pesanan (kolom pesanan.metode):
 //      Tunai / Transfer / (belum diisi) → QRIS statis + Transfer Bank
-//      QRIS      → QRIS statis (cek manual) + Midtrans (cek otomatis)
-//      Midtrans  → Midtrans (pembayaran via Snap, terverifikasi otomatis)
-//  - Apabila costumer memilih QRIS → tampil QRIS statis + jumlah yang harus
-//    dibayar (tagihan).
+//      QRIS      → QRIS statis (cek manual) + Transfer Bank
+//  - Gateway Duitku & Midtrans dinonaktifkan (fungsi ready() → false), sehingga
+//    payment point hanya menampilkan QRIS statis + Transfer Bank.
 // ============================================================================
 $ppRef = $ref ?? 'pesanan';
 $ppId  = (int)$id;
@@ -28,51 +27,17 @@ if (!function_exists('duitku_kasir_ready') && is_file(__DIR__ . '/../duitku.php'
 $ppMidtrans    = midtrans_is_ready();
 $ppDuitku      = function_exists('duitku_kasir_ready') ? duitku_kasir_ready() : false;
 $ppMetode      = strtolower(trim((string)($ps['metode'] ?? '')));
-$ppShowQris    = true;
-$ppShowBank    = true;
+// Payment point hanya menampilkan QRIS statis + Transfer Bank.
+// (Gateway Duitku & Midtrans tidak dipakai lagi — fungsi ready() mengembalikan false.)
+$ppShowQris    = !empty($ppQris);
+$ppShowBank    = !empty($ppBankRek);
 $ppShowMid     = false;
 $ppShowDuit    = false;
-if ($ppMetode === 'qris') {
-    $ppShowQris = true;
-    $ppShowBank = false;
-    $ppShowMid  = true;
-    $ppShowDuit = true;
-} elseif ($ppMetode === 'midtrans') {
-    $ppShowQris = false;
-    $ppShowBank = false;
-    $ppShowMid  = true;
-    $ppShowDuit = true;
-} elseif ($ppMetode === 'duitku') {
-    $ppShowQris = false;
-    $ppShowBank = false;
-    $ppShowMid  = false;
-    $ppShowDuit = true;
+$ppAct = $ppShowQris ? 'qris' : 'bank';
+if (!$ppShowQris && !$ppShowBank) {
+    $ppAct = '';
 }
-if (!$ppMidtrans) {
-    $ppShowMid = false;
-    if ($ppMetode === 'midtrans') {
-        $ppShowQris = true;
-        $ppShowBank = true;
-    }
-}
-if (!$ppDuitku) {
-    $ppShowDuit = false;
-    if ($ppMetode === 'duitku') {
-        $ppShowQris = true;
-        $ppShowBank = true;
-    }
-}
-$ppAct = 'qris';
-if ($ppShowDuit && $ppMetode === 'duitku') {
-    $ppAct = 'duitku';
-} elseif ($ppShowMid && $ppMetode === 'midtrans') {
-    $ppAct = 'midtrans';
-} elseif ($ppShowMid && $ppMetode === 'qris' && !$ppQris) {
-    $ppAct = 'midtrans';
-} elseif (!$ppQris && $ppShowBank && $ppBankRek) {
-    $ppAct = 'bank';
-}
-$ppAdaMetode = ($ppShowQris && $ppQris) || ($ppShowBank && $ppBankRek) || ($ppShowMid) || ($ppShowDuit);
+$ppAdaMetode = $ppShowQris || $ppShowBank;
 $ppWa = '';
 if ($ppTelp !== '') {
     $ppWaMsg = 'Halo ' . setting('nama_toko', 'Percetakan Rainbow') . ', saya ' . $ps['pelanggan']
@@ -94,9 +59,6 @@ $ppStatus = in_array($ps['status'], ['Selesai', 'Batal']) ? $ps['status'] : ($ps
 <meta name="robots" content="noindex,nofollow">
 <base href="<?= e($ppBase) ?>">
 <title>Pembayaran <?= e($ps['no_pesanan']) ?> — <?= e(setting('nama_toko')) ?></title>
-<?php if ($ppShowMid): ?>
-<script src="https://<?= midtrans_is_production() ? 'app.midtrans.com' : 'app.sandbox.midtrans.com' ?>/snap/snap.js" data-client-key="<?= e(midtrans_client_key()) ?>"></script>
-<?php endif; ?>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:Arial,Helvetica,sans-serif; }
 body { background:linear-gradient(160deg,#eef2ff,#f8fafc 60%,#f1f5f9); min-height:100vh; }
@@ -201,16 +163,6 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
                 <span class="ico">🏦</span>Transfer Bank<small>cek manual</small>
             </div>
             <?php endif; ?>
-            <?php if ($ppShowMid): ?>
-            <div class="pp-method<?= $ppAct === 'midtrans' ? ' act' : '' ?>" id="ppM-mid" onclick="ppSel('midtrans')">
-                <span class="ico">dY'3</span>Midtrans<small>cek otomatis</small>
-            </div>
-            <?php endif; ?>
-            <?php if ($ppShowDuit): ?>
-            <div class="pp-method<?= $ppAct === 'duitku' ? ' act' : '' ?>" id="ppM-duitku" onclick="ppSel('duitku')">
-                <span class="ico">💰</span>Duitku<small>cek otomatis</small>
-            </div>
-            <?php endif; ?>
         </div>
 
         <?php if ($ppShowQris && $ppQris): ?>
@@ -242,30 +194,6 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
         </div>
         <?php endif; ?>
 
-        <?php if ($ppShowMid): ?>
-        <div id="ppMidPanel" class="<?= $ppAct === 'midtrans' ? 'act' : '' ?>">
-            <p class="pp-note">Bayar <b><?= rp($ppTotal) ?></b> melalui <b>Midtrans</b>. Pembayaran <b>terverifikasi otomatis</b> — cashier tidak perlu cek manual.</p>
-            <div class="pp-amount">
-                <span class="lb">Total yang harus dibayar</span>
-                <span class="val"><?= rp($ppTotal) ?></span>
-            </div>
-            <button type="button" class="pp-btn" id="ppBayarMid">💳 Bayar via Midtrans</button>
-            <p class="pp-note" id="ppMidMsg"></p>
-        </div>
-        <?php endif; ?>
-
-        <?php if ($ppShowDuit): ?>
-        <div id="ppDuitPanel" class="<?= $ppAct === 'duitku' ? 'act' : '' ?>">
-            <p class="pp-note">Bayar <b><?= rp($ppTotal) ?></b> melalui <b>Duitku</b> (VA bank, QRIS, e-wallet, gerai). Pembayaran <b>terverifikasi otomatis</b> — cashier tidak perlu cek manual.</p>
-            <div class="pp-amount">
-                <span class="lb">Total yang harus dibayar</span>
-                <span class="val"><?= rp($ppTotal) ?></span>
-            </div>
-            <button type="button" class="pp-btn" id="ppBayarDuitku">💰 Bayar via Duitku</button>
-            <p class="pp-note" id="ppDuitMsg"></p>
-        </div>
-        <?php endif; ?>
-
         <?php if (!$ppAdaMetode): ?>
             <p class="pp-lunas">Belum ada metode pembayaran dikonfigurasi. Mohon kontak toko via WhatsApp / telepon.</p>
         <?php endif; ?>
@@ -273,9 +201,7 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
 
     <div class="pp-sec pp-no-print">
         <?php if ($ppWa): ?>
-        <?php $ppNoteAkhir = ($ppShowMid && !$ppShowQris && !$ppShowBank)
-            ? 'Pembayaran via <b>Midtrans</b> terverifikasi otomatis. Apabila ada kendala, hubungi kami di bawah:'
-            : 'Setelah transfer / scan QRIS, klik di bawah untuk konfirmasi:'; ?>
+        <?php $ppNoteAkhir = 'Setelah transfer / scan QRIS, klik di bawah untuk konfirmasi:'; ?>
         <p class="pp-note"><?= $ppNoteAkhir ?></p>
         <a class="pp-wa" href="<?= e($ppWa) ?>" target="_blank">💬 Konfirmasi via WhatsApp</a>
         <?php endif; ?>
@@ -302,12 +228,10 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
 function ppSel(m) {
     var map = {
         qris: ['ppM-qris', 'ppQrisPanel'],
-        bank: ['ppM-bank', 'ppBankPanel'],
-        midtrans: ['ppM-mid', 'ppMidPanel'],
-        duitku: ['ppM-duitku', 'ppDuitPanel']
+        bank: ['ppM-bank', 'ppBankPanel']
     };
     var act = map[m] || null;
-    var ids = ['ppM-qris', 'ppM-bank', 'ppM-mid', 'ppM-duitku', 'ppQrisPanel', 'ppBankPanel', 'ppMidPanel', 'ppDuitPanel'];
+    var ids = ['ppM-qris', 'ppM-bank', 'ppQrisPanel', 'ppBankPanel'];
     for (var i = 0; i < ids.length; i++) {
         var el = document.getElementById(ids[i]);
         if (!el) continue;
@@ -316,85 +240,6 @@ function ppSel(m) {
         if (ids[i].indexOf('ppM-') === 0) el.className = 'pp-method';
         else el.className = '';
     }
-}
-function bayarMidtransPublic() {
-    var btn = document.getElementById('ppBayarMid');
-    var msg = document.getElementById('ppMidMsg');
-    if (!btn) return;
-    if (btn.disabled) return;
-    btn.disabled = true;
-    if (msg) { msg.textContent = 'Membuat pembayaran…'; msg.style.color = '#475569'; }
-    fetch('pay-midtrans.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            ref: <?= json_encode($ref) ?>,
-            id: <?= (int)$ppId ?>,
-            k: <?= json_encode($k ?? '') ?>
-        })
-    }).then(function (r) { return r.json(); }).then(function (data) {
-        if (data.error) {
-            if (msg) { msg.textContent = 'Gagal: ' + data.error; msg.style.color = '#b91c1c'; }
-            btn.disabled = false;
-            return;
-        }
-        if (typeof snap !== 'undefined' && snap.pay) {
-            snap.pay(data.snap_token, {
-                onSuccess: function () {
-                    if (msg) { msg.textContent = '✅ Pembayaran diterima! Memperbarui halaman…'; msg.style.color = '#166534'; }
-                    setTimeout(function () { location.reload(); }, 2500);
-                },
-                onPending: function () { if (msg) msg.textContent = '⏳ Menunggu pembayaran selesai…'; },
-                onError: function () { if (msg) msg.textContent = 'Terjadi kesalahan saat pembayaran.'; btn.disabled = false; },
-                onClose: function () { if (msg) msg.textContent = ''; btn.disabled = false; }
-            });
-        } else {
-            if (msg) { msg.textContent = 'Snap.js belum dimuat. Muat ulang halaman.'; msg.style.color = '#b91c1c'; }
-            btn.disabled = false;
-        }
-    }).catch(function () {
-        if (msg) { msg.textContent = 'Gagal menghubungi server.'; msg.style.color = '#b91c1c'; }
-        btn.disabled = false;
-    });
-}
-if (document.getElementById('ppBayarMid')) {
-    document.getElementById('ppBayarMid').addEventListener('click', bayarMidtransPublic);
-}
-function bayarDuitkuPublic() {
-    var btn = document.getElementById('ppBayarDuitku');
-    var msg = document.getElementById('ppDuitMsg');
-    if (!btn) return;
-    if (btn.disabled) return;
-    btn.disabled = true;
-    if (msg) { msg.textContent = 'Membuat pembayaran...'; msg.style.color = '#475569'; }
-    fetch('pay-duitku.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            ref: <?= json_encode($ref) ?>,
-            id: <?= (int)$ppId ?>,
-            k: <?= json_encode($k ?? '') ?>
-        })
-    }).then(function (r) { return r.json(); }).then(function (data) {
-        if (data.error) {
-            if (msg) { msg.textContent = 'Gagal: ' + data.error; msg.style.color = '#b91c1c'; }
-            btn.disabled = false;
-            return;
-        }
-        if (data.payment_url) {
-            if (msg) { msg.textContent = 'Mengalihkan ke halaman bayar Duitku...'; msg.style.color = '#166534'; }
-            window.location.href = data.payment_url;
-            return;
-        }
-        if (msg) { msg.textContent = 'Respons pembayaran tidak valid.'; msg.style.color = '#b91c1c'; }
-        btn.disabled = false;
-    }).catch(function () {
-        if (msg) { msg.textContent = 'Gagal menghubungi server.'; msg.style.color = '#b91c1c'; }
-        btn.disabled = false;
-    });
-}
-if (document.getElementById('ppBayarDuitku')) {
-    document.getElementById('ppBayarDuitku').addEventListener('click', bayarDuitkuPublic);
 }
 function keluarNota() {
     if (history.length > 1) { history.back(); } else { window.close(); }

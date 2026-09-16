@@ -407,9 +407,7 @@ include 'includes/header.php';
                 $methodLabels = [
                     'transfer' => 'Transfer Bank (Cek Manual)',
                     'qris' => 'QRIS (Cek Manual)',
-                    'qris_dinamis' => 'QRIS (Cek Otomatis / API)',
                     'cod' => 'Bayar di Tempat (COD)',
-                    'midtrans' => 'Midtrans Online'
                 ];
                 echo $methodLabels[$result['payment_method'] ?? ''] ?? ucfirst($result['payment_method'] ?? 'Transfer');
                 ?>
@@ -481,33 +479,8 @@ include 'includes/header.php';
             </div>
         <?php endif; ?>
 
-        <!-- 🔥 🔥 QRIS DINAMIS (jika order QRIS & belum lunas) 🔥 🔥 -->
-        <?php if (in_array($result['payment_method'] ?? '', ['qris', 'qris_dinamis']) && ($result['payment_status'] ?? '') === 'unpaid'): ?>
-            <?php if (!empty($result['qris_content'])): ?>
-                <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
-                    <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 Scan QRIS untuk membayar</p>
-                    <img src="<?= qris_png_datauri($result['qris_content']) ?>" alt="QRIS" style="max-width:220px;width:100%;display:block;margin:0 auto 8px;border:1px solid #e2e8f0;border-radius:8px;">
-                    <?php if (!empty($result['qris_nmid'])): ?>
-                        <p style="margin:0;font-size:12px;color:#666;">NMID: <strong><?= htmlspecialchars($result['qris_nmid']) ?></strong></p>
-                    <?php endif; ?>
-                    <?php if (!empty($result['qris_invid'])): ?>
-                        <p style="margin:0;font-size:12px;color:#666;">INV: <strong><?= htmlspecialchars($result['qris_invid']) ?></strong></p>
-                    <?php endif; ?>
-                    <p style="margin:0;font-size:12px;color:#666;">Berlaku s/d <strong><?= htmlspecialchars($result['qris_expiry'] ?: qris_expiry_str($result)) ?></strong></p>
-                    <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">QRIS berlaku 30 menit.</p>
-                    <button type="button" class="btn btn-warning" onclick="tampilQris('<?= addslashes($result['order_code']) ?>','<?= addslashes($result['customer_phone']) ?>')">
-                        🔄 Periksa Status Pembayaran
-                    </button>
-                </div>
-            <?php elseif (($result['payment_method'] ?? '') === 'qris_dinamis' && qris_api_ready()): ?>
-                <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
-                    <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 QRIS Dinamis</p>
-                    <p style="font-size:14px;color:#666;">QRIS sedang diproses. Klik tombol di bawah.</p>
-                    <button type="button" class="btn btn-warning" onclick="tampilQris('<?= addslashes($result['order_code']) ?>','<?= addslashes($result['customer_phone']) ?>')">
-                        🔄 Dapatkan QRIS & Periksa Status
-                    </button>
-                </div>
-            <?php elseif (($result['payment_method'] ?? '') === 'qris'): ?>
+        <!-- 🔥 🔥 QRIS STATIS (jika order QRIS & belum lunas) 🔥 🔥 -->
+        <?php if (($result['payment_method'] ?? '') === 'qris' && ($result['payment_status'] ?? '') === 'unpaid'): ?>
                 <?php $qrisImg = getSetting('qris_image'); ?>
                 <div class="qris-block" style="margin:15px 0;padding:18px;background:#fff;border:1px solid #e9ecef;border-radius:10px;text-align:center;">
                     <p style="font-weight:600;margin-bottom:10px;color:#111111;">📱 Scan QRIS Statis untuk bayar (Cek Manual)</p>
@@ -521,12 +494,11 @@ include 'includes/header.php';
                     <?php endif; ?>
                     <p style="margin:6px 0 0;font-size:12px;color:var(--danger);">Bayar sesuai total pesanan <?= formatRupiah($result['total']) ?>, lalu upload bukti pembayaran di bawah.</p>
                 </div>
-            <?php endif; ?>
         <?php endif; ?>
 
         <!-- 🔥 🔥 TOMBOL AKSI 🔥 🔥 -->
         <div class="btn-group">
-            <?php if ($result['payment_status'] === 'unpaid' && in_array($result['payment_method'], ['transfer','qris','qris_dinamis'])): ?>
+            <?php if ($result['payment_status'] === 'unpaid' && in_array($result['payment_method'], ['transfer','qris'])): ?>
                 <a href="/payment/confirm.php?order=<?= urlencode($result['order_code']) ?>" class="btn btn-warning btn-lg">
                     💳 Upload Bukti Pembayaran
                 </a>
@@ -536,13 +508,6 @@ include 'includes/header.php';
                 <a href="/payment/confirm.php?order=<?= urlencode($result['order_code']) ?>" class="btn btn-warning btn-lg">
                     💰 Bayar Sisa (<?= formatRupiah($sisaPembayaran) ?>)
                 </a>
-            <?php endif; ?>
-
-            <?php if ($result['payment_status'] === 'unpaid' && $result['payment_method'] === 'midtrans' && getSetting('midtrans_server_key')): ?>
-                <button onclick="payMidtrans('<?= $result['order_code'] ?>')" class="btn btn-primary btn-lg">
-                    💳 Bayar Sekarang
-                </button>
-                <div id="midtrans-payment-status" style="margin-top:10px;width:100%;"></div>
             <?php endif; ?>
 
             <?php if ($result['payment_status'] === 'pending_verification'): ?>
@@ -605,47 +570,6 @@ function restoreLastOrder() {
     }
 }
 
-/**
- * 🔥 PAY MIDTRANS
- */
-async function payMidtrans(orderCode) {
-    var btn = document.querySelector('button[onclick*="' + orderCode + '"]');
-    if (btn) {
-        btn.disabled = true;
-        btn.textContent = '⏳ Mengarahkan...';
-    }
-    
-    try {
-        var response = await fetch('/payment/create.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_code: orderCode })
-        });
-        var result = await response.json();
-        
-        if (result.success && result.redirect_url) {
-            window.location.href = result.redirect_url;
-        } else {
-            var statusDiv = document.getElementById('midtrans-payment-status');
-            if (statusDiv) {
-                statusDiv.innerHTML = '<div class="alert alert-error" style="background:#f8d7da;color:#721c24;padding:12px;border-radius:6px;border:1px solid #f5c6cb;">❌ ' + (result.message || 'Gagal memproses pembayaran') + '</div>';
-            }
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = '💳 Bayar Sekarang';
-            }
-        }
-    } catch (err) {
-        var statusDiv = document.getElementById('midtrans-payment-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = '<div class="alert alert-error" style="background:#f8d7da;color:#721c24;padding:12px;border-radius:6px;border:1px solid #f5c6cb;">❌ Terjadi kesalahan, coba lagi</div>';
-        }
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = '💳 Bayar Sekarang';
-        }
-    }
-}
 <div id="modalQris" class="modal hidden">
         <div class="modal-box">
             <h3>QRIS Pembayaran</h3>

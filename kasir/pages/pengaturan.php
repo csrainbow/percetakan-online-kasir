@@ -71,34 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    if (!empty($_POST['simpan_midtrans'])) {
-        if (!is_superadmin()) {
-            flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
-        } else {
-            set_setting('midtrans_is_production', !empty($_POST['midtrans_is_production']) ? '1' : '0');
-            set_setting('midtrans_server_key_sandbox', trim($_POST['midtrans_server_key_sandbox'] ?? ''));
-            set_setting('midtrans_server_key_production', trim($_POST['midtrans_server_key_production'] ?? ''));
-            set_setting('midtrans_client_key_sandbox', trim($_POST['midtrans_client_key_sandbox'] ?? ''));
-            set_setting('midtrans_client_key_production', trim($_POST['midtrans_client_key_production'] ?? ''));
-            flash_set('success', 'Pengaturan Midtrans disimpan.');
-        }
-        header('Location: index.php?p=pengaturan');
-        exit;
-    }
-
-    if (!empty($_POST['simpan_duitku'])) {
-        if (!is_superadmin()) {
-            flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
-        } else {
-            set_setting('duitku_sandbox', !empty($_POST['duitku_sandbox']) ? '1' : '0');
-            set_setting('duitku_merchant_code', trim($_POST['duitku_merchant_code'] ?? ''));
-            set_setting('duitku_api_key', trim($_POST['duitku_api_key'] ?? ''));
-            flash_set('success', 'Pengaturan Duitku disimpan.');
-        }
-        header('Location: index.php?p=pengaturan');
-        exit;
-    }
-
     if (!empty($_POST['simpan_qris_api'])) {
         if (!is_superadmin()) {
             flash_set('error', 'Hanya super admin yang bisa mengubah pengaturan.');
@@ -201,9 +173,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 DB::run('DELETE FROM penjualan_item');
                 DB::run('DELETE FROM penjualan');
+                DB::run('DELETE FROM pesanan_item');
                 DB::run('DELETE FROM pesanan');
                 DB::run('DELETE FROM pembayaran');
-                DB::run("DELETE FROM sqlite_sequence WHERE name IN ('penjualan','penjualan_item','pesanan','pembayaran')");
+                DB::run("DELETE FROM sqlite_sequence WHERE name IN ('penjualan','penjualan_item','pesanan_item','pesanan','pembayaran')");
                 log_aktivitas('Reset data transaksi', '');
                 flash_set('success', 'Semua data transaksi direset. Perhitungan mulai dari awal.');
             }
@@ -439,57 +412,6 @@ require __DIR__ . '/../layout/header.php';
             <p class="muted kecil"><b>WA Gateway (lokal):</b> pengiriman memakai gateway WhatsApp di server (lihat menu <b>WA Gateway</b>). Kelola template pesan lewat menu <b>Pesanan</b> → tombol <b>Template WA</b>. Nomor admin tujuan diisi dengan nomor admin (tanpa izin nomor baru apapun).</p>
             <button type="submit" class="btn" name="simpan_wa" value="1">Simpan Notifikasi</button>
         </form>
-    </div>
-
-    <div class="panel">
-        <h3>Payment Gateway — Midtrans</h3>
-        <form method="post">
-            <label>Mode
-                <select name="midtrans_is_production">
-                    <option value="0" <?= setting('midtrans_is_production', '0') === '0' ? 'selected' : '' ?>>Sandbox (Uji Coba)</option>
-                    <option value="1" <?= setting('midtrans_is_production') === '1' ? 'selected' : '' ?>>Production</option>
-                </select>
-            </label>
-            <label>Server Key (Sandbox)
-                <input type="password" name="midtrans_server_key_sandbox" value="<?= e(setting('midtrans_server_key_sandbox')) ?>" placeholder="SB-Mid-server-..." required>
-            </label>
-            <label>Server Key (Production)
-                <input type="password" name="midtrans_server_key_production" value="<?= e(setting('midtrans_server_key_production')) ?>" placeholder="Mid-server-..." required>
-            </label>
-            <label>Client Key (Sandbox)
-                <input type="password" name="midtrans_client_key_sandbox" value="<?= e(setting('midtrans_client_key_sandbox')) ?>" placeholder="SB-Mid-client-..." required>
-            </label>
-            <label>Client Key (Production)
-                <input type="password" name="midtrans_client_key_production" value="<?= e(setting('midtrans_client_key_production')) ?>" placeholder="Mid-client-..." required>
-            </label>
-            <button type="submit" class="btn" name="simpan_midtrans" value="1">Simpan Midtrans</button>
-        </form>
-        <p class="muted kecil">Daftar di <b>midtrans.com</b>. Masukkan Server Key & Client Key dari dashboard Merchant. Mode Sandbox untuk uji coba (transaksi tidak diproses benar). URL notifikasi: <code><?= e(setting('url_publik', 'https://rainbowprinting.web.id/kasir')) ?>/midtrans-webhook.php</code></p>
-    </div>
-
-    <div class="panel">
-        <h3>Payment Gateway — Duitku</h3>
-        <?php if (setting('duitku_merchant_code') && setting('duitku_api_key')): ?>
-            <p class="muted kecil">✅ DUITKU AKTIF (<?= setting('duitku_sandbox', '1') === '0' ? 'PRODUCTION' : 'SANDBOX' ?>)</p>
-        <?php else: ?>
-            <p class="muted kecil">⚠️ DUITKU BELUM AKTIF — isi Merchant Code & API Key.</p>
-        <?php endif; ?>
-        <form method="post">
-            <label>Mode
-                <select name="duitku_sandbox">
-                    <option value="1" <?= setting('duitku_sandbox', '1') === '1' ? 'selected' : '' ?>>Sandbox (Uji Coba)</option>
-                    <option value="0" <?= setting('duitku_sandbox') === '0' ? 'selected' : '' ?>>Production</option>
-                </select>
-            </label>
-            <label>Merchant Code
-                <input type="text" name="duitku_merchant_code" value="<?= e(setting('duitku_merchant_code')) ?>" placeholder="cth: DS35378">
-            </label>
-            <label>API Key
-                <input type="password" name="duitku_api_key" value="<?= e(setting('duitku_api_key')) ?>" placeholder="API Key dari dashboard Duitku">
-            </label>
-            <button type="submit" class="btn" name="simpan_duitku" value="1">Simpan Duitku</button>
-        </form>
-        <p class="muted kecil">Daftar di <b>duitku.com</b>. Masukkan Merchant Code & API Key dari Project Settings. URL callback: <code><?= e(setting('url_publik', 'https://rainbowprinting.web.id/kasir')) ?>/duitku-webhook.php</code> (dikirim otomatis per transaksi).</p>
     </div>
 
     <?php endif; ?>

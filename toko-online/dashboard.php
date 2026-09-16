@@ -434,10 +434,6 @@ include '../includes/header.php';
                         <a href="/payment/confirm.php?order=<?= urlencode($o['order_code']) ?>" class="btn btn-primary btn-sm">
                             <i class="fas fa-credit-card"></i> Upload Bukti Bayar
                         </a>
-                    <?php elseif ($o['payment_method'] === 'midtrans' && getSetting('midtrans_server_key')): ?>
-                        <button onclick="payMidtrans('<?= $o['order_code'] ?>')" class="btn btn-primary btn-sm">
-                            <i class="fas fa-credit-card"></i> Bayar Sekarang
-                        </button>
                     <?php endif; ?>
                 <?php endif; ?>
                 
@@ -482,42 +478,6 @@ include '../includes/header.php';
 </p>
 
 <script>
-/**
- * 🔥 PAY MIDTRANS
- */
-async function payMidtrans(orderCode) {
-    var btn = document.querySelector('button[onclick*="' + orderCode + '"]');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '⏳ Mengarahkan...';
-    }
-    
-    try {
-        var response = await fetch('/payment/create.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_code: orderCode })
-        });
-        var result = await response.json();
-        
-        if (result.success && result.redirect_url) {
-            window.location.href = result.redirect_url;
-        } else {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
-            }
-            showNotification(result.message || 'Gagal memproses pembayaran', 'error');
-        }
-    } catch (err) {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-credit-card"></i> Bayar Sekarang';
-        }
-        showNotification('Terjadi kesalahan, coba lagi', 'error');
-    }
-}
-
 /**
  * 🔥 SHOW NOTIFICATION
  */

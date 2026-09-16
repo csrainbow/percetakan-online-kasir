@@ -13,7 +13,7 @@ function duitku_kasir_sandbox() {
 }
 
 function duitku_kasir_ready() {
-    return setting('duitku_merchant_code', '') !== '' && setting('duitku_api_key', '') !== '';
+    return false;
 }
 
 function duitku_kasir_base() {
@@ -21,7 +21,7 @@ function duitku_kasir_base() {
 }
 
 function duitku_kasir_log($message, $data = null) {
-    $dir = __DIR__ . '/logs';
+    $dir = LOG_DIR;
     if (!is_dir($dir)) {
         mkdir($dir, 0755, true);
     }
