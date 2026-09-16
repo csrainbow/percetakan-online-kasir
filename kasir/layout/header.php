@@ -13,7 +13,7 @@ $page = $page ?? '';
 </head>
 <body>
 <header class="topbar">
-    <div class="brand">APLIKASI KASIR PERCETAKAN RAINBOW</div>
+    <div class="brand"><img class="brand-logo" src="assets/logo-header.png" alt="Logo Rainbow Printing">APLIKASI KASIR PERCETAKAN RAINBOW</div>
     <nav>
         <a href="index.php" class="<?= $page === 'dashboard' ? 'act' : '' ?>">Dashboard</a>
         <a href="index.php?p=penjualan" class="<?= $page === 'penjualan' ? 'act' : '' ?>">Kasir</a>

@@ -24,6 +24,13 @@ body {
     padding: 14px 0;
 }
 
+.topbar .brand .brand-logo {
+    height: 34px;
+    width: auto;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
 .topbar nav { display: flex; flex-wrap: wrap; }
 
 .topbar nav a {
