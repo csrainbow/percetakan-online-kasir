@@ -326,53 +326,11 @@ try {
         'customer_id' => $customerId
     ]);
 
-    // 🔥 🔥 QRIS DINAMIS (hanya jika pelanggan pilih "QRIS Otomatis/API" & API terkonfigurasi) 🔥 🔥
+    // 🔥 QRIS dinamis telah dinonaktifkan — hanya QRIS statis yang dipakai.
     $qrisInfo = null;
-    if ($paymentMethod === 'qris_dinamis' && qris_api_ready()) {
-        $qi = qris_issue_order($orderCode, $total, $orderId);
-        if ($qi['ok'] && !empty($qi['row'])) {
-            $qrisInfo = [
-                'qris_content' => $qi['row']['qris_content'],
-                'qris_invid' => $qi['row']['qris_invid'],
-                'qris_nmid' => $qi['row']['qris_nmid'],
-                'qris_expiry' => $qi['row']['qris_expiry'],
-                'qris_request_date' => $qi['row']['qris_request_date'],
-            ];
-        }
-    }
 
-    // 🔥 🔥 DUITKU (buat invoice online + dapatkan paymentUrl) 🔥 🔥
+    // 🔥 Duitku telah dinonaktifkan — hanya Transfer Bank / QRIS statis yang dipakai.
     $duitkuInfo = null;
-    if ($paymentMethod === 'duitku') {
-        // Email struk: isian form -> email akun (bila login) -> email admin (fallback)
-        $duitkuEmail = $email;
-        if ($duitkuEmail === '' && $customerId > 0) {
-            $c = $db->prepare("SELECT email FROM customers WHERE id = ?");
-            $c->execute([$customerId]);
-            $crow = $c->fetch();
-            if ($crow && !empty($crow['email'])) $duitkuEmail = $crow['email'];
-        }
-        $inv = duitku_create_invoice(
-            ['id' => $orderId, 'order_code' => $orderCode, 'total' => $total, 'customer_name' => $name, 'customer_phone' => $phoneClean],
-            ['name' => $name, 'email' => $duitkuEmail, 'phone' => $phoneClean]
-        );
-        if (!$inv['ok']) {
-            logOrder("Duitku invoice gagal", ['order_code' => $orderCode, 'error' => $inv['error']]);
-            echo json_encode([
-                'success' => false,
-                'message' => 'Pesanan ' . $orderCode . ' tersimpan, tapi gagal membuat pembayaran Duitku: ' . $inv['error'] . ' — coba lagi via tombol Bayar di halaman pesanan.',
-                'code' => 'duitku_invoice_failed',
-                'order_code' => $orderCode,
-                'order_id' => $orderId,
-            ]);
-            exit;
-        }
-        $duitkuInfo = [
-            'payment_url' => $inv['paymentUrl'],
-            'reference' => $inv['reference'],
-        ];
-        logOrder("Duitku invoice OK", ['order_code' => $orderCode, 'reference' => $inv['reference']]);
-    }
 
     // 🔥 🔥 NOMINAL PEMBAYARAN (Jalur B — auto-check pembayaran)
     // Pembayaran manual (transfer / QRIS cek manual) disarankan sebesar TOTAL persis;

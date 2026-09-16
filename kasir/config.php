@@ -390,22 +390,15 @@ function wa_pelanggan_msg($ps, $event, $extra = '') {
     }
     $metode = trim((string)($ps['metode'] ?? ''));
     $cash = in_array(strtolower($metode), ['tunai', 'cash']);
-    $mid = strtolower($metode) === 'midtrans';
-    $duitku = strtolower($metode) === 'duitku';
-    $auto = $mid || $duitku;
-    $gwName = $mid ? 'Midtrans' : ($duitku ? 'Duitku' : '');
     $link = nota_link('pesanan', (int)$ps['id'], 'struk');
     // 🔥 Order SELESAI -> kirim nota A5 saja (bukan struk).
     $linkA5 = nota_link('pesanan', (int)$ps['id'], 'a5');
     $linkBayar = nota_link('pesanan', (int)$ps['id'], 'pay');
     $bayarSisa = max(0, $sisaVal);
     $waAdmin = setting('wa_admin_number', '') !== '' ? setting('wa_admin_number') : setting('telp');
-    $noteBayar = $auto
-        ? "\u{1F4A1} *Nilai bayar:* " . rp($bayarSisa) . "\nPembayaran via *$gwName* terverifikasi otomatis — tidak perlu kirim bukti bayar."
-        : "\u{1F4A1} *Nilai bayar:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin";
-    $noteDp = $auto
-        ? "\u{1F4A1} *Sisa tagihan:* " . rp($bayarSisa) . "\nPembayaran via *$gwName* terverifikasi otomatis — tidak perlu kirim bukti bayar."
-        : "\u{1F4A1} *Sisa tagihan:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin";
+    // Payment hanya via QRIS statis/Transfer Bank — tanpa gateway otomatis (Midtrans/Duitku).
+    $noteBayar = "\u{1F4A1} *Nilai bayar:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin";
+    $noteDp = "\u{1F4A1} *Sisa tagihan:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin";
     $msgs = [
         'baru'   => "\u{1F6E8}\u{FE0F} *PESANAN DITERIMA*\n\nHalo $name, pesanan *$code* sebesar " . rp($total) . " sudah kami terima.\n\nStatus pesanan: *BELUM LUNAS*\n\n" . ($cash ? "Silakan lunasi pada saat pengambilan atau kirim bukti bayar ke: $waAdmin" : "\u{1F4B3} *Silakan bayar melalui Payment Point berikut:*\n$linkBayar\n\n$noteBayar") . "\n\nTerima kasih \u{1F64F}",
         'dp'     => "\u{1F4B5} *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sebesar " . rp($dpVal) . (($metode !== '') ? " ($metode)" : '') . " sudah kami terima.\n\nSisa tagihan: " . rp($sisaVal) . "\n\n" . ($cash ? "Silakan lunasi sisa tagihan pada saat pengambilan atau kirim bukti bayar ke: $waAdmin" : "\u{1F4B3} *Silakan lunasi melalui Payment Point berikut:*\n$linkBayar\n\n$noteDp") . "\n\nTerima kasih \u{1F64F}",

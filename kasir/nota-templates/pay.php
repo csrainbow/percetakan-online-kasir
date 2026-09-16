@@ -23,16 +23,14 @@ $ppBankNama    = setting('bank_nama', '');
 $ppBankRek     = setting('bank_rekening', '');
 $ppBankPemilik = setting('bank_pemilik', '');
 $ppTelp        = setting('telp');
-if (!function_exists('duitku_kasir_ready') && is_file(__DIR__ . '/../duitku.php')) { require_once __DIR__ . '/../duitku.php'; }
-$ppMidtrans    = midtrans_is_ready();
-$ppDuitku      = function_exists('duitku_kasir_ready') ? duitku_kasir_ready() : false;
+// Gateway Midtrans & Duitku telah dinonaktifkan (fungsi ready mengembalikan false).
+// Hanya QRIS statis + Transfer Bank yang dipakai.
 $ppMetode      = strtolower(trim((string)($ps['metode'] ?? '')));
 // Payment point hanya menampilkan QRIS statis + Transfer Bank.
 // (Gateway Duitku & Midtrans tidak dipakai lagi — fungsi ready() mengembalikan false.)
 $ppShowQris    = !empty($ppQris);
 $ppShowBank    = !empty($ppBankRek);
-$ppShowMid     = false;
-$ppShowDuit    = false;
+// Hanya QRIS statis + Transfer Bank yang dipakai.
 $ppAct = $ppShowQris ? 'qris' : 'bank';
 if (!$ppShowQris && !$ppShowBank) {
     $ppAct = '';
