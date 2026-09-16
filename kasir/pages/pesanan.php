@@ -25,10 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 [$no, date('Y-m-d H:i:s'), $pelanggan, $telepon, $deskripsi, $total, $dp, $total - $dp, $status, $_SESSION['user_id'], $estimasi, $metode]);
             $pid = DB::lastId();
             if ($dp > 0) {
-                $pmStatus = strtolower($metode) === 'qris' ? 'Menunggu QRIS' : (strtolower($metode) === 'midtrans' ? 'Menunggu Midtrans' : 'Lunas');
+                $isQrisPending = strtolower($metode) === 'qris' && qris_api_ready();
+                $pmStatus = $isQrisPending ? 'Menunggu QRIS' : (strtolower($metode) === 'midtrans' ? 'Menunggu Midtrans' : 'Lunas');
                 DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
                     ['pesanan', $pid, date('Y-m-d H:i:s'), $dp, $metode, 'Pembayaran awal / DP', $pmStatus, $_SESSION['user_id']]);
-                if ($metode === 'QRIS') {
+                if ($isQrisPending) {
                     $pmPid = DB::lastId();
                     $qr = qris_create_invoice('PB' . $pmPid, (int)round($dp));
                     if ($qr['ok']) {
@@ -139,9 +140,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($jumlah > $sisa) {
                 $jumlah = $sisa;
             }
+            $isQrisPending = $metode === 'QRIS' && qris_api_ready();
             DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
-                ['pesanan', $id, date('Y-m-d H:i:s'), $jumlah, $metode, 'Pembayaran pesanan', $metode === 'QRIS' ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
-            if ($metode === 'QRIS') {
+                ['pesanan', $id, date('Y-m-d H:i:s'), $jumlah, $metode, 'Pembayaran pesanan', $isQrisPending ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
+            if ($isQrisPending) {
                 $pmPid = DB::lastId();
                 $qr = qris_create_invoice('PB' . $pmPid, (int)round($jumlah));
                 if ($qr['ok']) {
@@ -160,17 +162,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (setting('wa_notif_pembayaran') && setting('wa_admin_number') !== '') {
                 wa_send(setting('wa_admin_number'), "???? *PEMBAYARAN PESANAN*\nNo: " . $ps['no_pesanan'] . "\nPelanggan: " . $ps['pelanggan'] . "\nJumlah: " . rp($jumlah) . "\nMetode: " . $metode . "\nSisa: " . rp(max(0, $sisaBaru)) . "\nWaktu: " . date('d/m/Y H:i'));
             }
-            wa_pelanggan([
-                'id' => $id,
-                'no_pesanan' => $ps['no_pesanan'],
-                'pelanggan' => $ps['pelanggan'],
-                'telepon' => $ps['telepon'],
-                'total' => $ps['total'],
-                'dp' => $jumlah,
-                'sisa' => $sisaBaru,
-                'metode' => $metode,
-                'status' => $status,
-            ], $sisaBaru <= 0 ? 'lunas' : 'dp');
+            if (!$isQrisPending) {
+                wa_pelanggan([
+                    'id' => $id,
+                    'no_pesanan' => $ps['no_pesanan'],
+                    'pelanggan' => $ps['pelanggan'],
+                    'telepon' => $ps['telepon'],
+                    'total' => $ps['total'],
+                    'dp' => $jumlah,
+                    'sisa' => $sisaBaru,
+                    'metode' => $metode,
+                    'status' => $status,
+                ], $sisaBaru <= 0 ? 'lunas' : 'dp');
+            }
             flash_set('success', 'Pembayaran diterima.');
             header('Location: index.php?p=pesanan&template=' . $id);
             exit;
@@ -265,11 +269,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $sudahBayar = (float)DB::one("SELECT COALESCE(SUM(jumlah),0) t FROM pembayaran WHERE ref_type='pesanan' AND ref_id = ?", [$id])['t'];
             $delta = max(0, $dp - (float)$ps['dp']);
+            $isQrisPendingE = false;
             if ($delta > 0) {
-                $pmStatusE = strtolower($metode) === 'qris' ? 'Menunggu QRIS' : (strtolower($metode) === 'midtrans' ? 'Menunggu Midtrans' : 'Lunas');
+                $isQrisPendingE = strtolower($metode) === 'qris' && qris_api_ready();
+                $pmStatusE = $isQrisPendingE ? 'Menunggu QRIS' : (strtolower($metode) === 'midtrans' ? 'Menunggu Midtrans' : 'Lunas');
                 DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
                     ['pesanan', $id, date('Y-m-d H:i:s'), $delta, $metode, 'Perubahan DP / tambah uang muka (edit)', $pmStatusE, $_SESSION['user_id']]);
-                if (strtolower($metode) === 'qris') {
+                if ($isQrisPendingE) {
                     $pmPid = DB::lastId();
                     $qr = qris_create_invoice('PB' . $pmPid, (int)round($delta));
                     if ($qr['ok']) {
@@ -311,7 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             log_aktivitas('Edit pesanan', $ps['no_pesanan'] . ' | total baru ' . $total);
-            if ($status === 'DP' && $ps['status'] !== 'DP' && $telepon !== '') {
+            if ($status === 'DP' && $ps['status'] !== 'DP' && $telepon !== '' && !$isQrisPendingE) {
                 wa_pelanggan([
                     'id' => $id,
                     'no_pesanan' => $ps['no_pesanan'],
@@ -406,12 +412,14 @@ $normNama = function ($s) {
     $s = trim((string)$s);
     return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
 };
+$isM2Produk = function ($ph) {
+    $sat = strtolower(trim((string)($ph['satuan'] ?? '')));
+    return strpos($sat, 'm2') !== false || strpos($sat, 'm²') !== false || strpos($sat, 'meter persegi') !== false;
+};
 $produkM2 = [];
 $namaM2 = [];
 foreach ($produkHitung as $ph) {
-    $sat = strtolower((string)$ph['satuan']);
-    $kat = strtolower((string)$ph['kategori']);
-    if ($sat === 'm2' || strpos($kat, 'banner') !== false || strpos($kat, 'spanduk') !== false) {
+    if ($isM2Produk($ph)) {
         $produkM2[(int)$ph['id']] = true;
         // 🔥 Fallback nama: baris lama/impor tanpa produk_id tetap dikenali sebagai M2.
         $namaM2[$normNama($ph['nama'])] = true;
@@ -421,6 +429,7 @@ foreach ($produkHitung as $ph) {
 $judul = 'Pesanan';
 require __DIR__ . '/../layout/header.php';
 ?>
+<!-- BUILD-MARKER pesanan.php rev=9fd1b88+m2fix2 (abaikan; untuk diagnosis versi) -->
 <script>
 window.PESANAN_PRODUK = <?= json_encode(array_map(function ($p) {
     return ['id' => (int)$p['id'], 'nama' => $p['nama'], 'satuan' => $p['satuan'],
@@ -552,12 +561,10 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
         return null;
     }
     function isM2(p) {
-        var s = String(p.satuan || '').toLowerCase();
-        var k = String(p.kategori || '').toLowerCase();
-        return s === 'm2' || k.indexOf('banner') > -1 || k.indexOf('spanduk') > -1;
+        var s = String(p.satuan || '').trim().toLowerCase();
+        return s.indexOf('m2') > -1 || s.indexOf('m²') > -1 || s.indexOf('meter persegi') > -1;
     }
-    var itemArr = [];
-    pSel.addEventListener('change', function () {
+    function syncM2State() {
         var p = findProd(parseInt(pSel.value, 10));
         if (!p) { m2Box.classList.add('hidden'); m2Info.textContent = ''; return; }
         if (isM2(p)) {
@@ -567,7 +574,10 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
             m2Box.classList.add('hidden');
             m2Info.textContent = 'Harga: ' + rpJs(p.harga) + ' /' + (p.satuan || 'unit');
         }
-    });
+    }
+    var itemArr = [];
+    pSel.addEventListener('change', syncM2State);
+    syncM2State();
     btnAdd.addEventListener('click', function () {
         var p = findProd(parseInt(pSel.value, 10));
         if (!p) { window.alert('Pilih produk terlebih dahulu.'); return; }
@@ -889,9 +899,10 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
             }).join('');
         }
         function isM2p(p) {
-            var sat = String(p.satuan || '').toLowerCase();
-            var kat = String(p.kategori || '').toLowerCase();
-            return sat === 'm2' || kat.indexOf('banner') > -1 || kat.indexOf('spanduk') > -1;
+            var sat = String(p.satuan || '').trim().toLowerCase();
+            var kat = String(p.kategori || '').trim().toLowerCase();
+            return sat.indexOf('m2') > -1 || sat.indexOf('m²') > -1 || sat.indexOf('meter persegi') > -1 ||
+                kat.indexOf('banner') > -1 || kat.indexOf('spanduk') > -1;
         }
         function idByName(nm) {
             nm = String(nm || '').trim().toLowerCase();
