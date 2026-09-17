@@ -391,17 +391,27 @@ include 'includes/header.php';
     .filter-bar .filter-search { min-width: 100%; }
     .filter-bar .filter-sort select { width: 100%; }
     .btn-grad, .btn-outline-dark { justify-content: center; }
-    .product-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .product-img-link { height: 130px; }
+    .product-info { padding: 10px 12px 12px; }
+    .product-info h3 { font-size: 12.5px; }
+    .product-price { font-size: 14px; }
 }
 
 @media (max-width: 480px) {
     .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .product-img-link { height: 140px; }
-    .product-info { padding: 10px 12px; }
+    .product-img-link { height: 120px; }
+    .product-info { padding: 9px 10px 11px; }
     .product-info h3 { font-size: 12px; }
-    .product-price { font-size: 14px; }
+    .product-price { font-size: 13px; }
     .category-chips { gap: 7px; }
     .category-chip { padding: 7px 13px; font-size: 12px; }
+}
+
+@media (max-width: 359px) {
+    .product-grid { gap: 8px; }
+    .product-info h3 { font-size: 11px; }
+    .product-info .btn { padding: 7px; font-size: 12px; }
 }
 </style>
 
