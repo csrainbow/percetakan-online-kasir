@@ -16,6 +16,9 @@
     <meta name="robots" content="index, follow">
     <meta name="author" content="Percetakan Rainbow">
     <meta name="theme-color" content="#172033">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     
     <!-- 🔥 Open Graph / Social Media -->
     <meta property="og:title" content="<?= htmlspecialchars($pageTitle ?? 'Percetakan Rainbow') ?>">
@@ -69,6 +72,7 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         .container { 
