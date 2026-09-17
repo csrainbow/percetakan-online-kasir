@@ -20,11 +20,16 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <!-- 🔥 Open Graph / Social Media -->
-    <meta property="og:title" content="<?= htmlspecialchars($pageTitle ?? 'Percetakan Rainbow') ?>">
-    <meta property="og:description" content="Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, dan kebutuhan percetakan lainnya.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://rainbowprinting.web.id">
+    <!-- 🔥 Open Graph / Social Media (bisa di-override per halaman via $ogTitle, $ogDesc, $ogImage, $ogType, $ogUrl) -->
+    <meta property="og:title" content="<?= htmlspecialchars($ogTitle ?? $pageTitle ?? 'Percetakan Rainbow') ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($ogDesc ?? 'Percetakan online terpercaya di Samarinda. Cetak undangan, stiker, banner, dan kebutuhan percetakan lainnya.') ?>">
+    <meta property="og:type" content="<?= htmlspecialchars($ogType ?? 'website') ?>">
+    <meta property="og:url" content="<?= htmlspecialchars($ogUrl ?? 'https://rainbowprinting.web.id') ?>">
+    <?php if (!empty($ogImage)): ?>
+    <meta property="og:image" content="<?= htmlspecialchars($ogImage, ENT_QUOTES) ?>">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <?php endif; ?>
     
     <?php if (setting('meta_fb_verify') !== ''): ?>
     <!-- 🔥 Verifikasi Domain Meta (Commerce Manager) -->
