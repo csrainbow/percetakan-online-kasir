@@ -71,6 +71,8 @@ include 'includes/header.php';
     display: flex;
     align-items: center;
     margin-bottom: 24px;
+    min-width: 0;
+    max-width: 100%;
 }
 .category-chips {
     display: flex;
@@ -83,6 +85,9 @@ include 'includes/header.php';
     scrollbar-color: rgba(45,212,191,.45) transparent;
     padding: 4px 2px 8px;
     border-radius: 12px;
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
 }
 .category-chips::-webkit-scrollbar { height: 6px; }
 .category-chips::-webkit-scrollbar-thumb { background: rgba(45,212,191,.45); border-radius: 999px; }
