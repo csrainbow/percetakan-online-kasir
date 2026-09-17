@@ -66,6 +66,8 @@
            ============================================ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        html { overflow-x: hidden; max-width: 100vw; }
+        
         body { 
             font-family: 'Poppins', sans-serif; 
             background: var(--light); 
@@ -73,18 +75,22 @@
             flex-direction: column;
             min-height: 100vh;
             overflow-x: hidden;
+            max-width: 100vw;
         }
         
         .container { 
             max-width: 1200px; 
             margin: 0 auto; 
-            padding: 0 15px; 
+            padding: 0 15px;
+            overflow-x: hidden;
         }
         
         .main-content { 
             min-height: 500px; 
             padding: 20px 0;
             flex: 1;
+            overflow-x: hidden;
+            max-width: 100%;
         }
         
         /* ============================================
