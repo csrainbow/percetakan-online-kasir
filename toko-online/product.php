@@ -63,6 +63,7 @@ if (!empty($productImages)) {
 }
 $currentProductUrl = $ogUrl;
 $shareHashtag = '#PercetakanRainbow';
+$shareDesc = $ogDesc;
 
 // 🔥 ICON KATEGORI
 $categoryIcons = [
@@ -1126,8 +1127,13 @@ function uploadDesignFile(file, callback) {
 var shareData = {
     url: <?= json_encode($currentProductUrl) ?>,
     title: <?= json_encode((string)$product['name']) ?>,
+    desc: <?= json_encode($shareDesc) ?>,
     hashtag: <?= json_encode($shareHashtag) ?>
 };
+
+function shareText() {
+    return shareData.title + '\n' + shareData.desc + '\n' + shareData.hashtag;
+}
 
 function isMobileDevice() {
     return /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
@@ -1135,7 +1141,7 @@ function isMobileDevice() {
 
 function fbShareUrl() {
     var u = encodeURIComponent(shareData.url);
-    var t = encodeURIComponent(shareData.title + ' ' + shareData.hashtag);
+    var t = encodeURIComponent(shareText());
     return 'https://www.facebook.com/sharer/sharer.php?u=' + u + '&quote=' + t;
 }
 
@@ -1168,7 +1174,7 @@ function shareInstagram() {
     if (navigator.share) {
         navigator.share({
             title: shareData.title,
-            text: shareData.title + ' - Percetakan Rainbow ' + shareData.hashtag,
+            text: shareText(),
             url: shareData.url
         }).catch(function() {
             // user membatalkan — tidak apa
@@ -1180,7 +1186,7 @@ function shareInstagram() {
 
 // ✅ WHATSAPP
 function shareWA() {
-    var txt = encodeURIComponent(shareData.title + ' - Percetakan Rainbow ' + shareData.hashtag + '\n' + shareData.url);
+    var txt = encodeURIComponent(shareText() + '\n\n' + shareData.url);
     window.open('https://api.whatsapp.com/send?text=' + txt, '_blank');
 }
 
