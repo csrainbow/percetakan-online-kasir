@@ -31,7 +31,7 @@ if ($kind === 'penjualan') {
     if ($row['status'] !== 'Menunggu QRIS') {
         qris_json_out(['ok' => true, 'status' => 'paid', 'status_teks' => 'Pembayaran sudah lunas.', 'qris_image' => '', 'nmid' => '', 'error' => '']);
     }
-    $r = qris_refresh('pembayaran', $id, 'PB' . $id, (int)round((float)$row['jumlah']));
+    $r = qris_refresh('pembayaran', $id, 'PB' . $id, (int)round((float)$row['jumlah'] + (float)($row['biaya_layanan'] ?? 0)));
 }
 
 $row = $r['row'];
@@ -67,7 +67,7 @@ if ($cek) {
 }
 
 $expired = qris_is_expired($row);
-$amt = $kind === 'penjualan' ? (float)$row['total'] : (float)$row['jumlah'];
+$amt = $kind === 'penjualan' ? (float)$row['total'] : ((float)$row['jumlah'] + (float)($row['biaya_layanan'] ?? 0));
 $statusTeks = $expired
     ? 'QRIS kedaluwarsa. Klik "Periksa Status" untuk membuat QRIS baru.'
     : 'Menunggu pembayaran. QRIS berlaku 30 menit.';

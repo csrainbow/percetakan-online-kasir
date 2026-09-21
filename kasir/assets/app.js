@@ -210,6 +210,7 @@ function initKasir() {
     var lblKembali = qs('#lblKembali');
     var bayar = qs('#bayar');
     var form = qs('#formKasir');
+    var metodeSel = qs('#formKasir select[name="metode"]');
 
     function formatQty(n) {
         return Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 });
@@ -217,6 +218,21 @@ function initKasir() {
 
     function total() {
         return cart.reduce(function (s, it) { return s + it.harga * it.qty; }, 0);
+    }
+
+    // 🔥 Biaya layanan QRIS statis (Rp 3.000) — muncul saat metode QRIS dipilih.
+    var feeQRIS = window.KASIR_QRIS_FEE || 3000;
+
+    function isQris() {
+        return metodeSel && metodeSel.value === 'QRIS';
+    }
+
+    function biayaLayanan() {
+        return isQris() ? feeQRIS : 0;
+    }
+
+    function tagihan() {
+        return total() + biayaLayanan();
     }
 
     function renderCari(list) {
@@ -242,11 +258,9 @@ function initKasir() {
     }
 
     function isM2(p) {
-        // 🔥 Case-insensitive: admin bisa isi M2/m2/M² — semua dianggap meter persegi.
+        // m2 ditentukan berdasarkan satuan produk, bukan kategori.
         var sat = String(p.satuan || '').trim().toLowerCase();
-        return sat === 'm2' || sat === 'm²' || sat === 'meter persegi' ||
-            (p.kategori && p.kategori.toLowerCase().indexOf('banner') > -1) ||
-            (p.kategori && p.kategori.toLowerCase().indexOf('spanduk') > -1);
+        return sat.indexOf('m2') > -1 || sat.indexOf('m²') > -1 || sat.indexOf('meter persegi') > -1;
     }
 
     function addItem(p) {
@@ -362,14 +376,22 @@ function initKasir() {
             tr.appendChild(td5);
             tbody.appendChild(tr);
         });
-        lblTotal.textContent = rp(total());
+        if (isQris() && biayaLayanan() > 0) {
+            lblTotal.textContent = rp(total()) + ' + Biaya QRIS ' + rp(feeQRIS) + ' = ' + rp(tagihan());
+        } else {
+            lblTotal.textContent = rp(total());
+        }
         hitungKembali();
     }
 
     function hitungKembali() {
         var b = parseFloat(bayar.value) || 0;
-        var k = b - total();
+        var k = b - tagihan();
         lblKembali.textContent = rp(k < 0 ? 0 : k);
+    }
+
+    if (metodeSel) {
+        metodeSel.addEventListener('change', renderCart);
     }
 
     input.addEventListener('input', function () {
@@ -500,8 +522,9 @@ function initPesanan() {
             info.textContent = '';
             return;
         }
-        var isM2 = p.satuan === 'm2' || (p.kategori && p.kategori.toLowerCase().indexOf('banner') > -1) ||
-            (p.kategori && p.kategori.toLowerCase().indexOf('spanduk') > -1);
+        var isM2 = String(p.satuan || '').trim().toLowerCase().indexOf('m2') > -1 ||
+            String(p.satuan || '').trim().toLowerCase().indexOf('m²') > -1 ||
+            String(p.satuan || '').trim().toLowerCase().indexOf('meter persegi') > -1;
         box.classList.toggle('hidden', !isM2);
         if (isM2) {
             var luas = (parseFloat(panjang.value) || 0) * (parseFloat(lebar.value) || 0);
@@ -533,8 +556,8 @@ function initPesanan() {
     var form = sel.form;
 
     function isM2p(p) {
-        return p.satuan === 'm2' || (p.kategori && p.kategori.toLowerCase().indexOf('banner') > -1) ||
-            (p.kategori && p.kategori.toLowerCase().indexOf('spanduk') > -1);
+        var sat = String(p.satuan || '').trim().toLowerCase();
+        return sat.indexOf('m2') > -1 || sat.indexOf('m²') > -1 || sat.indexOf('meter persegi') > -1;
     }
 
     function hitungItem(p) {

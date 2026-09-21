@@ -25,13 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 [$no, date('Y-m-d H:i:s'), $pelanggan, $telepon, $deskripsi, $total, $dp, $total - $dp, $status, $_SESSION['user_id'], $estimasi, $metode]);
             $pid = DB::lastId();
             if ($dp > 0) {
-                $isQrisPending = strtolower($metode) === 'qris' && qris_api_ready();
+                $isQris = strtolower($metode) === 'qris';
+                $biayaL = $isQris ? qris_statis_fee() : 0;
+                $isQrisPending = $isQris && qris_api_ready();
                 $pmStatus = $isQrisPending ? 'Menunggu QRIS' : (strtolower($metode) === 'midtrans' ? 'Menunggu Midtrans' : 'Lunas');
-                DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
-                    ['pesanan', $pid, date('Y-m-d H:i:s'), $dp, $metode, 'Pembayaran awal / DP', $pmStatus, $_SESSION['user_id']]);
+                DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, biaya_layanan, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?,?)',
+                    ['pesanan', $pid, date('Y-m-d H:i:s'), $dp, $biayaL, $metode, 'Pembayaran awal / DP', $pmStatus, $_SESSION['user_id']]);
                 if ($isQrisPending) {
                     $pmPid = DB::lastId();
-                    $qr = qris_create_invoice('PB' . $pmPid, (int)round($dp));
+                    $qr = qris_create_invoice('PB' . $pmPid, (int)round($dp + $biayaL));
                     if ($qr['ok']) {
                         $qexp = date('Y-m-d H:i:s', strtotime($qr['data']['qris_request_date']) + QRIS_TTL);
                         DB::run('UPDATE pembayaran SET qris_content = ?, qris_invid = ?, qris_nmid = ?, qris_request_date = ?, qris_expiry = ? WHERE id = ?',
@@ -141,11 +143,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $jumlah = $sisa;
             }
             $isQrisPending = $metode === 'QRIS' && qris_api_ready();
-            DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
-                ['pesanan', $id, date('Y-m-d H:i:s'), $jumlah, $metode, 'Pembayaran pesanan', $isQrisPending ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
+            $biayaL = ($metode === 'QRIS') ? qris_statis_fee() : 0;
+            DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, biaya_layanan, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?,?)',
+                ['pesanan', $id, date('Y-m-d H:i:s'), $jumlah, $biayaL, $metode, 'Pembayaran pesanan', $isQrisPending ? 'Menunggu QRIS' : 'Lunas', $_SESSION['user_id']]);
             if ($isQrisPending) {
                 $pmPid = DB::lastId();
-                $qr = qris_create_invoice('PB' . $pmPid, (int)round($jumlah));
+                $qr = qris_create_invoice('PB' . $pmPid, (int)round($jumlah + $biayaL));
                 if ($qr['ok']) {
                     $qexp = date('Y-m-d H:i:s', strtotime($qr['data']['qris_request_date']) + QRIS_TTL);
                     DB::run('UPDATE pembayaran SET qris_content = ?, qris_invid = ?, qris_nmid = ?, qris_request_date = ?, qris_expiry = ? WHERE id = ?',
@@ -272,12 +275,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $isQrisPendingE = false;
             if ($delta > 0) {
                 $isQrisPendingE = strtolower($metode) === 'qris' && qris_api_ready();
+                $biayaLE = (strtolower($metode) === 'qris') ? qris_statis_fee() : 0;
                 $pmStatusE = $isQrisPendingE ? 'Menunggu QRIS' : (strtolower($metode) === 'midtrans' ? 'Menunggu Midtrans' : 'Lunas');
-                DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?)',
-                    ['pesanan', $id, date('Y-m-d H:i:s'), $delta, $metode, 'Perubahan DP / tambah uang muka (edit)', $pmStatusE, $_SESSION['user_id']]);
+                DB::run('INSERT INTO pembayaran (ref_type, ref_id, tgl, jumlah, biaya_layanan, metode, keterangan, status, user_id) VALUES (?,?,?,?,?,?,?,?,?)',
+                    ['pesanan', $id, date('Y-m-d H:i:s'), $delta, $biayaLE, $metode, 'Perubahan DP / tambah uang muka (edit)', $pmStatusE, $_SESSION['user_id']]);
                 if ($isQrisPendingE) {
                     $pmPid = DB::lastId();
-                    $qr = qris_create_invoice('PB' . $pmPid, (int)round($delta));
+                    $qr = qris_create_invoice('PB' . $pmPid, (int)round($delta + $biayaLE));
                     if ($qr['ok']) {
                         $qexp = date('Y-m-d H:i:s', strtotime($qr['data']['qris_request_date']) + QRIS_TTL);
                         DB::run('UPDATE pembayaran SET qris_content = ?, qris_invid = ?, qris_nmid = ?, qris_request_date = ?, qris_expiry = ? WHERE id = ?',
@@ -855,6 +859,7 @@ window.TPL_WA = <?= json_encode(array_map(function ($m) use ($waTplByPesanan) {
                             </select>
                             <button type="submit" class="btn kecil">Bayar</button>
                         </form>
+                        <p class="muted kecil" style="margin-top:4px;">QRIS dikenakan biaya layanan <?= rp(QRIS_STATIS_FEE) ?> (nominal QRIS termasuk fee, dana masuk pesanan = jumlah yang diisi).</p>
                     </details>
                 <?php endif; ?>
                 <?php if (in_array($ps['status'], ['DP', 'Lunas'])): ?>

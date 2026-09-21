@@ -27,6 +27,7 @@ function nota_data($ref, $id) {
                 return $i['nama'] . ' x' . qty($i['qty']);
             }, $items)),
             'total' => (float)$row['total'],
+            'biaya_layanan' => (float)($row['biaya_layanan'] ?? 0),
             'dp' => (float)$row['total'],
             'sisa' => 0.0,
             'status' => $row['status'] ?? 'Lunas',
@@ -48,10 +49,18 @@ function nota_data($ref, $id) {
         $ps['total'] = (float)$ps['total'];
         $ps['dp'] = (float)$ps['dp'];
         $ps['sisa'] = max(0, (float)$ps['sisa']);
+        // 🔥 Total biaya layanan QRIS dari semua pembayaran pesanan ini.
+        $ps['biaya_layanan'] = array_sum(array_map(function ($pb) {
+            return (float)($pb['biaya_layanan'] ?? 0);
+        }, $pembayaran));
         $totalBayar = max(0, $ps['total'] - $ps['sisa']);
-        // 🔥 Webhook Midtrans/Duitku/QRIS hanya update `sisa`, kolom `dp` bisa basi (0).
-        // Samakan tampilan DP struk dengan realisasi bayar agar struk & A5 angkanya sama.
-        $ps['dp'] = max($ps['dp'], $totalBayar);
+        // 🔥 Webhook Midtrans/QRIS hanya update `sisa`, kolom `dp` bisa basi (0).
+        // Samakan tampilan DP struk dengan realisasi bayar — HANYA bila benar-benar
+        // masih ada sisa (DP sebagian). Bila lunas penuh / belum bayar sama sekali
+        // (DP=0), kolom dp dibiarkan apa adanya agar DP tidak muncul di struk/nota.
+        if ($totalBayar > 0 && $totalBayar < $ps['total']) {
+            $ps['dp'] = max($ps['dp'], $totalBayar);
+        }
         $ps['pembayaran_status'] = pembayaran_status_label($totalBayar, $ps['total'], $ps['status']);
         $pitems = DB::q('SELECT nama, qty, harga, subtotal, COALESCE(panjang,0) AS panjang, COALESCE(lebar,0) AS lebar FROM pesanan_item WHERE pesanan_id = ? ORDER BY id', [$id]);
         if ($pitems) {

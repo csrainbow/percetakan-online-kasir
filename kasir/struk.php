@@ -63,7 +63,13 @@ $user = DB::one('SELECT username FROM users WHERE id = ?', [$p['user_id']]);
     </table>
     <hr>
     <table class="meta">
-        <tr><td>Total</td><td class="kanan"><b><?= rp($p['total']) ?></b></td></tr>
+        <?php if ((float)($p['biaya_layanan'] ?? 0) > 0): ?>
+            <tr><td>Subtotal Produk</td><td class="kanan"><?= rp(max(0, (float)$p['total'] - (float)$p['biaya_layanan'])) ?></td></tr>
+            <tr><td>Biaya Layanan QRIS</td><td class="kanan"><?= rp($p['biaya_layanan']) ?></td></tr>
+            <tr><td>Total</td><td class="kanan"><b><?= rp($p['total']) ?></b></td></tr>
+        <?php else: ?>
+            <tr><td>Total</td><td class="kanan"><b><?= rp($p['total']) ?></b></td></tr>
+        <?php endif; ?>
         <tr><td>Bayar</td><td class="kanan"><?= rp($p['bayar']) ?></td></tr>
         <tr><td>Kembalian</td><td class="kanan"><?= rp($p['kembalian']) ?></td></tr>
     </table>

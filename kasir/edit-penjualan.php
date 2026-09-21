@@ -61,6 +61,7 @@ window.EDIT_ITEMS = <?= json_encode(array_map(function ($i) {
                         <option <?= $penj['metode'] === $m ? 'selected' : '' ?>><?= $m ?></option>
                     <?php endforeach; ?>
                 </select>
+                <span class="muted kecil">QRIS dikenakan biaya layanan <?= rp(QRIS_STATIS_FEE) ?> (otomatis masuk total).</span>
             </label>
             <label>Keterangan
                 <input type="text" name="keterangan" value="<?= e($penj['keterangan']) ?>" placeholder="opsional">

@@ -122,6 +122,13 @@ $logoW = max(10, min(45, (float)setting('logo_nota_size', 24)));
             </td>
             <td class="invoice-bottom-right">
                 <table>
+                    <?php $biayaA5 = (float)($ps['biaya_layanan'] ?? 0); ?>
+                    <?php if ($biayaA5 > 0): ?>
+                        <?php if ($ref === 'penjualan'): ?>
+                            <tr><td>Subtotal Produk</td><td style="text-align:right;"><?= rp(max(0, (float)$ps['total'] - $biayaA5)) ?></td></tr>
+                        <?php endif; ?>
+                        <tr><td>Biaya Layanan QRIS</td><td style="text-align:right;"><?= rp($biayaA5) ?></td></tr>
+                    <?php endif; ?>
                     <tr><td>Total Pesanan</td><td style="text-align:right;"><?= rp($ps['total']) ?></td></tr>
                     <tr><td>Sudah Dibayar</td><td style="text-align:right;color:#27ae60;"><?= rp($totalBayar) ?></td></tr>
                     <tr class="total-row">

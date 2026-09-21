@@ -37,14 +37,14 @@ if (qris_api_ready()) {
         }
     }
 
-    $pembayaranBelum = DB::q("SELECT pp.id, pp.jumlah FROM pembayaran pp
+    $pembayaranBelum = DB::q("SELECT pp.id, pp.jumlah, pp.biaya_layanan FROM pembayaran pp
                               JOIN pesanan pe ON pe.id = pp.ref_id
                               WHERE pp.status = 'Menunggu QRIS' AND pp.ref_type = 'pesanan'
                                 AND (pp.qris_content = '' OR pp.qris_invid = '')
                                 AND pe.status != 'Batal' AND pe.deleted = 0
                               ORDER BY pp.id ASC LIMIT 5");
     foreach ($pembayaranBelum as $jm) {
-        $r = qris_refresh('pembayaran', (int)$jm['id'], 'PB' . $jm['id'], (int)round((float)$jm['jumlah']));
+        $r = qris_refresh('pembayaran', (int)$jm['id'], 'PB' . $jm['id'], (int)round((float)$jm['jumlah'] + (float)($jm['biaya_layanan'] ?? 0)));
         if ($r['ok']) {
             $dibuat++;
         } else {

@@ -52,8 +52,20 @@
     </table>
     <hr>
     <table class="meta">
-        <tr><td>Total Harga</td><td class="kanan"><?= rp($ps['total']) ?></td></tr>
+        <?php $biayaStruk = (float)($ps['biaya_layanan'] ?? 0); ?>
+        <?php if ($ref === 'penjualan' && $biayaStruk > 0): ?>
+            <tr><td>Subtotal Produk</td><td class="kanan"><?= rp(max(0, (float)$ps['total'] - $biayaStruk)) ?></td></tr>
+            <tr><td>Biaya Layanan QRIS</td><td class="kanan"><?= rp($biayaStruk) ?></td></tr>
+            <tr><td>Total</td><td class="kanan"><b><?= rp($ps['total']) ?></b></td></tr>
+        <?php else: ?>
+            <tr><td>Total Harga</td><td class="kanan"><?= rp($ps['total']) ?></td></tr>
+        <?php endif; ?>
+        <?php if ($ref === 'pesanan' && $biayaStruk > 0): ?>
+            <tr><td>Biaya Layanan QRIS</td><td class="kanan"><?= rp($biayaStruk) ?></td></tr>
+        <?php endif; ?>
+        <?php if ((float)$ps['dp'] > 0 && (float)$ps['sisa'] > 0): ?>
         <tr><td>Uang Muka / DP</td><td class="kanan"><?= rp($ps['dp']) ?></td></tr>
+        <?php endif; ?>
         <tr><td>Total Dibayar</td><td class="kanan"><?= rp($totalBayar) ?></td></tr>
         <tr><td>Sisa Tagihan</td><td class="kanan"><b><?= rp($ps['sisa']) ?></b></td></tr>
     </table>
@@ -68,6 +80,12 @@
                     <td><?= e($pb['keterangan'] ?: 'Pembayaran') ?></td>
                     <td class="kanan"><?= rp($pb['jumlah']) ?></td>
                 </tr>
+                <?php if ((float)($pb['biaya_layanan'] ?? 0) > 0): ?>
+                <tr class="muted">
+                    <td>&nbsp;&nbsp;+ Biaya Layanan QRIS</td>
+                    <td class="kanan"><?= rp((float)$pb['biaya_layanan']) ?></td>
+                </tr>
+                <?php endif; ?>
             <?php endforeach; ?>
         </table>
         <hr>

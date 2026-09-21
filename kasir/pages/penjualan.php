@@ -106,14 +106,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['simpan_edit_penjuala
             [$id, $l['produk_id'], $l['nama'], $l['harga'], $l['qty'], $l['subtotal']]);
         DB::run('UPDATE produk SET stok = stok - ? WHERE id = ?', [$l['qty'], $l['produk_id']]);
     }
+    $biayaLayanan = ($metode === 'QRIS') ? qris_statis_fee() : 0;
+    $totalBayar = $total + $biayaLayanan;
     $bayar = (float)$penj['bayar'];
-    $kembalian = $bayar - $total;
+    $kembalian = $bayar - $totalBayar;
     if ($kembalian < 0) {
-        $bayar = $total;
+        $bayar = $totalBayar;
         $kembalian = 0;
     }
-    DB::run('UPDATE penjualan SET total = ?, bayar = ?, kembalian = ?, metode = ?, keterangan = ? WHERE id = ?',
-        [$total, $bayar, $kembalian, $metode, $ket, $id]);
+    DB::run('UPDATE penjualan SET total = ?, bayar = ?, kembalian = ?, metode = ?, keterangan = ?, biaya_layanan = ? WHERE id = ?',
+        [$totalBayar, $bayar, $kembalian, $metode, $ket, $biayaLayanan, $id]);
     log_aktivitas('Edit transaksi', $penj['no_invoice'] . ' total ' . $total);
     flash_set('success', 'Transaksi diperbarui.');
     header('Location: index.php?p=' . ($back === 'dashboard' ? 'dashboard' : 'penjualan'));
@@ -181,20 +183,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['simpan'])) {
         header('Location: index.php?p=penjualan');
         exit;
     }
-    if ($bayar < $total) {
-        flash_set('error', 'Uang bayar kurang dari total.');
+    $biayaLayanan = ($metode === 'QRIS') ? qris_statis_fee() : 0;
+    $totalBayar = $total + $biayaLayanan;
+    if ($bayar < $totalBayar) {
+        flash_set('error', 'Uang bayar kurang dari total tagihan (termasuk biaya layanan QRIS).');
         header('Location: index.php?p=penjualan');
         exit;
     }
 
     $no = next_number('PNL', 'penjualan');
     $statusBayar = $metode === 'QRIS' ? 'Menunggu QRIS' : 'Lunas';
-    DB::run('INSERT INTO penjualan (no_invoice, tgl, total, bayar, kembalian, metode, user_id, keterangan, status) VALUES (?,?,?,?,?,?,?,?,?)',
-        [$no, date('Y-m-d H:i:s'), $total, $bayar, $bayar - $total, $metode, $_SESSION['user_id'], $ket, $statusBayar]);
+    DB::run('INSERT INTO penjualan (no_invoice, tgl, total, biaya_layanan, bayar, kembalian, metode, user_id, keterangan, status) VALUES (?,?,?,?,?,?,?,?,?,?)',
+        [$no, date('Y-m-d H:i:s'), $totalBayar, $biayaLayanan, $bayar, $bayar - $totalBayar, $metode, $_SESSION['user_id'], $ket, $statusBayar]);
     $pid = DB::lastId();
 
     if ($metode === 'QRIS') {
-        $qr = qris_create_invoice($no, (int)round($total));
+        $qr = qris_create_invoice($no, (int)round($totalBayar));
         if ($qr['ok']) {
             $qexp = date('Y-m-d H:i:s', strtotime($qr['data']['qris_request_date']) + QRIS_TTL);
             DB::run('UPDATE penjualan SET qris_content = ?, qris_invid = ?, qris_nmid = ?, qris_request_date = ?, qris_expiry = ? WHERE id = ?',
@@ -204,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['simpan'])) {
         }
     }
 
-    log_aktivitas('Transaksi baru', $no . ' | total ' . $total . ($statusBayar === 'Menunggu QRIS' ? ' | MENUNGGU KONFIRMASI QRIS' : ''));
+    log_aktivitas('Transaksi baru', $no . ' | total ' . $totalBayar . ($statusBayar === 'Menunggu QRIS' ? ' | MENUNGGU KONFIRMASI QRIS' : ''));
     foreach ($lines as $l) {
         DB::run('INSERT INTO penjualan_item (penjualan_id, produk_id, nama, harga, qty, subtotal) VALUES (?,?,?,?,?,?)',
             [$pid, $l['produk_id'], $l['nama'], $l['harga'], $l['qty'], $l['subtotal']]);
@@ -260,6 +264,7 @@ $judul = 'Kasir';
 require __DIR__ . '/../layout/header.php';
 ?>
 <script>
+window.KASIR_QRIS_FEE = <?= (int)QRIS_STATIS_FEE ?>;
 window.PRODUK = <?= json_encode(array_map(function ($p) {
     return ['id' => (int)$p['id'], 'kode' => $p['kode'], 'nama' => $p['nama'], 'barcode' => $p['barcode'], 'satuan' => $p['satuan'],
         'kategori' => $p['kategori'] ?? '', 'harga' => (float)$p['harga_jual'], 'stok' => (float)$p['stok']];
@@ -301,6 +306,7 @@ window.PRODUK = <?= json_encode(array_map(function ($p) {
                         <option>QRIS</option>
                         <option>Transfer</option>
                     </select>
+                    <span class="muted kecil">QRIS dikenakan biaya layanan <?= rp(QRIS_STATIS_FEE) ?> (otomatis masuk total).</span>
                 </label>
             </div>
             <label>Keterangan

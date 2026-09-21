@@ -7,8 +7,8 @@
 //    pesanan (kolom pesanan.metode):
 //      Tunai / Transfer / (belum diisi) → QRIS statis + Transfer Bank
 //      QRIS      → QRIS statis (cek manual) + Transfer Bank
-//  - Gateway Duitku & Midtrans dinonaktifkan (fungsi ready() → false), sehingga
-//    payment point hanya menampilkan QRIS statis + Transfer Bank.
+//  - Gateway otomatis (Duitku/Midtrans) tidak dipakai lagi — payment point
+//    hanya menampilkan QRIS statis + Transfer Bank.
 // ============================================================================
 $ppRef = $ref ?? 'pesanan';
 $ppId  = (int)$id;
@@ -23,11 +23,8 @@ $ppBankNama    = setting('bank_nama', '');
 $ppBankRek     = setting('bank_rekening', '');
 $ppBankPemilik = setting('bank_pemilik', '');
 $ppTelp        = setting('telp');
-// Gateway Midtrans & Duitku telah dinonaktifkan (fungsi ready mengembalikan false).
-// Hanya QRIS statis + Transfer Bank yang dipakai.
-$ppMetode      = strtolower(trim((string)($ps['metode'] ?? '')));
 // Payment point hanya menampilkan QRIS statis + Transfer Bank.
-// (Gateway Duitku & Midtrans tidak dipakai lagi — fungsi ready() mengembalikan false.)
+$ppMetode      = strtolower(trim((string)($ps['metode'] ?? '')));
 $ppShowQris    = !empty($ppQris);
 $ppShowBank    = !empty($ppBankRek);
 // Hanya QRIS statis + Transfer Bank yang dipakai.
@@ -85,8 +82,8 @@ table.pp-items { width:100%; border-collapse:collapse; font-size:12px; }
 .pp-method .ico { font-size:26px; margin:0 auto 6px; display:block; }
 .pp-method small { display:block; font-size:10px; font-weight:600; opacity:.85; margin-top:2px; }
 .pp-method.act { border-color:#0f172a; background:#0f172a; color:#fff; box-shadow:0 4px 10px rgba(15,23,42,.18); }
-#ppQrisPanel, #ppBankPanel, #ppMidPanel, #ppDuitPanel { display:none; }
-#ppQrisPanel.act, #ppBankPanel.act, #ppMidPanel.act, #ppDuitPanel.act { display:block; }
+#ppQrisPanel, #ppBankPanel { display:none; }
+#ppQrisPanel.act, #ppBankPanel.act { display:block; }
 .pp-qris-img { max-width:200px; margin:8px auto; display:block; border:1px solid #cbd5e1; border-radius:10px; }
 .pp-amount { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 4px; }
 .pp-amount .lb { font-size:12px; color:#475569; }

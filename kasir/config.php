@@ -15,6 +15,14 @@ define('DB_PATH', __DIR__ . '/data/kasir.db');
 define('LOG_DIR', '/var/www/private/kasir-logs');
 define('NOTA_SECRET', '0f6a1a3d4c34c8fceb18b655f21fb5a6');
 
+// 🔥 Biaya layanan QRIS statis (Rp 3.000) — otomatis ditambahkan ke total
+// tagihan saat metode pembayaran QRIS, dan dirinci di struk/nota.
+define('QRIS_STATIS_FEE', 3000);
+
+function qris_statis_fee() {
+    return QRIS_STATIS_FEE;
+}
+
 function nota_token($ref, $id) {
     return substr(hash('sha256', $ref . ':' . $id . ':' . NOTA_SECRET), 0, 12);
 }
@@ -396,7 +404,7 @@ function wa_pelanggan_msg($ps, $event, $extra = '') {
     $linkBayar = nota_link('pesanan', (int)$ps['id'], 'pay');
     $bayarSisa = max(0, $sisaVal);
     $waAdmin = setting('wa_admin_number', '') !== '' ? setting('wa_admin_number') : setting('telp');
-    // Payment hanya via QRIS statis/Transfer Bank — tanpa gateway otomatis (Midtrans/Duitku).
+    // Payment hanya via QRIS statis/Transfer Bank — tanpa gateway otomatis.
     $noteBayar = "\u{1F4A1} *Nilai bayar:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin";
     $noteDp = "\u{1F4A1} *Sisa tagihan:* " . rp($bayarSisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: $waAdmin";
     $msgs = [

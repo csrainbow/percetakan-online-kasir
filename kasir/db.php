@@ -45,6 +45,7 @@ class DB {
             no_invoice TEXT NOT NULL UNIQUE,
             tgl TEXT NOT NULL,
             total REAL NOT NULL DEFAULT 0,
+            biaya_layanan REAL NOT NULL DEFAULT 0,
             bayar REAL NOT NULL DEFAULT 0,
             kembalian REAL NOT NULL DEFAULT 0,
             metode TEXT NOT NULL DEFAULT 'Tunai',
@@ -92,6 +93,7 @@ class DB {
             ref_id INTEGER NOT NULL,
             tgl TEXT NOT NULL,
             jumlah REAL NOT NULL DEFAULT 0,
+            biaya_layanan REAL NOT NULL DEFAULT 0,
             metode TEXT NOT NULL DEFAULT 'Tunai',
             keterangan TEXT DEFAULT ''
         )");
@@ -192,6 +194,19 @@ class DB {
             self::run("ALTER TABLE penjualan ADD COLUMN status TEXT NOT NULL DEFAULT 'Lunas'");
         }
 
+        // 🔥 Biaya layanan QRIS statis (Rp 3.000) per transaksi penjualan.
+        $cols = self::q('PRAGMA table_info(penjualan)');
+        $hasBiaya = false;
+        foreach ($cols as $c) {
+            if ($c['name'] === 'biaya_layanan') {
+                $hasBiaya = true;
+                break;
+            }
+        }
+        if (!$hasBiaya) {
+            self::run("ALTER TABLE penjualan ADD COLUMN biaya_layanan REAL NOT NULL DEFAULT 0");
+        }
+
         $cols = self::q('PRAGMA table_info(pembayaran)');
         $hasStatusB = false;
         foreach ($cols as $c) {
@@ -226,6 +241,19 @@ class DB {
         }
         if (!$hasToken) {
             self::run("ALTER TABLE pembayaran ADD COLUMN token TEXT DEFAULT ''");
+        }
+
+        // 🔥 BIAYA LAYANAN QRIS per pembayaran pesanan (pelunasan DP/dll).
+        $cols = self::q('PRAGMA table_info(pembayaran)');
+        $hasBiayaPm = false;
+        foreach ($cols as $c) {
+            if ($c['name'] === 'biaya_layanan') {
+                $hasBiayaPm = true;
+                break;
+            }
+        }
+        if (!$hasBiayaPm) {
+            self::run("ALTER TABLE pembayaran ADD COLUMN biaya_layanan REAL NOT NULL DEFAULT 0");
         }
 
         // 🔥 Dimensi M2 per item pesanan (panjang & lebar meter) — agar ukuran
