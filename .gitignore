@@ -11,3 +11,11 @@ uploads/
 vendor/
 game-topup/config.local.php
 .env
+
+# --- artefak tes shell / cek domain (non-aplikasi) ---
+cek_*.sh
+tmp_*.sh
+*_test.sh
+*_domain*.sh
+domain_*.sh
+*.tmp
