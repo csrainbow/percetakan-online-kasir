@@ -191,3 +191,29 @@ function brand_logo_url(string $brand): string {
     if ($info === false || $info[0] < 64 || $info[1] < 64) return '';
     return BASE_PATH . '/assets/brands/' . $slug . '.png';
 }
+
+/** Warna avatar yang stabil per brand (dipakai saat logo file tidak ada). */
+function brand_avatar_color(string $brand): string {
+    $palette = [
+        ['#6366f1', '#22d3ee'], ['#8b5cf6', '#d946ef'], ['#f59e0b', '#ef4444'],
+        ['#10b981', '#0ea5e9'], ['#f43f5e', '#f59e0b'], ['#14b8a6', '#6366f1'],
+        ['#a855f7', '#ec4899'], ['#06b6d4', '#3b82f6'], ['#f97316', '#e11d48'],
+        ['#7c3aed', '#06b6d4'],
+    ];
+    [$c1, $c2] = $palette[abs(crc32(strtoupper($brand))) % count($palette)];
+    return "$c1;$c2";
+}
+
+/** Initial singkat untuk avatar brand (mis. "MOBILE LEGENDS" -> "ML"). */
+function brand_initial(string $brand): string {
+    $b = trim($brand);
+    if ($b === '') return '#';
+    $parts = preg_split('/[\s\-\.\/]+/', strtoupper($b));
+    $init = '';
+    foreach ($parts as $p) {
+        if ($p === '' || $p === 'BY') continue;
+        $init .= $p[0];
+        if (mb_strlen($init) >= 2) break;
+    }
+    return mb_strlen($init) >= 2 ? $init : substr($b, 0, 2);
+}
