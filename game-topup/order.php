@@ -12,7 +12,7 @@ if (!$product) {
     $f = function_exists('htmlspecialchars') ? 'htmlspecialchars' : 'htmlspecialchars'; ?>
 <!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Produk Tidak Ditemukan</title>
-<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/style.css">
+<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/style-fly.css">
 </head>
 <body><div class="page page-slim">
   <div class="notfound">
@@ -38,7 +38,7 @@ $logo = $brand !== '' ? brand_logo_url($brand) : '';
 <meta name="description" content="Top up <?= htmlspecialchars($product['name']) ?> seharga Rp <?= number_format($price,0,',','.') ?> - proses cepat & aman.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/style.css">
+<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/style-fly.css">
 </head>
 <body>
 <header class="site-header">

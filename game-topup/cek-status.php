@@ -18,7 +18,7 @@ if ($ref) {
 <title>Cek Status Order - <?= htmlspecialchars(SITE_NAME) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/style.css">
+<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/style-fly.css">
 </head>
 <body>
 <header class="site-header">
