@@ -149,8 +149,8 @@ include __DIR__ . '/includes/header.php';
         <div class="step">
             <span class="step-num">5</span>
             <div class="step-body">
-                <h3>Unggah Desain (Opsional)</h3>
-                <p>Jika sudah punya desain, unggah dengan format <strong>PDF, AI, CDR, PNG, atau JPG</strong> beresolusi tinggi. Belum punya desain? Tidak masalah — kami sediakan <strong>jasa desain</strong>, konsultasikan lewat WhatsApp.</p>
+                <h3>Unggah Desain</h3>
+                <p>Unggah desain Anda dengan format <strong>PDF, AI, CDR, PNG, atau JPG</strong> beresolusi tinggi saat checkout. Belum punya desain? Konsultasikan kebutuhan Anda lewat WhatsApp.</p>
             </div>
         </div>
 
@@ -163,7 +163,7 @@ include __DIR__ . '/includes/header.php';
                     <li><strong>QRIS</strong> — scan QR dari aplikasi m-banking atau e-wallet mana pun (otomatis &amp; paling cepat terverifikasi).</li>
                     <li><strong>Transfer Bank</strong> — BCA dan Mandiri atas nama Percetakan Rainbow.</li>
                 </ul>
-                <p>Beberapa pesanan tersedia sistem <strong>DP 50%</strong> — selesaikan pelunasan setelah desain/produk jadi.</p>
+                <p>Semua pembayaran dilakukan sebagai <strong>pelunasan penuh</strong> sesuai total pesanan — desain/produksi baru berjalan setelah pembayaran diterima oleh kami.</p>
             </div>
         </div>
 

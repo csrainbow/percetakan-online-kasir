@@ -100,7 +100,7 @@ include __DIR__ . '/includes/header.php';
         </div>
         <div class="cs-step">
             <div class="num">2</div>
-            <div class="txt"><strong>Pembayaran</strong> — transfer sesuai <strong>total pesanan</strong> (atau DP 70%) pada metode yang Anda pilih; lalu upload bukti pembayaran.<em></em></div>
+            <div class="txt"><strong>Pembayaran</strong> — transfer sesuai <strong>total pesanan</strong> pada metode yang Anda pilih; lalu upload bukti pembayaran.<em></em></div>
         </div>
         <div class="cs-step">
             <div class="num">3</div>

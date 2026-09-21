@@ -438,10 +438,8 @@ function renderCart() {
         var isCustom = item.sizeUnit && item.sizeUnit !== 'none';
         var dimLabel = isCustom && item.label ? ' (' + item.label + ')' : '';
         var dsLabel = '';
-        if (item.designService === 'jasa') {
-            dsLabel = ' <span style="color:#e67e22;">🎨 +Jasa Desain</span>';
-        } else if (item.designService === 'upload') {
-            dsLabel = item.designFile ? ' <span style="color:var(--success);">✅ File terupload</span>' : ' <span style="color:var(--warning);">📎 File Desain (upload di checkout)</span>';
+        if (item.designService === 'upload' || !item.designService) {
+            dsLabel = item.designFile ? ' <span style="color:var(--success);">✅ File terupload</span>' : ' <span style="color:var(--warning);">📎 File Desain (wajib diupload)</span>';
         }
         
         var itemKey = getItemKey(item);

@@ -391,6 +391,9 @@ include 'includes/header.php';
                     <?php if ($qrisName): ?>
                         <p style="text-align:center;">a.n. <strong><?= htmlspecialchars($qrisName) ?></strong></p>
                     <?php endif; ?>
+                    <p style="font-size:13px;color:#b45309;margin-top:10px;text-align:center;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;">
+                        🧾 Pembayaran QRIS dikenakan <strong>Biaya Layanan <?= formatRupiah(qris_statis_fee()) ?></strong> — otomatis ditambahkan ke total tagihan.
+                    </p>
 <p style="font-size:13px;color:#6c757d;margin-top:10px;text-align:center;">
                         Scan QRIS, lalu upload bukti pembayaran di halaman berikutnya untuk dicek manual oleh admin.
                     </p>
@@ -428,6 +431,7 @@ include 'includes/header.php';
 /**
  * 🔥 PAYMENT METHOD TOGGLE
  */
+window.QRIS_FEE_VALUE = <?= (int)qris_statis_fee() ?>;
 document.addEventListener('DOMContentLoaded', function() {
     var paymentSelect = document.getElementById('payment_method');
     
@@ -441,6 +445,9 @@ document.addEventListener('DOMContentLoaded', function() {
         var targetId = this.value + '-info';
         var target = document.getElementById(targetId);
         if (target) target.classList.add('show');
+
+        // 🔥 Perbarui ringkasan (total tagihan + biaya layanan QRIS)
+        if (typeof renderCheckoutSummary === 'function') renderCheckoutSummary();
     });
     
     // 🔥 Trigger initial state

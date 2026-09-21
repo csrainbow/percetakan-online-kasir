@@ -148,6 +148,14 @@ include '../includes/header.php';
     margin-bottom: 30px;
 }
 
+.login-logo .logo-image {
+    max-height: 72px;
+    max-width: 180px;
+    display: block;
+    margin: 0 auto 12px;
+    object-fit: contain;
+}
+
 .login-logo .logo-icon {
     width: 64px;
     height: 64px;
@@ -415,9 +423,7 @@ include '../includes/header.php';
         <div class="login-box">
             <!-- 🔥 LOGO -->
             <div class="login-logo">
-                <div class="logo-icon">
-                    <i class="fas fa-print"></i>
-                </div>
+                <img src="/logostruk.png" alt="Logo Percetakan Rainbow" class="logo-image">
                 <h1>Percetakan Rainbow</h1>
                 <p>Admin Panel</p>
             </div>

@@ -2,7 +2,7 @@
  * ============================================
  * RAINBOW PRINTING - MAIN SCRIPT v3.0
  * ============================================
- * Fitur: Cart, Checkout, Midtrans, DP, WhatsApp
+ * Fitur: Cart, Checkout, Midtrans, WhatsApp
  * ============================================
  */
 
@@ -255,9 +255,7 @@ function renderCart() {
         total += subtotal;
         var dimLabel = item.customSize ? ' <span style="font-size:12px;color:#666;">(' + (item.label || '') + ')</span>' : '';
         var dsLabel = '';
-        if (item.designService === 'jasa') {
-            dsLabel = ' <span style="font-size:12px;color:#e67e22;">🎨 +Jasa Desain</span>';
-        } else if (item.designService === 'upload') {
+        if (item.designService === 'upload') {
             dsLabel = item.designFile ? ' <span style="font-size:12px;color:var(--success);">✅ File terupload</span>' : ' <span style="font-size:12px;color:var(--warning);">📎 File Desain (upload di checkout)</span>';
         }
         var itemKey = getItemKey(item);
@@ -331,7 +329,7 @@ function renderCheckoutSummary() {
         var subtotal = item.price * item.qty;
         total += subtotal;
         var dim = item.customSize && item.label ? ' (' + item.label + ')' : '';
-        var ds = item.designService === 'jasa' ? ' +Jasa Desain' : item.designService === 'upload' ? ' +File Desain' : '';
+        var ds = item.designService === 'upload' ? ' +File Desain' : '';
         
         html += `
             <div class="summary-item">
@@ -340,8 +338,23 @@ function renderCheckoutSummary() {
             </div>
         `;
     });
-    
-    html += `<div class="summary-total"><span>Total</span><span>${formatRupiah(total)}</span></div>`;
+
+    // 🔥 Biaya layanan QRIS statis (Rp 3.000) — otomatis ditambahkan saat QRIS.
+    var paySel = document.querySelector('[name="payment_method"]');
+    var feeQris = (paySel && paySel.value === 'qris')
+        ? (window.QRIS_FEE_VALUE || 3000)
+        : 0;
+    if (feeQris > 0) {
+        html += `
+            <div class="summary-item">
+                <span>Biaya Layanan QRIS</span>
+                <span>${formatRupiah(feeQris)}</span>
+            </div>
+        `;
+    }
+
+    var grand = total + feeQris;
+    html += `<div class="summary-total"><span>Total Tagihan</span><span>${formatRupiah(grand)}</span></div>`;
     container.innerHTML = html;
 }
 
@@ -382,12 +395,6 @@ async function submitOrder(event) {
             };
         })
     };
-    
-    // 🔥 Validasi COD dengan Jasa Desain
-    if (data.payment_method === 'cod' && items.some(function(i) { return i.designService === 'jasa'; })) {
-        showNotification('Pesanan dengan Jasa Desain tidak bisa menggunakan COD. Silakan pilih Transfer Bank / QRIS.', 'error');
-        return;
-    }
     
     // 🔥 Validasi nomor WhatsApp
     if (!validatePhone(data.phone)) {
@@ -439,17 +446,16 @@ function initPaymentToggle() {
         var bankInfo = document.getElementById('bank-info');
         var qrisInfo = document.getElementById('qris-info');
         var midtransInfo = document.getElementById('midtrans-info');
-        var codInfo = document.getElementById('cod-info');
         
         if (bankInfo) bankInfo.style.display = 'none';
         if (qrisInfo) qrisInfo.style.display = 'none';
         if (midtransInfo) midtransInfo.style.display = 'none';
-        if (codInfo) codInfo.style.display = 'none';
         
         if (this.value === 'transfer' && bankInfo) bankInfo.style.display = 'block';
         if (this.value === 'qris' && qrisInfo) qrisInfo.style.display = 'block';
         if (this.value === 'midtrans' && midtransInfo) midtransInfo.style.display = 'block';
-        if (this.value === 'cod' && codInfo) codInfo.style.display = 'block';
+
+        renderCheckoutSummary();
     });
 }
 

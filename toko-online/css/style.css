@@ -700,6 +700,7 @@ img {
     gap: 4px;
     margin-top: 6px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .slider-thumb {
@@ -1629,6 +1630,14 @@ textarea.error {
     
     .product-detail {
         grid-template-columns: 1fr;
+    }
+    
+    .product-detail-info {
+        padding: 0 16px;
+    }
+    
+    .product-detail-info .product-description {
+        text-align: justify;
     }
     
     .checkout-layout {

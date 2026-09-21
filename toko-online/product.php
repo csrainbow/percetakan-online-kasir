@@ -189,6 +189,7 @@ fbq('track', 'ViewContent', {
     gap: 6px;
     margin-top: 8px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 .slider-thumb {
     width: 50px;
@@ -290,7 +291,7 @@ fbq('track', 'ViewContent', {
 }
 #design-upload-area {
     margin: 8px 0 8px 28px;
-    display: none;
+    display: block;
 }
 #design-upload-area input[type="file"] {
     font-size: 13px;
@@ -532,6 +533,12 @@ fbq('track', 'ViewContent', {
 
 /* 🔥 RESPONSIVE */
 @media (max-width: 480px) {
+    .product-detail-info {
+        padding: 0 16px;
+    }
+    .product-detail-info .product-description {
+        text-align: justify;
+    }
     .product-detail-info h1 {
         font-size: 20px;
     }
@@ -694,25 +701,19 @@ fbq('track', 'ViewContent', {
             </div>
             <?php endif; ?>
 
-            <!-- 🔥 DESIGN SERVICE -->
+            <!-- 🔥 DESIGN SERVICE (wajib: upload desain) -->
             <div class="design-service-options">
-                <label style="font-weight:600;margin-bottom:8px;display:block;">Pilihan Jasa Desain:</label>
+                <label style="font-weight:600;margin-bottom:8px;display:block;">Upload Desain (Wajib):</label>
                 <div style="margin-bottom:6px;">
                     <label>
-                        <input type="radio" name="design_service" value="upload" onchange="toggleDesignService()">
+                        <input type="radio" name="design_service" value="upload" checked onchange="toggleDesignService()">
                         Desain Sudah Jadi — Upload File (JPG/JPEG/PDF)
                     </label>
                     <div id="design-upload-area">
-                        <input type="file" name="design_file" id="design-file" accept=".jpg,.jpeg,.pdf" 
+                        <input type="file" name="design_file" id="design-file" accept=".jpg,.jpeg,.pdf" required
                                style="font-size:13px;padding:6px;">
                         <div id="design-file-status" style="font-size:12px;color:#6c757d;margin-top:4px;"></div>
                     </div>
-                </div>
-                <div>
-                    <label>
-                        <input type="radio" name="design_service" value="jasa" onchange="toggleDesignService()">
-                        Jasa Desain (+ Rp 25.000)
-                    </label>
                 </div>
             </div>
 
@@ -888,6 +889,8 @@ function toggleDesignService() {
 }
 
 // 🔥 SLIDER
+var autoTimer = null;
+
 function goToSlide(n) {
     if (totalSlides <= 1) return;
     currentSlide = n;
@@ -907,10 +910,27 @@ function goToSlide(n) {
     thumbs.forEach(function(t, i) {
         t.classList.toggle('active', i === currentSlide);
     });
+    
+    resetAutoSlide();
 }
 
 function slideGallery(d) {
     goToSlide(currentSlide + d);
+}
+
+// 🔥 AUTO SLIDE: pindah otomatis tiap 4 detik (hanya jika >1 foto)
+function startAutoSlide() {
+    if (totalSlides <= 1) return;
+    if (autoTimer) clearInterval(autoTimer);
+    autoTimer = setInterval(function() {
+        slideGallery(1);
+    }, 4000);
+}
+
+function resetAutoSlide() {
+    if (totalSlides <= 1) return;
+    if (autoTimer) clearInterval(autoTimer);
+    startAutoSlide();
 }
 
 // 🔥 TOUCH SUPPORT
@@ -929,6 +949,11 @@ function slideGallery(d) {
     });
 })();
 
+// 🔥 Mulai auto slide
+if (totalSlides > 1) {
+    startAutoSlide();
+}
+
 // 🔥 ADD TO CART
 document.addEventListener('DOMContentLoaded', function() {
     var form = document.querySelector('.add-to-cart-form');
@@ -943,7 +968,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var designInput = document.querySelector('input[name="design_service"]:checked');
         
         if (!designInput) {
-            showNotification('Pilih jasa desain terlebih dahulu!', 'error');
+            showNotification('Pilih opsi desain terlebih dahulu!', 'error');
             return;
         }
         
@@ -994,14 +1019,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         var variantJson = variantList.length ? JSON.stringify(variantList) : '';
         
-        // 🔥 Add design service fee
-        if (designService === 'jasa') {
-            price += 25000;
-        }
-        
-        // 🔥 Upload file jika ada, lalu add to cart
+        // 🔥 Upload file desain WAJIB, lalu add to cart
         if (designService === 'upload') {
-            // 🔥 Guest yang pilih "Desain Sudah Jadi (Upload File)" wajib daftar
+            // 🔥 Guest yang memilih "Upload File" wajib daftar
             // dulu — arahkan ke register SEBELUM upload (upload-design.php menolak
             // tamu & tanpa redirect, pesan "Silakan login" mentok di sini).
             if (typeof isCustomerLoggedIn !== 'undefined' && !isCustomerLoggedIn) {
@@ -1010,17 +1030,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             var fileInput = document.getElementById('design-file');
-            if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                var btn = this.querySelector('button[type="submit"]');
-                btn.disabled = true;
-                btn.textContent = '⏳ Mengupload...';
-                uploadDesignFile(fileInput.files[0], function(filename) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-cart-plus"></i> Tambah ke Keranjang';
-                    addToCart(id, name, qty, price, isCustom, width, height, matPrice, matName, label, designService, filename, key, variantJson, sizeUnit);
-                });
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                showNotification('Wajib upload file desain!', 'error');
                 return;
             }
+            var btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = '⏳ Mengupload...';
+            uploadDesignFile(fileInput.files[0], function(filename) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-cart-plus"></i> Tambah ke Keranjang';
+                addToCart(id, name, qty, price, isCustom, width, height, matPrice, matName, label, designService, filename, key, variantJson, sizeUnit);
+            });
+            return;
         }
         
         addToCart(id, name, qty, price, isCustom, width, height, matPrice, matName, label, designService, '', key, variantJson, sizeUnit);
@@ -1078,10 +1100,7 @@ function addToCart(id, name, qty, price, isCustom, width, height, matPrice, matN
     badges.forEach(function(b) { b.textContent = total; });
     
     // 🔥 Show notification
-    var msg = name;
-    if (designService === 'jasa') msg += ' + Jasa Desain';
-    if (designService === 'upload') msg += ' (dengan file desain)';
-    msg += ' ditambahkan!';
+    var msg = name + ' (dengan file desain) ditambahkan!';
     showNotification(msg, 'success');
 }
 
@@ -1145,44 +1164,55 @@ function fbShareUrl() {
     return 'https://www.facebook.com/sharer/sharer.php?u=' + u + '&quote=' + t;
 }
 
-// ✅ FB POSTING — buka Share Dialog resmi (web popup / native di HP)
-function shareFB(kind) {
-    var shareLink = fbShareUrl();
-    if (kind === 'story' && isMobileDevice()) {
-        // 🔥 FB CERITA — buka lewat Aplikasi Facebook (share sheet native punya
-        // opsi "Your Story / Cerita"). Fallback ke dialog web jika app tak ada.
-        var appLink = 'fb://facewebmodal/f?href=' + encodeURIComponent(shareLink);
-        var fallback = window.setTimeout(function() {
-            // document.hidden tetap false → aplikasi FB tidak terbuka
-            if (document.hidden === false) {
-                window.open(shareLink, '_blank', 'width=600,height=520');
-            }
-        }, 1500);
-        window.location.href = appLink;
-    } else {
-        window.open(
-            shareLink,
-            'fb-share',
-            'width=600,height=520,scrollbars=yes,resizable=yes'
-        );
-    }
-}
+// ✅ TOMBOL SHARE UNIFIED — Web Share API (sheet sistem HP)
+//    🔥 INI FIX INTI BUG "domain tidak termasuk dalam domain aplikasi":
+//    sharer.php & fb://facewebmodal DIVALIDASI domain ketat oleh FB/mobile web.
+//    tapi navigator.share() hanya membuka *share sheet sistem* HP → TANPA
+//    validasi domain → user bebas pilih Cerita FB / Posting FB / app lain.
+function shareSosmed(platform, kind) {
+    var tag = shareData.hashtag;
+    var isStory = (kind === 'story');
 
-// ✅ INSTAGRAM (Post & Cerita) — Web Share API: muncul sheet sistem HP
-//    (bisa pilih IG Story / Post / app lain). Di desktop: salin link.
-function shareInstagram() {
     if (navigator.share) {
         navigator.share({
             title: shareData.title,
-            text: shareText(),
+            text: shareText() + (isStory ? '\n(Bagikan ke Cerita)' : ''),
             url: shareData.url
         }).catch(function() {
             // user membatalkan — tidak apa
         });
         return;
     }
+
+    // 💻 DESKTOP — tanpa navigator.share:
+    //    • FB Posting → buka sharer.php (masih berfungsi web/desktop jika user
+    //      login FB di browser; tanpa param quote → tanpa validasi app domain).
+    //    • FB Cerita / IG → tidak bisa dari web; arahkan ke salin link.
+    if (platform === 'fb' && !isStory) {
+        window.open(
+            'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareData.url),
+            'fb-share',
+            'width=600,height=520,scrollbars=yes,resizable=yes'
+        );
+        return;
+    }
+
+    // Cerita / IG di desktop → salin link + instruksi app HP
     copyProductLink(true);
+    showNotification(
+        '📲 Cerita hanya bisa dibagikan dari HP. Link produk disalin — ' +
+        'buka aplikasi FB/IG di HP untuk Cerita.',
+        'info'
+    );
 }
+
+// ✅ POSTING — buka sheet share HP (muncul opsi Cerita FB, IG, dll) →
+//    pengguna pilih sendiri cara postingnya
+function shareFB(kind) { shareSosmed('fb', kind || 'post'); }
+
+// ✅ INSTAGRAM (Post & Cerita) — share sheet sistem HP (bisa pilih IG
+//    Story / Post / app lain). Di desktop: salin link.
+function shareInstagram() { shareSosmed('ig', 'mixed'); }
 
 // ✅ WHATSAPP
 function shareWA() {

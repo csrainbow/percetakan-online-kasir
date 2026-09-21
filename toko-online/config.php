@@ -40,12 +40,21 @@ define('SITE_DESCRIPTION', 'Percetakan online terpercaya di Samarinda. Cetak und
 // 🔥 WhatsApp
 define('WHATSAPP_NUMBER', '6281234567890');
 
+// 🔥 WhatsApp Cloud API (Meta)
+define('WHATSAPP_PHONE_NUMBER_ID', '1295084437027112');
+define('WHATSAPP_BUSINESS_ACCOUNT_ID', '2530101160785700');
+define('WHATSAPP_ACCESS_TOKEN', 'EAAZATZAigzK4cBSpHrcW0H6AzZAFtMXZCnsCAZB3tZCHCQZBCnH5xBTZAZAfUChbHqsmKhtlUBcg6K0H5lhP0nf5zqYcGZBs0TA33gmbQIlPruF0zAijZCXdMJxKU8woIIFRZCA1ooTOftWZC3803VpbvSiMxD8PX4FlC5FuJCkTZAiYT5gjFFCno0jIXw3wSev4WDIXB6FVbU4cxBsWcfgmH0ZBiHmFjtHYhPBB65L960HZAQEn7bq9hfAs3GnXZCvu27DMQbZCXskOgLZCb9rmghbp5v7fJEMVO8IlcJzecXZAq8GvzwZDZD');
+define('WHATSAPP_VERIFY_TOKEN', 'verify_token_random_' . md5('Percetakan Rainbow WhatsApp API'));
+
 // 🔥 Admin Login
 define('ADMIN_USERNAME', 'admin');
 define('ADMIN_PASSWORD_HASH', '$2y$10$/QhFH0S5hbJZbxJiSqbqPuGM0Trmx3mpq3rZLEo8kcQ5uBEnuxuri');
 
 // 🔥 Salt untuk token Payment Point (halaman bayar publik)
 define('PAYPOINT_SALT', 'e9f2d81a5c07b4639a1c8e4f20d15b73');
+
+// 🔥 Biaya layanan QRIS statis (Rp 3.000) — ditambahkan otomatis ke total tagihan.
+define('QRIS_STATIS_FEE', 3000);
 
 // ============================================
 // LOGS FOLDER

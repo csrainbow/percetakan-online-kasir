@@ -16,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'qris_name', 'qris_merchant_id',
         'qris_fee_percent',
         'qris_api_mid', 'qris_api_nmid', 'qris_api_apikey',
-        'duitku_merchant_code', 'duitku_api_key', 'duitku_sandbox',
         'midtrans_server_key', 'midtrans_client_key',
         'invoice_template', 'invoice_footer', 'printer_options',
         'logo_nota_size',
@@ -351,7 +350,6 @@ include '../includes/header.php';
                 <button type="button" class="tab-btn" data-tab="tab-bank">🏦 Bank</button>
                 <button type="button" class="tab-btn" data-tab="tab-qris">📱 QRIS</button>
                 <button type="button" class="tab-btn" data-tab="tab-qris-dinamis">⚡ QRIS Dinamis</button>
-                <button type="button" class="tab-btn" data-tab="tab-duitku">💰 Duitku</button>
                 <button type="button" class="tab-btn" data-tab="tab-midtrans">💳 Midtrans</button>
                 <button type="button" class="tab-btn" data-tab="tab-invoice">🧾 Invoice</button>
             </div>
@@ -507,34 +505,6 @@ include '../includes/header.php';
                     <div class="form-group">
                         <label>APIKEY</label>
                         <input type="password" name="qris_api_apikey" value="<?= htmlspecialchars($settings['qris_api_apikey'] ?? '') ?>" placeholder="APIKEY dari email aktivasi">
-                    </div>
-                </div>
-            </div>
-
-            <!-- 🔥 TAB 3c: DUITKU -->
-            <div class="tab-section" id="tab-duitku">
-                <div class="settings-section">
-                    <h2>💳 Duitku — Pembayaran Online</h2>
-                    <p style="color:#666;font-size:13px;margin-bottom:15px;">VA bank, QRIS, e-wallet & gerai retail (verifikasi otomatis via callback). Ambil Merchant Code & API Key di dashboard Duitku (Project Settings). Daftarkan Callback URL: <code>https://rainbowprinting.web.id/payment/duitku-callback.php</code></p>
-                    <?php if (getSetting('duitku_merchant_code') && getSetting('duitku_api_key')): ?>
-                        <p class="qris-badge ok">✅ DUITKU AKTIF (<?= getSetting('duitku_sandbox') === '0' ? 'PRODUCTION' : 'SANDBOX' ?>)</p>
-                    <?php else: ?>
-                        <p class="qris-badge warn">⚠️ DUITKU BELUM AKTIF — isi Merchant Code & API Key</p>
-                    <?php endif; ?>
-                    <div class="form-group">
-                        <label>Merchant Code</label>
-                        <input type="text" name="duitku_merchant_code" value="<?= htmlspecialchars($settings['duitku_merchant_code'] ?? '') ?>" placeholder="cth: D12345">
-                    </div>
-                    <div class="form-group">
-                        <label>API Key</label>
-                        <input type="password" name="duitku_api_key" value="<?= htmlspecialchars($settings['duitku_api_key'] ?? '') ?>" placeholder="API Key dari dashboard Duitku">
-                    </div>
-                    <div class="form-group">
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                            <input type="hidden" name="duitku_sandbox" value="0">
-                            <input type="checkbox" name="duitku_sandbox" value="1" <?= (getSetting('duitku_sandbox', '1') === '1') ? 'checked' : '' ?> style="width:auto;">
-                            Mode Sandbox (uji coba — centang untuk sandbox, lepas untuk production)
-                        </label>
                     </div>
                 </div>
             </div>

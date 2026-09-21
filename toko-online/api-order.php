@@ -14,7 +14,6 @@ ini_set('display_errors', 1);
 require_once __DIR__ . '/config.php';
 if (!defined('LOG_DIR')) define('LOG_DIR','/var/www/private/toko-logs');
 require_once __DIR__ . '/includes/qris.php';
-require_once __DIR__ . '/includes/duitku.php';
 
 header('Content-Type: application/json');
 
@@ -95,7 +94,6 @@ if (!preg_match('/^(0|62)\d{8,13}$/', $phoneClean)) {
 // 🔥 🔥 PROSES ITEMS 🔥 🔥
 $total = 0;
 $validItems = [];
-$hasDesignService = false;
 $hasCustomSize = false;
 
 foreach ($items as $item) {
@@ -116,6 +114,17 @@ foreach ($items as $item) {
     $designService = trim($item['designService'] ?? '');
     $designFile = trim($item['designFile'] ?? '');
     $designOriginalName = trim($item['designOriginalName'] ?? '');
+    
+    // 🔥 WAJIB upload file desain (Jasa Desain sudah dihapus).
+    if ($designFile === '') {
+        logOrder("Design file missing", ['product_id' => $item['id']]);
+        echo json_encode([
+            'success' => false,
+            'message' => 'File desain wajib diupload untuk setiap item. Silakan upload file desain di halaman produk.',
+            'code' => 'design_file_required'
+        ]);
+        exit;
+    }
     
     $matName = trim($item['material'] ?? '');
     $matPrice = floatval($item['matPrice'] ?? 0);
@@ -140,12 +149,6 @@ foreach ($items as $item) {
     }
     if ($unitPrice <= 0) {
         $unitPrice = $sizeUnit !== 'none' ? $effectivePricePerM2 : $product['price'];
-    }
-    
-    // 🔥 Tambahan Jasa Desain
-    if ($designService === 'jasa') {
-        $unitPrice += 25000;
-        $hasDesignService = true;
     }
     
     $subtotal = $unitPrice * $qty;
@@ -178,23 +181,8 @@ if (empty($validItems)) {
     exit;
 }
 
-// 🔥 🔥 CEK COD DENGAN JASA DESAIN 🔥 🔥
-if ($paymentMethod === 'cod') {
-    foreach ($validItems as $vi) {
-        if ($vi['design_service'] === 'jasa') {
-            logOrder("COD with design service rejected", ['order' => $name]);
-            echo json_encode([
-                'success' => false, 
-                'message' => 'Pesanan dengan Jasa Desain tidak bisa menggunakan COD. Silakan pilih Transfer Bank atau QRIS.',
-                'code' => 'cod_not_allowed'
-            ]);
-            exit;
-        }
-    }
-}
-
-// 🔥 🔥 CEK METODE PEMBAYARAN 🔥 🔥
-if (!in_array($paymentMethod, ['transfer', 'qris', 'cod'])) {
+// 🔥 🔥 CEK METODE PEMBAYARAN 🔥 🔥 (COD dinonaktifkan)
+if (!in_array($paymentMethod, ['transfer', 'qris'])) {
     logOrder("Metode pembayaran tidak tersedia", ['payment_method' => $paymentMethod]);
     echo json_encode([
         'success' => false,
@@ -224,6 +212,11 @@ if ($total < 1000) {
     exit;
 }
 
+// 🔥 Biaya layanan QRIS statis (Rp 3.000) — otomatis masuk ke total tagihan.
+$biayaLayanan = ($paymentMethod === 'qris') ? qris_statis_fee() : 0;
+$totalTagihan = $total + $biayaLayanan;
+logOrder("Biaya layanan QRIS", ['payment_method' => $paymentMethod, 'fee' => $biayaLayanan, 'total_tagihan' => $totalTagihan]);
+
 // 🔥 🔥 GENERATE ORDER CODE 🔥 🔥
 $orderCode = generateOrderCode();
 logOrder("Generated order code", ['order_code' => $orderCode]);
@@ -240,12 +233,13 @@ try {
         customer_phone, 
         customer_address, 
         notes, 
-        total, 
+        total,
+        biaya_layanan,
         payment_method, 
         customer_id, 
         payment_deadline,
         created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+5 minutes'), CURRENT_TIMESTAMP)");
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+5 minutes'), CURRENT_TIMESTAMP)");
     
     $stmt->execute([
         $orderCode,
@@ -253,7 +247,8 @@ try {
         $phoneClean,
         $address,
         $notes,
-        $total,
+        $totalTagihan,
+        $biayaLayanan,
         $paymentMethod,
         $customerId
     ]);
@@ -322,21 +317,18 @@ try {
     $db->commit();
     logOrder("Order committed successfully", [
         'order_code' => $orderCode,
-        'total' => $total,
+        'total' => $totalTagihan,
         'customer_id' => $customerId
     ]);
 
     // 🔥 QRIS dinamis telah dinonaktifkan — hanya QRIS statis yang dipakai.
     $qrisInfo = null;
 
-    // 🔥 Duitku telah dinonaktifkan — hanya Transfer Bank / QRIS statis yang dipakai.
-    $duitkuInfo = null;
-
     // 🔥 🔥 NOMINAL PEMBAYARAN (Jalur B — auto-check pembayaran)
-    // Pembayaran manual (transfer / QRIS cek manual) disarankan sebesar TOTAL persis;
-    // pencocokan otomatis dilakukan terhadap total pesanan.
+    // Pembayaran manual (transfer / QRIS cek manual) disarankan sebesar TOTAL
+    // tagihan (termasuk biaya layanan QRIS); pencocokan otomatis terhadap total pesanan.
     $payCode = 0;
-    $uniqueAmount = $total;
+    $uniqueAmount = $totalTagihan;
     logOrder("Payment amount", ['order_code' => $orderCode, 'unique_amount' => $uniqueAmount]);
     
     // 🔥 🔥 KIRIM NOTIFIKASI KE ADMIN 🔥 🔥
@@ -348,7 +340,7 @@ try {
             $message .= "Kode: " . $orderCode . "\n";
             $message .= "Customer: " . $name . "\n";
             $message .= "Telepon: " . $phoneClean . "\n";
-            $message .= "Total: Rp " . number_format($total, 0, ',', '.') . "\n";
+            $message .= "Total: Rp " . number_format($totalTagihan, 0, ',', '.') . "\n";
             $message .= "Metode: " . $paymentMethod . "\n";
             $message .= "Item: " . count($validItems) . " item\n\n";
             $message .= "Link: https://rainbowprinting.web.id/admin/order-detail.php?id=" . $orderId;
@@ -359,7 +351,7 @@ try {
             wa_web_notify_admin("📦 Pesanan Baru (Web) - " . $orderCode, [
                 "Customer: " . $name,
                 "Telepon: " . $phoneClean,
-                "Total: Rp " . number_format($total, 0, ',', '.'),
+                "Total: Rp " . number_format($totalTagihan, 0, ',', '.'),
                 "Metode: " . $paymentMethod,
                 "Item: " . count($validItems) . " item",
                 "Link: https://rainbowprinting.web.id/admin/order-detail.php?id=" . $orderId,
@@ -374,16 +366,13 @@ try {
         'success' => true,
         'message' => 'Pesanan berhasil dibuat!',
         'order_code' => $orderCode,
-        'total' => $total,
+        'total' => $totalTagihan,
         'order_id' => $orderId,
         'pay_code' => $payCode,
         'unique_amount' => $uniqueAmount,
-        'has_design' => $hasDesignService,
         'has_custom_size' => $hasCustomSize,
         'qris' => $qrisInfo,
         'qris_api_ready' => qris_api_ready(),
-        'duitku' => $duitkuInfo,
-        'duitku_ready' => duitku_ready(),
     ]);
     
 } catch (PDOException $e) {

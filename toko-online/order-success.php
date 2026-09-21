@@ -27,7 +27,6 @@ $persentaseDibayar = $order['total'] > 0 ? round(($totalPaid / $order['total']) 
 
 // 🔥 CEK STATUS PEMBAYARAN
 $isPaid = $order['payment_status'] === 'paid';
-$isDp = $order['payment_status'] === 'dp';
 $isUnpaid = $order['payment_status'] === 'unpaid';
 $isPendingVerification = $order['payment_status'] === 'pending_verification';
 
@@ -273,8 +272,6 @@ fbq('track', 'Purchase', {
     <div class="success-icon">
         <?php if ($isPaid): ?>
             ✅
-        <?php elseif ($isDp): ?>
-            💰
         <?php elseif ($isPendingVerification): ?>
             ⏳
         <?php else: ?>
@@ -286,8 +283,6 @@ fbq('track', 'Purchase', {
     <h1>
         <?php if ($isPaid): ?>
             Pembayaran Berhasil! 🎉
-        <?php elseif ($isDp): ?>
-            DP Berhasil Dibayar!
         <?php elseif ($isPendingVerification): ?>
             Menunggu Verifikasi Pembayaran
         <?php else: ?>
@@ -298,8 +293,6 @@ fbq('track', 'Purchase', {
     <p class="subtitle">
         <?php if ($isPaid): ?>
             Terima kasih! Pembayaran Anda telah kami terima. Pesanan akan segera diproses.
-        <?php elseif ($isDp): ?>
-            DP berhasil dibayar! Silakan lunasi sisa pembayaran.
         <?php elseif ($isPendingVerification): ?>
             Bukti pembayaran sedang diverifikasi oleh admin. Proses ini maksimal 1x24 jam.
         <?php else: ?>
@@ -343,6 +336,9 @@ fbq('track', 'Purchase', {
         <p><strong>📋 Kode Pesanan:</strong> <?= htmlspecialchars($order['order_code']) ?></p>
         <p><strong>👤 Nama:</strong> <?= htmlspecialchars($order['customer_name']) ?></p>
         <p><strong>📱 WhatsApp:</strong> <?= htmlspecialchars($order['customer_phone']) ?></p>
+        <?php if ((float)($order['biaya_layanan'] ?? 0) > 0): ?>
+            <p><strong>🧾 Biaya Layanan QRIS:</strong> <?= formatRupiah((float)$order['biaya_layanan']) ?></p>
+        <?php endif; ?>
         <p><strong>💰 Total:</strong> <?= formatRupiah($order['total']) ?></p>
         <p><strong>📊 Status Pesanan:</strong>
             <span class="status-badge status-<?= $order['status'] ?>">
@@ -355,19 +351,13 @@ fbq('track', 'Purchase', {
                 $pl = [
                     'unpaid' => 'Belum Dibayar',
                     'pending_verification' => 'Menunggu Verifikasi',
-                    'paid' => '✅ Lunas',
-                    'dp' => '💰 DP'
+                    'paid' => '✅ Lunas'
                 ];
                 echo $pl[$order['payment_status']] ?? ucfirst($order['payment_status']);
                 ?>
             </span>
         </p>
         <p><strong>🏦 Metode:</strong> <?= htmlspecialchars($methodLabel) ?></p>
-        <?php if ($isDp && $sisaPembayaran > 0): ?>
-            <p style="color:var(--danger);font-weight:bold;margin-top:5px;">
-                💰 Sisa pembayaran: <?= formatRupiah($sisaPembayaran) ?>
-            </p>
-        <?php endif; ?>
     </div>
 
     <?php if ($isUnpaid && ($order['payment_method'] ?? '') === 'qris'): ?>
@@ -387,9 +377,9 @@ fbq('track', 'Purchase', {
     <?php endif; ?>
     <!-- 🔥 🔥 TOMBOL AKSI 🔥 🔥 -->
     <div class="btn-group">
-        <?php if ($isUnpaid || $isDp): ?>
+        <?php if ($isUnpaid): ?>
             <a href="/payment/confirm.php?order=<?= urlencode($order['order_code']) ?>" class="btn btn-primary btn-lg">
-                <?= $isDp ? '💰 Bayar Sisa ('. formatRupiah($sisaPembayaran) .')' : '💳 Lanjutkan Pembayaran' ?>
+                💳 Lanjutkan Pembayaran
             </a>
         <?php endif; ?>
 

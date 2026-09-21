@@ -23,85 +23,13 @@ $totalPaid = floatval($totalPaidStmt->fetch()['total']);
 $sisaPembayaran = max(0, $order['total'] - $totalPaid);
 $persentaseDibayar = $order['total'] > 0 ? min(100, round(($totalPaid / $order['total']) * 100)) : 0;
 
-// 🔥 Ambil payment_type terakhir untuk informasi
-$lastPaymentType = $db->prepare("SELECT payment_type FROM payments WHERE order_id=? AND status IN ('verified','approved','paid') ORDER BY created_at DESC LIMIT 1");
-$lastPaymentType->execute([$id]);
-$lastPaymentType = $lastPaymentType->fetch();
-$lastPaymentType = $lastPaymentType ? $lastPaymentType['payment_type'] : null;
-
-// 🔥 CEK JASA DESAIN
-$hasJasaStmt = $db->prepare("SELECT COUNT(*) as c FROM order_items WHERE order_id=? AND design_service='jasa'");
-$hasJasaStmt->execute([$id]);
-$hasJasa = $hasJasaStmt->fetch()['c'] > 0;
-
-// 🔥 CEK INVOICE STATUS
-$canPublishInvoice = false;
-if ($hasJasa) {
-    $canPublishInvoice = in_array($order['payment_status'], ['dp','paid']) && in_array($order['status'], ['desain','processed','printing','done']);
-} else {
-    $canPublishInvoice = in_array($order['payment_status'], ['dp','paid']) && in_array($order['status'], ['processed','printing','done']);
-}
+// 🔥 CEK INVOICE STATUS (hanya jika sudah LUNAS dan sudah diproses/dicetak/selesai)
+$canPublishInvoice = $order['payment_status'] === 'paid' && in_array($order['status'], ['processed','printing','done']);
 
 // 🔥 CEK STATUS PEMBAYARAN UNTUK TOMBOL
 $isPaid = $order['payment_status'] === 'paid';
-$isDp = $order['payment_status'] === 'dp';
 $isPendingVerification = $order['payment_status'] === 'pending_verification';
 $isUnpaid = $order['payment_status'] === 'unpaid';
-
-// 🔥 PROSES UPLOAD HASIL DESAIN
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_design_result'])) {
-    $orderId = intval($_POST['order_id']);
-    if (isset($_FILES['design_result']) && $_FILES['design_result']['error'] === UPLOAD_ERR_OK) {
-        $ext = strtolower(pathinfo($_FILES['design_result']['name'], PATHINFO_EXTENSION));
-        $allowed = ['jpg','jpeg','png','pdf'];
-        if (in_array($ext, $allowed)) {
-            $uploadDir = __DIR__ . '/../uploads/designs/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-            $filename = 'result_' . $orderId . '_' . uniqid() . '.' . $ext;
-            if (move_uploaded_file($_FILES['design_result']['tmp_name'], $uploadDir . $filename)) {
-                $stmt = $db->prepare("UPDATE order_items SET design_result_file=? WHERE order_id=? AND design_service='jasa'");
-                $stmt->execute([$filename, $orderId]);
-                $db->prepare("UPDATE orders SET status='processed' WHERE id=?")->execute([$orderId]);
-
-                $order = $db->prepare("SELECT * FROM orders WHERE id=?");
-                $order->execute([$orderId]);
-                $order = $order->fetch();
-
-                $adminEmail = getSetting('admin_email');
-                $notifyEmails = [];
-                if ($adminEmail) $notifyEmails[] = $adminEmail;
-
-                if ($order && $order['customer_id'] > 0) {
-                    $cust = $db->prepare("SELECT email FROM customers WHERE id=?");
-                    $cust->execute([$order['customer_id']]);
-                    $c = $cust->fetch();
-                    if ($c && $c['email']) $notifyEmails[] = $c['email'];
-                }
-
-                foreach ($notifyEmails as $to) {
-                    $subject = '🎨 Hasil Desain Siap - ' . $order['order_code'];
-                    $message = "Hasil desain untuk pesanan {$order['order_code']} sudah selesai.\n\n";
-                    $message .= "Pelanggan: {$order['customer_name']}\n";
-                    $message .= "File: " . $_FILES['design_result']['name'] . "\n";
-                    $message .= "Link: https://rainbowprinting.web.id/uploads/designs/" . $filename . "\n";
-                    $message .= "Waktu: " . date('d/m/Y H:i:s') . "\n\n";
-                    $message .= "Pelanggan dapat mendownload file hasil desain di halaman detail pesanan.\n";
-                    sendEmail($to, $subject, $message);
-                }
-
-                if ($order && $order['customer_phone'] && function_exists('wa_web_send')) {
-                    wa_web_send($order['customer_phone'], "🎨 *Hasil Desain Siap*\n\nHalo " . $order['customer_name']
-                        . ", hasil desain untuk pesanan *{$order['order_code']}* sudah kami upload.\n"
-                        . "Link: https://rainbowprinting.web.id/uploads/designs/" . $filename . "\n\n"
-                        . "Silakan cek & konfirmasi. Terima kasih 🙏\n\n— Percetakan Rainbow");
-                }
-                $_SESSION['success'] = "✅ Hasil desain berhasil diupload! Customer sudah diberi notifikasi.";
-                echo '<script>location.href="order-detail.php?id=' . $orderId . '";</script>';
-                exit;
-            }
-        }
-    }
-}
 
 // 🔥 PROSES SIMPAN PRINTER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_printer'])) {
@@ -357,11 +285,8 @@ include '../includes/header.php';
                 <div>
                     <strong style="color:#555;">Status</strong><br>
                     <span style="font-size:16px;font-weight:bold;color:<?= $sisaPembayaran > 0 ? 'var(--danger)' : 'var(--success)' ?>;">
-                        <?= $sisaPembayaran > 0 ? '💰 DP (' . $persentaseDibayar . '%)' : '✅ LUNAS' ?>
+                        <?= $sisaPembayaran > 0 ? 'Pembayaran Sebagian' : '✅ LUNAS' ?>
                     </span>
-                    <?php if ($lastPaymentType): ?>
-                        <br><small style="color:#666;">Jenis: <?= $lastPaymentType === 'pelunasan' ? 'Pelunasan' : 'DP' ?></small>
-                    <?php endif; ?>
                 </div>
             </div>
             <?php if ($sisaPembayaran > 0): ?>
@@ -386,7 +311,7 @@ include '../includes/header.php';
                 <p><strong>Pesanan:</strong> <span class="status-badge status-<?= $order['status'] ?>"><?= ucfirst($order['status']) ?></span></p>
                 <p><strong>Pembayaran:</strong> <span class="status-badge status-<?= $order['payment_status'] ?>">
                     <?php
-                    $pl = ['unpaid'=>'Belum','pending_verification'=>'Verifikasi','paid'=>'Lunas','dp'=>'DP'];
+                    $pl = ['unpaid'=>'Belum','pending_verification'=>'Verifikasi','paid'=>'Lunas'];
                     echo $pl[$order['payment_status']] ?? ucfirst($order['payment_status']);
                     ?>
                 </span></p>
@@ -425,18 +350,11 @@ include '../includes/header.php';
             $runningTotal = 0;
             foreach ($payments as $p): 
                 $runningTotal += floatval($p['amount']);
-                $isDpPayment = ($runningTotal < $order['total']);
-                $paymentTypeLabel = '';
-                if ($p['payment_type'] === 'dp') $paymentTypeLabel = $isDpPayment ? '💰 DP' : '✅ Lunas';
-                elseif ($p['payment_type'] === 'pelunasan') $paymentTypeLabel = '✅ Pelunasan';
+                $paymentTypeLabel = '✅ Pelunasan';
             ?>
             <div class="card" style="position:relative;padding-top:25px;">
                 <?php if ($p['status'] === 'verified' || $p['status'] === 'approved' || $p['status'] === 'paid'): ?>
-                    <?php if ($isDpPayment): ?>
-                        <span style="position:absolute;top:-8px;right:10px;background:var(--danger);color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">💰 DP</span>
-                    <?php else: ?>
-                        <span style="position:absolute;top:-8px;right:10px;background:var(--success);color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">✅ LUNAS</span>
-                    <?php endif; ?>
+                    <span style="position:absolute;top:-8px;right:10px;background:var(--success);color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">✅ LUNAS</span>
                 <?php elseif ($p['status'] === 'rejected'): ?>
                     <span style="position:absolute;top:-8px;right:10px;background:var(--danger);color:#fff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:bold;">❌ DITOLAK</span>
                 <?php else: ?>
@@ -460,16 +378,9 @@ include '../includes/header.php';
                 <p><strong>Jumlah:</strong> <?= formatRupiah($p['amount']) ?></p>
                 
                 <?php if ($p['status'] === 'verified' || $p['status'] === 'approved' || $p['status'] === 'paid'): ?>
-                    <?php if ($isDpPayment): ?>
-                        <p style="font-size:12px;color:var(--danger);margin-top:-5px;">
-                            <strong>Sisa:</strong> <?= formatRupiah(max(0, $order['total'] - $runningTotal)) ?>
-                            <br><small>(<?= min(100, round(($runningTotal/$order['total'])*100)) ?>% dari total)</small>
-                        </p>
-                    <?php else: ?>
-                        <p style="font-size:12px;color:var(--success);margin-top:-5px;">
-                            <strong>✅ Lunas</strong> — <?= min(100, round(($runningTotal/$order['total'])*100)) ?>% dari total
-                        </p>
-                    <?php endif; ?>
+                    <p style="font-size:12px;color:var(--success);margin-top:-5px;">
+                        <strong>✅ Lunas</strong> — <?= min(100, round(($runningTotal/$order['total'])*100)) ?>% dari total
+                    </p>
                 <?php endif; ?>
                 
                 <p>Status: <span class="status-badge status-<?= $p['status'] ?>"><?= ucfirst($p['status']) ?></span></p>
@@ -480,7 +391,6 @@ include '../includes/header.php';
                     <input type="hidden" name="payment_id" value="<?= $p['id'] ?>">
                     <input type="hidden" name="return_to" value="order-detail.php?id=<?= $order['id'] ?>">
                     <button type="submit" name="verify_payment" value="1" class="btn btn-success btn-sm">✅ Verifikasi (Lunas)</button>
-                    <button type="submit" name="verify_dp" value="1" class="btn btn-warning btn-sm">💰 Verifikasi (DP)</button>
                     <button type="submit" name="reject_payment" value="1" class="btn btn-danger btn-sm">✕ Tolak</button>
                 </form>
                 <?php endif; ?>
@@ -509,18 +419,13 @@ include '../includes/header.php';
                     <td><?= htmlspecialchars($item['material_name']) ?: '-' ?></td>
                     <td><?= ($item['width'] && $item['height']) ? intval($item['width']) . '×' . intval($item['height']) . ' cm' : '-' ?></td>
                     <td>
-                        <?php if ($item['design_service'] === 'jasa'): ?>
-                            <span style="display:inline-block;padding:3px 10px;background:var(--danger);color:#fff;border-radius:4px;font-size:12px;font-weight:bold;">Jasa Desain</span>
-                        <?php elseif ($item['design_service'] === 'upload'): ?>
+                        <?php if ($item['design_service'] === 'upload'): ?>
                             <span style="display:inline-block;padding:3px 10px;background:var(--info);color:#fff;border-radius:4px;font-size:12px;">Upload File</span>
                             <?php if ($item['design_file']): ?>
                                 <br><a href="/uploads/designs/<?= htmlspecialchars($item['design_file']) ?>" target="_blank" style="font-size:11px;text-decoration:underline;">📎 <?= htmlspecialchars($item['design_original_name'] ?: 'Lihat File') ?></a>
                             <?php endif; ?>
                         <?php else: ?>
                             <span style="color:#999;font-size:12px;">-</span>
-                        <?php endif; ?>
-                        <?php if ($item['design_result_file']): ?>
-                            <br><span style="font-size:11px;color:var(--success);">✅ Hasil: <a href="/uploads/designs/<?= htmlspecialchars($item['design_result_file']) ?>" target="_blank" style="text-decoration:underline;">Download</a></span>
                         <?php endif; ?>
                     </td>
                     <td><?= $item['quantity'] ?></td>
@@ -530,25 +435,12 @@ include '../includes/header.php';
                 <?php endforeach; ?>
             </tbody>
             <tfoot>
+                <?php if ((float)($order['biaya_layanan'] ?? 0) > 0): ?>
+                    <tr><th colspan="5" style="text-align:right;">Biaya Layanan QRIS</th><th colspan="2"><?= formatRupiah((float)$order['biaya_layanan']) ?></th></tr>
+                <?php endif; ?>
                 <tr><th colspan="5" style="text-align:right;">Total</th><th colspan="2"><?= formatRupiah($order['total']) ?></th></tr>
             </tfoot>
         </table>
-        
-        <!-- 🔥 UPLOAD HASIL DESAIN -->
-        <?php if ($order['status'] === 'desain'): ?>
-        <div style="margin-top:20px;padding:15px;background:#e8daef;border-radius:8px;border:1px solid #d2b4de;">
-            <h3 style="margin:0 0 10px;color:var(--secondary-dark);">🎨 Upload Hasil Desain</h3>
-            <form method="POST" enctype="multipart/form-data" action="" style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
-                <input type="hidden" name="upload_design_result" value="1">
-                <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                <div>
-                    <input type="file" name="design_result" accept=".jpg,.jpeg,.png,.pdf" required style="font-size:14px;">
-                </div>
-                <button type="submit" class="btn btn-primary">📤 Upload & Selesaikan Desain</button>
-            </form>
-            <p style="margin-top:8px;font-size:12px;color:var(--secondary-dark);">⚠️ Setelah upload, customer akan mendapat notifikasi email.</p>
-        </div>
-        <?php endif; ?>
         
         <!-- 🔥 INVOICE STATUS -->
         <div style="margin-top:20px;">
@@ -556,23 +448,15 @@ include '../includes/header.php';
                 <div style="padding:15px;background:#e8f5e9;border-radius:8px;border:1px solid var(--success);">
                     <h3 style="margin:0 0 10px;color:#1e8e49;">✅ Syarat Terbitkan Invoice Terpenuhi</h3>
                     <p style="margin:0;font-size:13px;color:var(--success);">
-                        <?php if ($hasJasa): ?>
-                            Pesanan menggunakan Jasa Desain — Pembayaran sudah <strong>Lunas</strong>.
-                        <?php else: ?>
-                            Pesanan tanpa Jasa Desain — <strong>DP sudah diterima/terverifikasi</strong>.
-                        <?php endif; ?>
+                        Pembayaran sudah <strong>Lunas</strong>. Invoice dapat diterbitkan.
                     </p>
                     <a href="/invoice.php?order=<?= urlencode($order['order_code']) ?>" target="_blank" class="btn btn-success" style="margin-top:10px;">🧾 Terbitkan / Lihat Invoice</a>
                 </div>
-            <?php elseif (!$isPaid && !$isDp && $order['status'] !== 'done'): ?>
+            <?php elseif (!$isPaid && $order['status'] !== 'done'): ?>
                 <div style="padding:15px;background:#fef9e7;border-radius:8px;border:1px solid var(--danger);">
                     <h3 style="margin:0 0 10px;color:#b7950b;">⏳ Belum Bisa Terbitkan Invoice</h3>
                     <p style="margin:0;font-size:13px;color:#b7950b;">
-                        <?php if ($hasJasa): ?>
-                            Pesanan menggunakan Jasa Desain — Harus <strong>Lunas</strong> (status: <?= ucfirst($order['payment_status']) ?>).
-                        <?php else: ?>
-                            Pesanan tanpa Jasa Desain — Butuh <strong>DP terverifikasi</strong> (status: <?= ucfirst($order['payment_status']) ?>).
-                        <?php endif; ?>
+                        Pembayaran harus <strong>Lunas</strong> dulu (status: <?= ucfirst($order['payment_status']) ?>).
                     </p>
                 </div>
             <?php endif; ?>

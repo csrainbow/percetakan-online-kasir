@@ -22,30 +22,11 @@ $totalPaidStmt->execute([$order['id']]);
 $totalPaid = floatval($totalPaidStmt->fetch()['total']);
 $sisaPembayaran = max(0, $order['total'] - $totalPaid);
 
-// Cek apakah pesanan pakai jasa desain
-$hasJasaStmt = $db->prepare("SELECT COUNT(*) as c FROM order_items WHERE order_id=? AND design_service='jasa'");
-$hasJasaStmt->execute([$order['id']]);
-$hasJasaDesain = $hasJasaStmt->fetch()['c'] > 0;
-
-// 🔥 VALIDASI AKSES INVOICE
-$canViewInvoice = false;
-
-if ($hasJasaDesain) {
-    if ($order['payment_status'] === 'paid') {
-        $canViewInvoice = true;
-    } elseif ($order['payment_status'] === 'dp' && in_array($order['status'], ['desain', 'processed', 'printing', 'done'])) {
-        $canViewInvoice = true;
-    }
-} else {
-    if ($order['payment_status'] === 'paid') {
-        $canViewInvoice = true;
-    } elseif ($order['payment_status'] === 'dp' && in_array($order['status'], ['processed', 'printing', 'done'])) {
-        $canViewInvoice = true;
-    }
-}
+// 🔥 VALIDASI AKSES INVOICE (hanya jika sudah LUNAS)
+$canViewInvoice = $order['payment_status'] === 'paid';
 
 if (!$canViewInvoice) {
-    $_SESSION['error'] = "Invoice belum dapat diakses. Pastikan pembayaran sudah lunas atau DP sudah diverifikasi.";
+    $_SESSION['error'] = "Invoice belum dapat diakses. Pastikan pembayaran sudah lunas dan terverifikasi.";
     header('Location: /customer/order-detail.php?order=' . urlencode($orderCode));
     exit;
 }
@@ -76,14 +57,8 @@ $grandTotal = floatval($order['total']);
 $sisaAmount = $sisaPembayaran; // 🔥 Sisa pembayaran yang sebenarnya
 $totalDibayar = $totalPaid;
 
-// 🔥 Status pembayaran ala kasir (LUNAS / DOWN PAYMENT / BELUM BAYAR)
-if ($sisaAmount <= 0) {
-    $payLabel = 'LUNAS';
-} elseif ($totalDibayar > 0) {
-    $payLabel = 'DOWN PAYMENT';
-} else {
-    $payLabel = 'BELUM BAYAR';
-}
+// 🔥 Status pembayaran (DP dihapus → selalu LUNAS pada invoice yang terbit)
+$payLabel = 'LUNAS';
 
 // 🔥 Bangun item nota (sama pola kasir: nama + catatan baris kecil)
 $viewItems = [];
@@ -95,9 +70,7 @@ foreach ($items as $item) {
         'total' => $item['subtotal'],
         'note'  => [],
     ];
-    if ($item['design_service'] === 'jasa') {
-        $line['note'][] = 'Jasa Desain';
-    } elseif ($item['design_service'] === 'upload') {
+    if ($item['design_service'] === 'upload') {
         $line['note'][] = 'Upload File Desain';
     }
     if ($item['width'] && $item['height']) {
@@ -272,6 +245,9 @@ foreach ($chunks as $chunk):
             </td>
             <td class="invoice-bottom-right">
                 <table>
+                    <?php if ((float)($order['biaya_layanan'] ?? 0) > 0): ?>
+                        <tr><td>Biaya Layanan QRIS</td><td style="text-align:right;"><?= formatRupiah((float)$order['biaya_layanan']) ?></td></tr>
+                    <?php endif; ?>
                     <tr><td>Total Pesanan</td><td style="text-align:right;"><?= formatRupiah($grandTotal) ?></td></tr>
                     <tr><td>Sudah Dibayar</td><td style="text-align:right;color:#27ae60;"><?= formatRupiah($totalDibayar) ?></td></tr>
                     <tr class="total-row">

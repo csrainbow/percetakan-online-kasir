@@ -363,7 +363,7 @@ include 'includes/header.php';
                 <div class="label">Status</div>
                 <div class="value warning" style="font-size:14px;">
                     <?php if ($sisaPembayaran > 0): ?>
-                        <?= $totalPaid == 0 ? '💰 Belum Bayar' : '💰 DP (' . $persentaseDibayar . '%)' ?>
+                        <?= $totalPaid == 0 ? '💰 Belum Bayar' : '💰 Sebagian (' . $persentaseDibayar . '%)' ?>
                     <?php else: ?>
                         ✅ LUNAS
                     <?php endif; ?>
@@ -397,7 +397,7 @@ include 'includes/header.php';
             <p><strong>Status Pembayaran:</strong>
                 <span class="status-badge status-<?= $result['payment_status'] ?>">
                     <?php
-                    $pl = ['unpaid'=>'💰 Belum Dibayar','pending_verification'=>'⏳ Menunggu Verifikasi','paid'=>'✅ Lunas','dp'=>'💰 DP'];
+                    $pl = ['unpaid'=>'💰 Belum Dibayar','pending_verification'=>'⏳ Menunggu Verifikasi','paid'=>'✅ Lunas'];
                     echo $pl[$result['payment_status']] ?? ucfirst($result['payment_status']);
                     ?>
                 </span>
@@ -407,7 +407,6 @@ include 'includes/header.php';
                 $methodLabels = [
                     'transfer' => 'Transfer Bank (Cek Manual)',
                     'qris' => 'QRIS (Cek Manual)',
-                    'cod' => 'Bayar di Tempat (COD)',
                 ];
                 echo $methodLabels[$result['payment_method'] ?? ''] ?? ucfirst($result['payment_method'] ?? 'Transfer');
                 ?>
@@ -445,15 +444,10 @@ include 'includes/header.php';
                         <td><?= htmlspecialchars($item['material_name']) ?: '-' ?></td>
                         <td><?= ($item['width'] && $item['height']) ? intval($item['width']) . '×' . intval($item['height']) . ' cm' : '-' ?></td>
                         <td>
-                            <?php if ($item['design_service'] === 'jasa'): ?>
-                                <span style="display:inline-block;padding:2px 10px;background:var(--danger);color:#fff;border-radius:4px;font-size:11px;font-weight:bold;">🎨 Jasa Desain</span>
-                            <?php elseif ($item['design_service'] === 'upload'): ?>
+                            <?php if ($item['design_service'] === 'upload'): ?>
                                 <span style="display:inline-block;padding:2px 10px;background:var(--info);color:#fff;border-radius:4px;font-size:11px;">📎 Upload File</span>
                             <?php else: ?>
                                 <span style="color:#999;font-size:12px;">-</span>
-                            <?php endif; ?>
-                            <?php if ($item['design_result_file']): ?>
-                                <br><span style="font-size:11px;color:var(--success);">✅ <a href="/uploads/designs/<?= htmlspecialchars($item['design_result_file']) ?>" target="_blank">Download Hasil</a></span>
                             <?php endif; ?>
                         </td>
                         <td style="text-align:center;"><?= $item['quantity'] ?></td>
@@ -463,6 +457,12 @@ include 'includes/header.php';
                     <?php endforeach; ?>
                 </tbody>
                 <tfoot>
+                    <?php if ((float)($result['biaya_layanan'] ?? 0) > 0): ?>
+                        <tr style="background:#fffbeb;font-weight:bold;">
+                            <th colspan="5" style="text-align:right;">Biaya Layanan QRIS</th>
+                            <th colspan="2" style="text-align:right;"><?= formatRupiah((float)$result['biaya_layanan']) ?></th>
+                        </tr>
+                    <?php endif; ?>
                     <tr style="background:#f8f9fa;font-weight:bold;">
                         <th colspan="5" style="text-align:right;">Total</th>
                         <th colspan="2" style="text-align:right;"><?= formatRupiah($result['total']) ?></th>
@@ -504,12 +504,6 @@ include 'includes/header.php';
                 </a>
             <?php endif; ?>
 
-            <?php if ($result['payment_status'] === 'dp' && $sisaPembayaran > 0): ?>
-                <a href="/payment/confirm.php?order=<?= urlencode($result['order_code']) ?>" class="btn btn-warning btn-lg">
-                    💰 Bayar Sisa (<?= formatRupiah($sisaPembayaran) ?>)
-                </a>
-            <?php endif; ?>
-
             <?php if ($result['payment_status'] === 'pending_verification'): ?>
                 <div style="padding:12px 16px;background:#fff3cd;border-radius:8px;color:#856404;width:100%;text-align:center;">
                     ⏳ Bukti pembayaran sedang diverifikasi oleh admin.
@@ -520,12 +514,6 @@ include 'includes/header.php';
                 <a href="/invoice.php?order=<?= urlencode($result['order_code']) ?>" target="_blank" class="btn btn-success btn-lg">
                     🧾 Lihat Invoice
                 </a>
-            <?php endif; ?>
-
-            <?php if ($result['payment_method'] === 'cod' && $result['payment_status'] === 'unpaid'): ?>
-                <div style="padding:12px 16px;background:#eaf2f8;border-radius:8px;color:#111111;width:100%;text-align:center;">
-                    💵 Pembayaran dilakukan saat barang diterima (COD).
-                </div>
             <?php endif; ?>
         </div>
 

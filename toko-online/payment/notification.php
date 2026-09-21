@@ -1,4 +1,5 @@
 <?php
+if (!defined('LOG_DIR')) { @require_once __DIR__ . '/../config.php'; if (!defined('LOG_DIR')) define('LOG_DIR','/var/www/private/toko-logs'); }
 // 🔥 DEBUG - Aktifkan error logging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -7,13 +8,13 @@ ini_set('log_errors', 1);
 require_once __DIR__ . '/../config.php';
 
 // 🔥 BUAT LOG FOLDER JIKA BELUM ADA
-if (!is_dir(__DIR__ . '/../logs')) {
-    mkdir(__DIR__ . '/../logs', 0755, true);
+if (!is_dir(LOG_DIR)) {
+    mkdir(LOG_DIR, 0755, true);
 }
 
 // 🔥 🔥 FUNGSI LOG 🔥 🔥
 function logMidtrans($message, $data = null) {
-    $logFile = __DIR__ . '/../logs/midtrans.log';
+    $logFile = LOG_DIR . '/midtrans.log';
     $timestamp = date('Y-m-d H:i:s');
     $logMessage = "[$timestamp] " . $message;
     if ($data) {
@@ -144,11 +145,6 @@ $totalPaidStmt->execute([$order['id']]);
 $totalPaid = floatval($totalPaidStmt->fetch()['total']);
 $sisaPembayaran = max(0, $order['total'] - $totalPaid);
 
-// 🔥 CEK APAKAH ADA JASA DESAIN
-$stmt = $db->prepare("SELECT COUNT(*) as c FROM order_items WHERE order_id=? AND design_service='jasa'");
-$stmt->execute([$order['id']]);
-$hasJasa = $stmt->fetch()['c'] > 0;
-
 // 🔥 AMBIL EMAIL CUSTOMER
 $customerEmail = null;
 if ($order['customer_id'] > 0) {
@@ -166,15 +162,13 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
         $amount = floatval($grossAmount);
         $newTotalPaid = $totalPaid + $amount;
         
-        // 🔥 TENTUKAN STATUS PEMBAYARAN
+        // 🔥 DP sudah dihapus → semua pembayaran dianggap lunas
+        $newPaymentStatus = 'paid';
+        $newOrderStatus = 'processed';
         if ($newTotalPaid >= $order['total']) {
-            $newPaymentStatus = 'paid';
-            $newOrderStatus = $hasJasa ? 'desain' : 'processed';
             logMidtrans("✅ Full payment - LUNAS");
         } else {
-            $newPaymentStatus = 'dp';
-            $newOrderStatus = $hasJasa ? 'desain' : 'processed';
-            logMidtrans("💰 DP payment - DP (" . round(($newTotalPaid/$order['total'])*100) . "%)");
+            logMidtrans("✅ Payment diterima (" . round(($newTotalPaid/$order['total'])*100) . "%)");
         }
         
         // 🔥 UPDATE ORDER
@@ -203,7 +197,7 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
         // 🔥 KIRIM WA KE PELANGGAN (via antrean kasir)
         try {
             if (function_exists('waOrderStatus') && !empty($order['customer_phone'])) {
-                $waEv = $newPaymentStatus === 'paid' ? 'paid' : 'dp';
+                $waEv = 'paid';
                 $waSent = waOrderStatus($db, (int)$order['id'], $waEv);
                 logMidtrans('WA to customer: ' . ($waSent ? 'enqueued' : 'skipped'));
             }
@@ -217,7 +211,7 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
             
             // 🔥 Email ke Admin
             if ($adminEmail) {
-                $paymentLabel = $newPaymentStatus === 'paid' ? 'LUNAS' : 'DP';
+                $paymentLabel = 'LUNAS';
                 $subject = "💰 Pembayaran $paymentLabel - " . $order['order_code'];
                 $message = "Pembayaran baru dari Midtrans:\n\n";
                 $message .= "Kode: " . $order['order_code'] . "\n";
@@ -233,21 +227,12 @@ if (in_array($transactionStatus, ['capture', 'settlement'])) {
             
             // 🔥 Email ke Customer
             if ($customerEmail) {
-                $paymentLabel = $newPaymentStatus === 'paid' ? 'Lunas' : 'DP';
+                $paymentLabel = 'Lunas';
                 $subject = "✅ Pembayaran $paymentLabel Berhasil - " . $order['order_code'];
                 $message = "Halo " . $order['customer_name'] . ",\n\n";
                 $message .= "Pembayaran Anda untuk pesanan " . $order['order_code'] . " telah berhasil.\n\n";
                 $message .= "Status: " . $paymentLabel . "\n";
                 $message .= "Jumlah: Rp " . number_format($amount, 0, ',', '.') . "\n";
-                if ($newPaymentStatus === 'dp' && $newTotalPaid < $order['total']) {
-                    $sisaEmail = max(0, $order['total'] - $newTotalPaid);
-                    $message .= "Sisa pembayaran: Rp " . number_format($sisaEmail, 0, ',', '.') . "\n";
-                    if (function_exists('wa_web_pay_point_url')) {
-                        $message .= "Bayar sisa melalui Payment Point (QRIS & rekening):\n" . wa_web_pay_point_url($order['order_code'], $order['customer_phone']) . "\n\n";
-                    } else {
-                        $message .= "Silakan lunasi sisa pembayaran melalui halaman pesanan Anda.\n\n";
-                    }
-                }
                 $message .= "Terima kasih telah berbelanja di Percetakan Rainbow!\n";
                 $message .= "Link: https://rainbowprinting.web.id/customer/order-detail.php?order=" . $order['order_code'];
                 sendEmail($customerEmail, $subject, $message);
@@ -292,8 +277,8 @@ elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire'])) {
     
     // 🔥 CEK APAKAH SUDAH PERNAH BAYAR SEBELUMNYA
     if ($totalPaid > 0) {
-        $db->prepare("UPDATE orders SET payment_status='dp' WHERE id=?")->execute([$order['id']]);
-        logMidtrans("💰 Keeping DP status because previous payment exists");
+        $db->prepare("UPDATE orders SET payment_status='paid' WHERE id=?")->execute([$order['id']]);
+        logMidtrans("✅ Keeping paid status because previous payment exists");
     } else {
         $db->prepare("UPDATE orders SET payment_status='unpaid', status='cancelled' WHERE id=?")->execute([$order['id']]);
         logMidtrans("❌ Order cancelled - no payment made");

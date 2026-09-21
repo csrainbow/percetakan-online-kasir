@@ -159,7 +159,6 @@ if (!function_exists('waOrderStatus')) {
 
         $msgs = [
             'paid'      => "\u{2705} *PEMBAYARAN DITERIMA*\n\nHalo $name, pembayaran pesanan *$code* sebesar *" . formatRupiah($total) . "* sudah kami terima.\n\nPesanan Anda akan segera kami kerjakan. Terima kasih \u{1F64F}",
-            'dp'        => "\u{1F4B5} *PEMBAYARAN DP DITERIMA*\n\nHalo $name, pembayaran DP pesanan *$code* sebesar *" . formatRupiah($totalPaid) . "* sudah kami terima.\n\nSisa tagihan: *" . formatRupiah($sisa) . "*\n\n\u{1F4B3} *Silakan lunasi melalui Payment Point berikut:*\n" . wa_web_pay_point_url($order['order_code'], $order['customer_phone']) . "\n\n*Nilai bayar:* " . formatRupiah($sisa) . "\nCantumkan nama pesanan *$code* pada keterangan/berita transfer agar pembayaran terdeteksi otomatis.\n\nSetelah transfer, kirimkan *screenshot bukti bayar* ke: " . wa_web_admin_number() . "\n\nTerima kasih \u{1F64F}",
             'processed' => "\u{1F528} *PESANAN DIPROSES*\n\nHalo $name, pesanan *$code* sedang dikerjakan oleh tim kami.\n\nKami akan kabari lagi jika sudah selesai. Terima kasih \u{1F64F}",
             'printing'  => "\u{1F5A8}\u{FE0F} *PESANAN DICETAK*\n\nHalo $name, pesanan *$code* sedang dalam proses cetak.\n\nMohon ditunggu ya \u{1F64F}",
             'done'      => "\u{1F389} *PESANAN SELESAI*\n\nHalo $name, pesanan *$code* sudah selesai dan siap untuk diambil / dikirim.\n\nJangan lupa Kunjungi juga Website Kami yaa....\nhttps://rainbowprinting.web.id\n\nTerima kasih sudah mempercayakan kami \u{1F64F}",

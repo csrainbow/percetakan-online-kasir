@@ -8,16 +8,14 @@ $totalRevenue = $db->query("SELECT COALESCE(SUM(total),0) as t FROM orders WHERE
 $pendingOrders = $db->query("SELECT COUNT(*) as c FROM orders WHERE status='pending'")->fetch()['c'];
 $totalProducts = $db->query("SELECT COUNT(*) as c FROM products")->fetch()['c'];
 
-// 🔥 🔥 STATISTIK DP vs LUNAS 🔥 🔥
-$dpOrders = $db->query("SELECT COUNT(*) as c FROM orders WHERE payment_status='dp'")->fetch()['c'];
+// 🔥 🔥 STATISTIK PEMBAYARAN 🔥 🔥
 $paidOrders = $db->query("SELECT COUNT(*) as c FROM orders WHERE payment_status='paid'")->fetch()['c'];
 $unpaidOrders = $db->query("SELECT COUNT(*) as c FROM orders WHERE payment_status='unpaid'")->fetch()['c'];
 $pendingVerificationOrders = $db->query("SELECT COUNT(*) as c FROM orders WHERE payment_status='pending_verification'")->fetch()['c'];
 
-// 🔥 TOTAL PENDAPATAN DARI DP + LUNAS
-$totalDpRevenue = $db->query("SELECT COALESCE(SUM(amount),0) as t FROM payments WHERE status IN ('verified','approved','paid') AND payment_type='dp'")->fetch()['t'];
+// 🔥 TOTAL PENDAPATAN DARI PEMBAYARAN TERVERIFIKASI
 $totalPaidRevenue = $db->query("SELECT COALESCE(SUM(amount),0) as t FROM payments WHERE status IN ('verified','approved','paid') AND payment_type='pelunasan'")->fetch()['t'];
-$totalAllRevenue = $totalDpRevenue + $totalPaidRevenue;
+$totalAllRevenue = $totalPaidRevenue;
 
 // 🔥 STATISTIK PER BULAN (UNTUK GRAFIK)
 $monthlyStats = $db->query("
@@ -26,7 +24,7 @@ $monthlyStats = $db->query("
         COUNT(*) as total_orders,
         COALESCE(SUM(total),0) as total_amount
     FROM orders 
-    WHERE payment_status IN ('paid','dp')
+    WHERE payment_status = 'paid'
     GROUP BY strftime('%Y-%m', created_at)
     ORDER BY month DESC
     LIMIT 6
@@ -334,7 +332,7 @@ include '../includes/header.php';
             </div>
             <div class="stat-card success">
                 <div class="stat-value"><?= formatRupiah($totalAllRevenue) ?></div>
-                <div class="stat-label">Total Pendapatan (DP + Lunas)</div>
+                <div class="stat-label">Total Pendapatan (Lunas)</div>
             </div>
             <div class="stat-card warning">
                 <div class="stat-value"><?= $pendingOrders ?></div>
@@ -352,10 +350,6 @@ include '../includes/header.php';
             <div class="payment-stat-card">
                 <div class="stat-value paid"><?= $paidOrders ?></div>
                 <div class="stat-label">✅ Lunas</div>
-            </div>
-            <div class="payment-stat-card">
-                <div class="stat-value dp"><?= $dpOrders ?></div>
-                <div class="stat-label">💰 DP</div>
             </div>
             <div class="payment-stat-card">
                 <div class="stat-value verification"><?= $pendingVerificationOrders ?></div>
@@ -421,15 +415,11 @@ include '../includes/header.php';
                             $pl = [
                                 'unpaid' => 'Belum',
                                 'pending_verification' => 'Verifikasi',
-                                'paid' => 'Lunas',
-                                'dp' => 'DP'
+                                'paid' => 'Lunas'
                             ];
                             echo $pl[$o['payment_status']] ?? ucfirst($o['payment_status']);
                             ?>
                         </span>
-                        <?php if ($o['payment_status'] === 'dp'): ?>
-                            <br><small style="color:var(--warning);">Sisa: <?= formatRupiah($sisa) ?></small>
-                        <?php endif; ?>
                     </td>
                     <td><?= date('d/m/Y H:i', strtotime($o['created_at'])) ?></td>
                     <td>

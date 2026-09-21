@@ -164,7 +164,7 @@ function pm_match_hits($db, &$log = [], $limit = 50) {
     }
     $sum = ['matched' => 0, 'unmatched' => 0, 'ambiguous' => 0, 'duplicate' => 0, 'processed' => count($rows)];
     // Cocokkan nominal total persis untuk transfer/QRIS manual.
-    $find = $db->prepare("SELECT * FROM orders WHERE payment_status IN ('unpaid','dp') AND payment_method IN ('transfer','qris','qris_dinamis') AND total > 0 AND total = ?");
+    $find = $db->prepare("SELECT * FROM orders WHERE payment_status IN ('unpaid') AND payment_method IN ('transfer','qris','qris_dinamis') AND total > 0 AND total = ?");
 
     foreach ($rows as $h) {
         $amount = (int)$h['amount'];

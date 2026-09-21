@@ -45,11 +45,9 @@ $totalPaid = floatval($totalPaidStmt->fetch()['total']);
 $sisaPembayaran = max(0, $order['total'] - $totalPaid);
 $persentaseDibayar = $order['total'] > 0 ? round(($totalPaid / $order['total']) * 100) : 0;
 
-// 🔥 CEK APAKAH ADA JASA DESAIN
-$hasDesignService = false;
+// 🔥 CEK APAKAH ADA HASIL DESAIN (legacy order lama)
 $hasDesignResult = false;
 foreach ($items as $item) {
-    if ($item['design_service'] === 'jasa') $hasDesignService = true;
     if ($item['design_result_file']) $hasDesignResult = true;
 }
 
@@ -332,7 +330,7 @@ include '../includes/header.php';
                     <?php if ($totalPaid == 0): ?>
                         💰 Belum Bayar
                     <?php else: ?>
-                        💰 DP (<?= $persentaseDibayar ?>%)
+                        💰 Sebagian (<?= $persentaseDibayar ?>%)
                     <?php endif; ?>
                 <?php else: ?>
                     ✅ LUNAS
@@ -366,16 +364,11 @@ include '../includes/header.php';
         if ($sisaPembayaran <= 0) {
             echo 'Lunas';
         } else {
-            $pl = ['unpaid'=>'Belum Dibayar','pending_verification'=>'Menunggu Verifikasi','paid'=>'Lunas','dp'=>'DP'];
+            $pl = ['unpaid'=>'Belum Dibayar','pending_verification'=>'Menunggu Verifikasi','paid'=>'Lunas'];
             echo $pl[$order['payment_status']] ?? $order['payment_status'];
         }
         ?></span>
     </p>
-    <?php if ($order['payment_status'] === 'dp' && $sisaPembayaran > 0): ?>
-        <p style="color:var(--warning);font-weight:bold;margin-top:5px;">
-            💰 DP telah dibayar. Sisa pembayaran: <?= formatRupiah($sisaPembayaran) ?>
-        </p>
-    <?php endif; ?>
     <?php if ($order['payment_status'] === 'pending_verification'): ?>
         <p style="color:var(--warning);font-weight:bold;margin-top:5px;">
             ⏳ Bukti pembayaran sedang diverifikasi oleh admin.
@@ -404,9 +397,7 @@ include '../includes/header.php';
             <td><?= htmlspecialchars($item['material_name']) ?: '-' ?></td>
             <td><?= ($item['width'] && $item['height']) ? intval($item['width']) . '×' . intval($item['height']) . ' cm' : '-' ?></td>
             <td>
-                <?php if ($item['design_service'] === 'jasa'): ?>
-                    <span style="display:inline-block;padding:3px 10px;background:var(--warning);color:#fff;border-radius:4px;font-size:12px;font-weight:bold;">Jasa Desain</span>
-                <?php elseif ($item['design_service'] === 'upload'): ?>
+                <?php if ($item['design_service'] === 'upload'): ?>
                     <span style="display:inline-block;padding:3px 10px;background:var(--info);color:#fff;border-radius:4px;font-size:12px;">Upload File</span>
                 <?php else: ?>
                     <span style="color:#999;font-size:12px;">-</span>
@@ -431,6 +422,12 @@ include '../includes/header.php';
         <?php endforeach; ?>
     </tbody>
     <tfoot>
+        <?php if ((float)($order['biaya_layanan'] ?? 0) > 0): ?>
+            <tr>
+                <th colspan="5" style="text-align:right;">Biaya Layanan QRIS</th>
+                <th colspan="2" style="text-align:right;"><?= formatRupiah((float)$order['biaya_layanan']) ?></th>
+            </tr>
+        <?php endif; ?>
         <tr>
             <th colspan="5" style="text-align:right;">Total</th>
             <th colspan="2" style="text-align:right;"><?= formatRupiah($order['total']) ?></th>
@@ -443,9 +440,8 @@ include '../includes/header.php';
     <h2 style="margin-top:20px;font-size:18px;color:var(--primary);">💰 Riwayat Pembayaran</h2>
     <div class="payment-history">
         <?php foreach ($payments as $p): 
-            $isDp = ($p['payment_type'] === 'dp' && $p['amount'] < $order['total']);
-            $typeLabel = $isDp ? 'DP' : ($p['payment_type'] === 'pelunasan' ? 'Pelunasan' : 'Lunas');
-            $typeClass = $isDp ? 'payment-type-dp' : 'payment-type-pelunasan';
+            $typeLabel = ($p['payment_type'] === 'pelunasan') ? 'Pelunasan' : 'Lunas';
+            $typeClass = 'payment-type-pelunasan';
         ?>
         <div class="payment-item">
             <div class="payment-info">
@@ -477,12 +473,6 @@ include '../includes/header.php';
     <?php if ($order['payment_status'] === 'unpaid'): ?>
         <a href="/payment/confirm.php?order=<?= urlencode($order['order_code']) ?>" class="btn btn-primary">
             💳 Lanjutkan Pembayaran
-        </a>
-    <?php endif; ?>
-    
-    <?php if ($order['payment_status'] === 'dp' && $sisaPembayaran > 0): ?>
-        <a href="/payment/confirm.php?order=<?= urlencode($order['order_code']) ?>" class="btn btn-warning">
-            💰 Bayar Sisa (<?= formatRupiah($sisaPembayaran) ?>)
         </a>
     <?php endif; ?>
     

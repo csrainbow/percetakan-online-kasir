@@ -90,6 +90,7 @@ function initDatabase() {
             customer_address TEXT,
             notes TEXT,
             total REAL NOT NULL,
+            biaya_layanan REAL NOT NULL DEFAULT 0,
             status TEXT DEFAULT 'pending',
             payment_method TEXT,
             payment_status TEXT DEFAULT 'unpaid',
@@ -103,6 +104,11 @@ function initDatabase() {
     } catch (Exception $e) {
         error_log("Failed to create orders table: " . $e->getMessage());
     }
+
+    // 🔥 TAMBAH KOLOM BIAYA LAYANAN QRIS (Rp 3.000 per order QRIS statis)
+    try {
+        $db->exec("ALTER TABLE orders ADD COLUMN biaya_layanan REAL DEFAULT 0");
+    } catch (Exception $e) {}
 
     // 🔥 TAMBAH KOLOM QRIS (jika belum ada — idempotent)
     try {
@@ -127,16 +133,30 @@ function initDatabase() {
         $db->exec("ALTER TABLE orders ADD COLUMN qris_check_count INTEGER DEFAULT 0");
     } catch (Exception $e) {}
 
-    // 🔥 TAMBAH KOLOM DUITKU (jika belum ada — idempotent)
+    // 🔥 BUANG KOLOM DUITKU (gateway Duitku sudah dihapus total — tidak dipakai lagi).
+    // Aman: hanya di-drop apabila seluruh kolom Duitku pada orders masih kosong,
+    // sehingga tidak ada data yang terhapus. Bila ada data, kolom dibiarkan.
     try {
-        $db->exec("ALTER TABLE orders ADD COLUMN duitku_order_id TEXT DEFAULT ''");
-    } catch (Exception $e) {}
-    try {
-        $db->exec("ALTER TABLE orders ADD COLUMN duitku_reference TEXT DEFAULT ''");
-    } catch (Exception $e) {}
-    try {
-        $db->exec("ALTER TABLE orders ADD COLUMN duitku_payment_url TEXT DEFAULT ''");
-    } catch (Exception $e) {}
+        $ordCols = $db->query('PRAGMA table_info(orders)')->fetchAll(PDO::FETCH_ASSOC);
+        $ordNames = array_column($ordCols, 'name');
+        $duitkuCols = ['duitku_order_id', 'duitku_reference', 'duitku_payment_url'];
+        $present = array_values(array_intersect($duitkuCols, $ordNames));
+        if (count($present) > 0) {
+            $wheres = array_map(function ($c) { return 'COALESCE(TRIM("' . $c . '"),"") <> ""'; }, $present);
+            $used = (int)$db->query('SELECT COUNT(*) FROM orders WHERE ' . implode(' OR ', $wheres))->fetchColumn();
+            if ($used === 0) {
+                foreach ($present as $c) {
+                    try {
+                        $db->exec('ALTER TABLE orders DROP COLUMN "' . $c . '"');
+                    } catch (Exception $e) {
+                        // SQLite tanpa DROP COLUMN — kolom dibiarkan (tidak dipakai lagi).
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Gagal membersihkan kolom Duitku: " . $e->getMessage());
+    }
 
     // 🔥 TAMBAH KOLOM NOMINAL UNIK (auto-check pembayaran)
     try {
@@ -203,7 +223,7 @@ function initDatabase() {
             account_name TEXT,
             amount REAL NOT NULL,
             proof_image TEXT,
-            payment_type TEXT DEFAULT 'dp',
+            payment_type TEXT DEFAULT 'pelunasan',
             status TEXT DEFAULT 'pending',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (order_id) REFERENCES orders(id)
@@ -351,7 +371,7 @@ function initDatabase() {
         "ALTER TABLE customers ADD COLUMN address TEXT DEFAULT ''",
         "ALTER TABLE customers ADD COLUMN remember_token TEXT DEFAULT ''",
         "ALTER TABLE customers ADD COLUMN remember_expires DATETIME DEFAULT NULL",
-        "ALTER TABLE payments ADD COLUMN payment_type TEXT DEFAULT 'dp'",
+        "ALTER TABLE payments ADD COLUMN payment_type TEXT DEFAULT 'pelunasan'",
         "ALTER TABLE content_pages ADD COLUMN meta_title VARCHAR(255)",
         "ALTER TABLE content_pages ADD COLUMN meta_description TEXT",
         "ALTER TABLE content_pages ADD COLUMN meta_keywords VARCHAR(255)",
@@ -600,6 +620,14 @@ if (!function_exists('setting')) {
     function setting($key, $default = '') {
         $v = getSetting($key);
         return ($v === null || (string)$v === '') ? $default : $v;
+    }
+}
+
+// 🔥 Biaya layanan QRIS statis (Rp 3.000) — otomatis ditambahkan ke total
+// tagihan order saat metode pembayaran QRIS (statis / cek manual).
+if (!function_exists('qris_statis_fee')) {
+    function qris_statis_fee() {
+        return defined('QRIS_STATIS_FEE') ? QRIS_STATIS_FEE : 3000;
     }
 }
 

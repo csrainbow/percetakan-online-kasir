@@ -37,9 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     
-    // 🔥 VERIFIKASI PEMBAYARAN (OTOMATIS - DETEKSI DP/LUNAS)
+    // 🔥 VERIFIKASI PEMBAYARAN (OTOMATIS - SELALU LUNAS)
     if (isset($_POST['verify_payment'])) {
-        $payment = $db->prepare("SELECT amount, payment_type FROM payments WHERE id=?");
+        $payment = $db->prepare("SELECT amount FROM payments WHERE id=?");
         $payment->execute([$_POST['payment_id']]);
         $paymentData = $payment->fetch();
         
@@ -49,67 +49,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         
-        $db->prepare("UPDATE payments SET status='verified' WHERE id=?")->execute([$_POST['payment_id']]);
+        $db->prepare("UPDATE payments SET status='verified', payment_type='pelunasan' WHERE id=?")->execute([$_POST['payment_id']]);
         
-        $order = $db->prepare("SELECT id, total FROM orders WHERE id=?");
-        $order->execute([$_POST['order_id']]);
-        $order = $order->fetch();
+        // 🔥 UPDATE STATUS - selalu lunas dan langsung diproses
+        $db->prepare("UPDATE orders SET payment_status='paid', status='processed' WHERE id=?")->execute([$_POST['order_id']]);
+        $_SESSION['success'] = "✅ Pembayaran LUNAS berhasil diverifikasi!";
         
-        $stmt = $db->prepare("SELECT COUNT(*) as c FROM order_items WHERE order_id=? AND design_service='jasa'");
-        $stmt->execute([$_POST['order_id']]);
-        $hasJasa = $stmt->fetch()['c'] > 0;
-        
-        $total = floatval($order['total']);
-        $paymentType = $paymentData['payment_type'] ?? 'dp';
-        
-        $paidStmt = $db->prepare("SELECT SUM(amount) as total_paid FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
-        $paidStmt->execute([$_POST['order_id']]);
-        $totalPaid = floatval($paidStmt->fetch()['total_paid']);
-        
-        // 🔥 UPDATE STATUS
-        if ($paymentType === 'pelunasan' || $totalPaid >= $total) {
-            if ($hasJasa) {
-                $db->prepare("UPDATE orders SET payment_status='paid', status='desain' WHERE id=?")->execute([$_POST['order_id']]);
-            } else {
-                $db->prepare("UPDATE orders SET payment_status='paid', status='processed' WHERE id=?")->execute([$_POST['order_id']]);
-            }
-            $_SESSION['success'] = "✅ Pembayaran LUNAS berhasil diverifikasi!";
-        } else {
-            if ($hasJasa) {
-                $db->prepare("UPDATE orders SET payment_status='dp', status='desain' WHERE id=?")->execute([$_POST['order_id']]);
-            } else {
-                $db->prepare("UPDATE orders SET payment_status='dp', status='processed' WHERE id=?")->execute([$_POST['order_id']]);
-            }
-            $_SESSION['success'] = "💰 Pembayaran DP berhasil diverifikasi! Sisa: " . formatRupiah(max(0, $total - $totalPaid));
-        }
-        
-        waOrderStatus($db, intval($_POST['order_id']), $totalPaid >= $total ? 'paid' : 'dp');
-        header('Location: ' . $returnTo);
-        exit;
-    }
-    
-    // 🔥 VERIFIKASI DP (PAKSA)
-    if (isset($_POST['verify_dp'])) {
-        $db->prepare("UPDATE payments SET status='verified' WHERE id=?")->execute([$_POST['payment_id']]);
-        
-        $order = $db->prepare("SELECT id, total FROM orders WHERE id=?");
-        $order->execute([$_POST['order_id']]);
-        $order = $order->fetch();
-        
-        $stmt = $db->prepare("SELECT COUNT(*) as c FROM order_items WHERE order_id=? AND design_service='jasa'");
-        $stmt->execute([$_POST['order_id']]);
-        $hasJasa = $stmt->fetch()['c'] > 0;
-        
-        if ($hasJasa) {
-            $db->prepare("UPDATE orders SET payment_status='dp', status='desain' WHERE id=?")->execute([$_POST['order_id']]);
-        } else {
-            $db->prepare("UPDATE orders SET payment_status='dp', status='processed' WHERE id=?")->execute([$_POST['order_id']]);
-        }
-        
-        $db->prepare("UPDATE payments SET payment_type='dp' WHERE id=? AND (payment_type IS NULL OR payment_type='')")->execute([$_POST['payment_id']]);
-        
-        $_SESSION['success'] = "💰 Pembayaran DP berhasil diverifikasi (paksa)!";
-        waOrderStatus($db, intval($_POST['order_id']), 'dp');
+        waOrderStatus($db, intval($_POST['order_id']), 'paid');
         header('Location: ' . $returnTo);
         exit;
     }
@@ -131,90 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // 🔥 CATAT DP MANUAL (POPUP ISI NOMINAL DP DARI ADMIN)
-    if (isset($_POST['record_dp'])) {
-        $orderId = intval($_POST['order_id'] ?? 0);
-        $amount = floatval(str_replace(',', '', $_POST['dp_amount'] ?? 0));
-
-        $orderStmt = $db->prepare("SELECT * FROM orders WHERE id=?");
-        $orderStmt->execute([$orderId]);
-        $order = $orderStmt->fetch();
-
-        if (!$order) {
-            $_SESSION['error'] = "❌ Pesanan tidak ditemukan!";
-            header('Location: ' . $returnTo);
-            exit;
-        }
-
-        $paidStmt = $db->prepare("SELECT COALESCE(SUM(amount),0) as p FROM payments WHERE order_id=? AND status IN ('verified','approved','paid')");
-        $paidStmt->execute([$orderId]);
-        $alreadyPaid = floatval($paidStmt->fetch()['p']);
-        $sisa = max(0, floatval($order['total']) - $alreadyPaid);
-
-        if ($amount <= 0) {
-            $_SESSION['error'] = "❌ Nominal DP harus lebih dari 0!";
-        } elseif ($amount > $sisa) {
-            $_SESSION['error'] = "❌ Nominal DP melebihi sisa tagihan (" . formatRupiah($sisa) . ")!";
-        } else {
-            // 🔥 Catat baris pembayaran (verified langsung)
-            $db->prepare("INSERT INTO payments (order_id, amount, bank_name, account_number, account_name, proof_image, payment_type, status, created_at) 
-                           VALUES (?, ?, 'Admin', 'Manual', 'Admin', '', 'dp', 'verified', datetime('now'))")
-                ->execute([$orderId, $amount]);
-
-            $newTotalPaid = $alreadyPaid + $amount;
-            $stmt = $db->prepare("SELECT COUNT(*) as c FROM order_items WHERE order_id=? AND design_service='jasa'");
-            $stmt->execute([$orderId]);
-            $hasJasa = $stmt->fetch()['c'] > 0;
-            $newStatus = $hasJasa ? 'desain' : 'processed';
-
-            if ($newTotalPaid >= floatval($order['total'])) {
-                $db->prepare("UPDATE orders SET payment_status='paid', status=? WHERE id=?")->execute([$newStatus, $orderId]);
-                $_SESSION['success'] = "✅ Pembayaran LUNAS berhasil dicatat: " . formatRupiah($amount);
-                $waEv = 'paid';
-            } else {
-                $db->prepare("UPDATE orders SET payment_status='dp', status=? WHERE id=?")->execute([$newStatus, $orderId]);
-                $_SESSION['success'] = "💰 DP berhasil dicatat: " . formatRupiah($amount) . ". Sisa: " . formatRupiah($sisa - $amount);
-                $waEv = 'dp';
-            }
-
-            // 🔥 WA ke pelanggan (event dp/paid: menyertakan nominal, sisa, link Payment Point)
-            try {
-                if (function_exists('waOrderStatus')) {
-                    waOrderStatus($db, $orderId, $waEv);
-                }
-            } catch (Throwable $e) {
-                // Abaikan error WA, pesanan tetap tercatat
-            }
-
-            // 🔥 Email ke pelanggan (jika terdaftar)
-            if ($order['customer_id'] > 0) {
-                $cust = $db->prepare("SELECT email FROM customers WHERE id=?");
-                $cust->execute([$order['customer_id']]);
-                $c = $cust->fetch();
-                if ($c && !empty($c['email']) && function_exists('sendEmail')) {
-                    $label = $waEv === 'paid' ? 'Lunas' : 'DP';
-                    $subject = "✅ Pembayaran $label Berhasil - " . $order['order_code'];
-                    $msg = "Halo " . $order['customer_name'] . ",\n\n";
-                    $msg .= "Pembayaran Anda untuk pesanan " . $order['order_code'] . " telah kami terima.\n\n";
-                    $msg .= "Jumlah dibayar: Rp " . number_format($amount, 0, ',', '.') . "\n";
-                    if ($waEv === 'dp') {
-                        $sisaBaru = max(0, floatval($order['total']) - $newTotalPaid);
-                        $msg .= "Sisa tagihan: Rp " . number_format($sisaBaru, 0, ',', '.') . "\n";
-                        $msg .= "Bayar sisa melalui Payment Point (QRIS & rekening):\n";
-                        $msg .= wa_web_pay_point_url($order['order_code'], $order['customer_phone']) . "\n\n";
-                    } else {
-                        $msg .= "\n";
-                    }
-                    $msg .= "Terima kasih telah berbelanja di Percetakan Rainbow!\n";
-                    $msg .= "Cek pesanan: " . (getSetting('site_url') ?: 'https://rainbowprinting.web.id') . "/cek-pesanan.php";
-                    sendEmail($c['email'], $subject, $msg);
-                }
-            }
-        }
-        header('Location: ' . $returnTo);
-        exit;
-    }
-    
     // 🔥 🔥 EXPORT CSV 🔥 🔥
     if (isset($_POST['export_csv'])) {
         header('Content-Type: text/csv; charset=UTF-8');
@@ -313,8 +175,7 @@ $totalPages = ceil($totalOrders / $perPage);
 // 🔥 🔥 AMBIL DATA 🔥 🔥
 $sql = "
     SELECT o.*, 
-           COALESCE((SELECT SUM(amount) FROM payments WHERE order_id=o.id AND status IN ('verified','approved','paid')), 0) as total_paid,
-           (SELECT payment_type FROM payments WHERE order_id=o.id ORDER BY created_at DESC LIMIT 1) as last_payment_type
+           COALESCE((SELECT SUM(amount) FROM payments WHERE order_id=o.id AND status IN ('verified','approved','paid')), 0) as total_paid
     FROM orders o 
     $whereSql
     $orderBy
@@ -329,7 +190,7 @@ $orders = $stmt->fetchAll();
 // 🔥 AMBIL PAYMENT_ID UNTUK VERIFIKASI
 $paymentIds = [];
 foreach ($orders as $o) {
-    $stmt = $db->prepare("SELECT id, payment_type FROM payments WHERE order_id=? AND status='pending_verification' ORDER BY created_at DESC LIMIT 1");
+    $stmt = $db->prepare("SELECT id FROM payments WHERE order_id=? AND status='pending_verification' ORDER BY created_at DESC LIMIT 1");
     $stmt->execute([$o['id']]);
     $payment = $stmt->fetch();
     $paymentIds[$o['id']] = $payment ? $payment : null;
@@ -341,7 +202,6 @@ $stats = $db->query("
         COUNT(*) as total,
         SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) as pending,
         SUM(CASE WHEN payment_status='paid' THEN 1 ELSE 0 END) as paid,
-        SUM(CASE WHEN payment_status='dp' THEN 1 ELSE 0 END) as dp,
         SUM(CASE WHEN payment_status='pending_verification' THEN 1 ELSE 0 END) as verification
     FROM orders
 ")->fetch();
@@ -387,10 +247,6 @@ include '../includes/header.php';
                 <span class="label">✅ Lunas</span>
             </div>
             <div class="stat-item">
-                <span class="number" style="color:var(--warning);"><?= $stats['dp'] ?? 0 ?></span>
-                <span class="label">💰 DP</span>
-            </div>
-            <div class="stat-item">
                 <span class="number" style="color:var(--info);"><?= $stats['verification'] ?? 0 ?></span>
                 <span class="label">⏳ Verifikasi</span>
             </div>
@@ -413,7 +269,6 @@ include '../includes/header.php';
                     <option value="">Semua Pembayaran</option>
                     <option value="unpaid" <?= $paymentFilter === 'unpaid' ? 'selected' : '' ?>>Belum</option>
                     <option value="pending_verification" <?= $paymentFilter === 'pending_verification' ? 'selected' : '' ?>>Verifikasi</option>
-                    <option value="dp" <?= $paymentFilter === 'dp' ? 'selected' : '' ?>>DP</option>
                     <option value="paid" <?= $paymentFilter === 'paid' ? 'selected' : '' ?>>Lunas</option>
                 </select>
                 
@@ -451,7 +306,6 @@ include '../includes/header.php';
                         $sisa = max(0, $o['total'] - $o['total_paid']);
                         $paymentData = $paymentIds[$o['id']] ?? null;
                         $payment_id = $paymentData ? $paymentData['id'] : null;
-                        $payment_type = $paymentData ? $paymentData['payment_type'] : null;
                     ?>
                     <tr>
                         <td><input type="checkbox" class="order-checkbox" value="<?= $o['id'] ?>"></td>
@@ -489,7 +343,7 @@ include '../includes/header.php';
                         <td>
                             <span class="status-badge status-<?= $o['payment_status'] ?>">
                                 <?php
-                                $pl = ['unpaid'=>'Belum','pending_verification'=>'Verifikasi','paid'=>'Lunas','dp'=>'DP'];
+                                $pl = ['unpaid'=>'Belum','pending_verification'=>'Verifikasi','paid'=>'Lunas'];
                                 echo $pl[$o['payment_status']] ?? $o['payment_status'];
                                 ?>
                             </span>
@@ -498,11 +352,10 @@ include '../includes/header.php';
                                 <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
                                 <input type="hidden" name="return_to" value="orders.php">
                                 <select name="payment_status" style="padding:3px 6px;font-size:11px;border:1px solid #ddd;border-radius:4px;"
-                                        data-sisa="<?= $sisa ?>" data-prev="<?= $o['payment_status'] ?>"
+                                        data-prev="<?= $o['payment_status'] ?>"
                                         onchange="handlePayStatus(this, this.form)">
                                     <option value="unpaid" <?= $o['payment_status']==='unpaid'?'selected':'' ?>>Belum</option>
                                     <option value="pending_verification" <?= $o['payment_status']==='pending_verification'?'selected':'' ?>>Verifikasi</option>
-                                    <option value="dp" <?= $o['payment_status']==='dp'?'selected':'' ?>>DP</option>
                                     <option value="paid" <?= $o['payment_status']==='paid'?'selected':'' ?>>Lunas</option>
                                 </select>
                                 <button type="submit" name="update_payment" class="btn btn-sm btn-outline">OK</button>
@@ -511,22 +364,14 @@ include '../includes/header.php';
                             <!-- 🔥 TOMBOL VERIFIKASI -->
                             <?php if ($o['payment_status'] == 'pending_verification' && $payment_id): ?>
                                 <div style="margin-top:5px; display:flex; gap:4px; flex-wrap:wrap;">
-                                    <?php if ($payment_type): ?>
-                                        <small style="width:100%;color:#666;font-size:9px;">
-                                            Jenis: <?= $payment_type === 'pelunasan' ? '✅ Pelunasan' : '💰 DP' ?>
-                                        </small>
-                                    <?php endif; ?>
+                                    <small style="width:100%;color:#666;font-size:9px;">
+                                        Jenis: ✅ Pelunasan
+                                    </small>
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
                                         <input type="hidden" name="payment_id" value="<?= $payment_id ?>">
                                         <input type="hidden" name="return_to" value="orders.php">
                                         <button type="submit" name="verify_payment" class="btn btn-sm btn-success">✅</button>
-                                    </form>
-                                    <form method="POST" style="display:inline;">
-                                        <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
-                                        <input type="hidden" name="payment_id" value="<?= $payment_id ?>">
-                                        <input type="hidden" name="return_to" value="orders.php">
-                                        <button type="submit" name="verify_dp" class="btn btn-sm btn-warning">💰</button>
                                     </form>
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
@@ -578,29 +423,6 @@ include '../includes/header.php';
                     <div style="display:flex;gap:10px;">
                         <button type="button" class="btn btn-outline" style="flex:1;" onclick="closeModal()">Batal</button>
                         <button type="submit" class="btn btn-danger" style="flex:1;">🗑️ Hapus</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        
-        <!-- 🔥 MODAL CATAT DP (POPUP ISI NOMINAL) -->
-        <div id="dpModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;">
-            <div style="background:#fff;padding:30px;border-radius:12px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-                <h3 style="margin-bottom:6px;">💰 Catat Pembayaran DP</h3>
-                <p style="font-size:13px;color:#666;margin:0 0 15px;">Masukkan nominal DP yang dibayarkan pelanggan, lalu simpan. Pelanggan otomatis dapat notifikasi WhatsApp/email.</p>
-                <form method="POST" id="dpForm">
-                    <input type="hidden" name="record_dp" value="1">
-                    <input type="hidden" name="order_id" id="dpOrderId" value="">
-                    <input type="hidden" name="return_to" id="dpReturnTo" value="orders.php">
-                    <div style="background:#fef9e7;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;border:1px solid #f9e79f;">
-                        Sisa tagihan: <strong id="dpSisaLabel" style="color:var(--danger);">Rp 0</strong>
-                    </div>
-                    <label for="dpAmount" style="display:block;font-weight:bold;font-size:13px;margin-bottom:5px;">Nominal DP Dibayar (Rp)</label>
-                    <input type="number" name="dp_amount" id="dpAmount" min="1" step="1" required inputmode="numeric"
-                           style="width:100%;padding:10px 14px;border:2px solid #ddd;border-radius:8px;font-size:16px;margin-bottom:15px;">
-                    <div style="display:flex;gap:10px;">
-                        <button type="button" class="btn btn-outline" style="flex:1;" onclick="closeDpModal()">Batal</button>
-                        <button type="submit" class="btn btn-warning" style="flex:1;">💰 Simpan</button>
                     </div>
                 </form>
             </div>
@@ -661,52 +483,10 @@ function confirmDelete() {
 function closeModal() {
     document.getElementById('deleteModal').style.display = 'none';
 }
-// 🔥 HANDLER STATUS PEMBAYARAN: memilih DP -> popup isi nominal
+// 🔥 HANDLER STATUS PEMBAYARAN
 function handlePayStatus(sel, form) {
-    if (sel.value === 'dp') {
-        var prev = sel.getAttribute('data-prev');
-        if (prev) sel.value = prev;
-        openDpModal(sel, form);
-        return;
-    }
     sel.setAttribute('data-prev', sel.value);
 }
-function openDpModal(sel, form) {
-    document.getElementById('dpOrderId').value = form.elements['order_id'].value;
-    var rt = form.elements['return_to'];
-    document.getElementById('dpReturnTo').value = rt ? rt.value : 'orders.php';
-    var sisa = parseFloat(String(sel.getAttribute('data-sisa')).replace(/[^\d.-]/g, '')) || 0;
-    if (sisa <= 0) {
-        alert('✅ Pesanan ini sudah lunas / tidak ada sisa tagihan.');
-        return;
-    }
-    document.getElementById('dpSisaLabel').textContent = 'Rp ' + (sisa.toLocaleString ? sisa.toLocaleString('id-ID') : sisa);
-    var amt = document.getElementById('dpAmount');
-    amt.value = sisa;
-    amt.max = sisa;
-    amt.min = 1;
-    document.getElementById('dpModal').style.display = 'flex';
-    setTimeout(function() { amt.focus(); }, 100);
-}
-function closeDpModal() {
-    document.getElementById('dpModal').style.display = 'none';
-}
-document.getElementById('dpForm').addEventListener('submit', function(e) {
-    var val = parseFloat(document.getElementById('dpAmount').value);
-    var maxS = parseFloat(document.getElementById('dpAmount').max);
-    if (isNaN(val) || val <= 0) {
-        e.preventDefault();
-        alert('❌ Masukkan nominal DP yang valid (lebih dari 0).');
-        document.getElementById('dpAmount').focus();
-        return;
-    }
-    if (!isNaN(maxS) && val > maxS) {
-        e.preventDefault();
-        alert('❌ Nominal DP melebihi sisa tagihan.');
-        document.getElementById('dpAmount').focus();
-        return;
-    }
-});
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.order-checkbox').forEach(function(cb) { cb.addEventListener('change', updateSelectedCount); });
 });

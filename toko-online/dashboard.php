@@ -16,7 +16,6 @@ $stats = $db->prepare("
         COUNT(*) as total,
         SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) as pending,
         SUM(CASE WHEN payment_status='paid' THEN 1 ELSE 0 END) as paid,
-        SUM(CASE WHEN payment_status='dp' THEN 1 ELSE 0 END) as dp,
         SUM(CASE WHEN payment_status='pending_verification' THEN 1 ELSE 0 END) as verification
     FROM orders 
     WHERE customer_id = ?
@@ -308,10 +307,6 @@ include '../includes/header.php';
         <span class="number paid"><?= $stats['paid'] ?? 0 ?></span>
         <span class="label">✅ Lunas</span>
     </div>
-    <div class="stat-item border-dp">
-        <span class="number dp"><?= $stats['dp'] ?? 0 ?></span>
-        <span class="label">💰 DP</span>
-    </div>
     <div class="stat-item border-verification">
         <span class="number verification"><?= $stats['verification'] ?? 0 ?></span>
         <span class="label">⏳ Verifikasi</span>
@@ -371,8 +366,7 @@ include '../includes/header.php';
                         $pl = [
                             'unpaid' => '❌ Belum Dibayar',
                             'pending_verification' => '⏳ Verifikasi',
-                            'paid' => '✅ Lunas',
-                            'dp' => '💰 DP'
+                            'paid' => '✅ Lunas'
                         ];
                         echo $pl[$o['payment_status']] ?? ucfirst($o['payment_status']);
                         ?>
@@ -386,9 +380,6 @@ include '../includes/header.php';
                 <div class="item-row">
                     <span>
                         <?= htmlspecialchars($item['product_name']) ?>
-                        <?php if ($item['design_service'] === 'jasa'): ?>
-                            <span style="color:#e67e22;font-size:12px;">(+ Jasa Desain)</span>
-                        <?php endif; ?>
                         <?php if ($item['design_result_file']): ?>
                             <span style="color:var(--success);font-size:12px;">✅ Hasil siap</span>
                         <?php endif; ?>
@@ -435,12 +426,6 @@ include '../includes/header.php';
                             <i class="fas fa-credit-card"></i> Upload Bukti Bayar
                         </a>
                     <?php endif; ?>
-                <?php endif; ?>
-                
-                <?php if ($o['payment_status'] === 'dp' && $sisa > 0): ?>
-                    <a href="/payment/confirm.php?order=<?= urlencode($o['order_code']) ?>" class="btn btn-warning btn-sm">
-                        <i class="fas fa-money-bill-wave"></i> Bayar Sisa (<?= formatRupiah($sisa) ?>)
-                    </a>
                 <?php endif; ?>
                 
                 <?php if ($o['payment_status'] === 'pending_verification'): ?>

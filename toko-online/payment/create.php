@@ -1,4 +1,5 @@
 <?php
+if (!defined('LOG_DIR')) { @require_once __DIR__ . '/../config.php'; if (!defined('LOG_DIR')) define('LOG_DIR','/var/www/private/toko-logs'); }
 // 🔥 DEBUG
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -113,9 +114,7 @@ foreach ($orderItems as $item) {
     $qty = (int) $item['quantity'];
     $name = $item['product_name'];
     
-    if ($item['design_service'] === 'jasa') {
-        $name .= ' (+ Jasa Desain)';
-    } elseif ($item['design_service'] === 'upload') {
+    if ($item['design_service'] === 'upload') {
         $name .= ' (+ File Desain)';
     }
     
@@ -134,7 +133,7 @@ foreach ($orderItems as $item) {
     $totalItemAmount += $price * $qty;
 }
 
-// 🔥 order_id UNIK PER PERCOBAAN (agar bisa retry / DP lalu pelunasan)
+// 🔥 order_id UNIK PER PERCOBAAN (agar bisa retry pembayaran)
 $midtransOrderId = $order['order_code'] . '-' . time();
 
 // 🔥 🔥 PARAMETER MIDTRANS 🔥 🔥
@@ -176,15 +175,9 @@ $params = [
     'error_redirect_url' => BASE_URL . 'payment/finish.php?order=' . urlencode($order['order_code']) . '&status=error&mid_order=' . urlencode($midtransOrderId),
 ];
 
-// 🔥 TAMBAHKAN CUSTOM FIELD UNTUK DP
-if ($totalPaid > 0 && $sisaPembayaran > 0) {
-    $params['custom_field1'] = 'pelunasan';
-    $params['custom_field2'] = 'Sisa pembayaran dari DP: Rp ' . number_format($sisaPembayaran, 0, ',', '.');
-    $params['custom_field3'] = 'DP sudah dibayar: Rp ' . number_format($totalPaid, 0, ',', '.');
-} else {
-    $params['custom_field1'] = 'full_payment';
-    $params['custom_field2'] = 'Pembayaran penuh';
-}
+// 🔥 TAMBAHKAN CUSTOM FIELD (DP sudah dihapus → selalu full/pelunasan)
+$params['custom_field1'] = 'pelunasan';
+$params['custom_field2'] = 'Pembayaran penuh';
 
 // 🔥 🔥 LOG UNTUK DEBUGGING 🔥 🔥
 logMidtrans("=== MIDTRANS CREATE PAYMENT ===");
@@ -244,7 +237,7 @@ if ($httpCode === 201 && isset($result['redirect_url'])) {
             'token' => $result['token'] ?? '',
             'amount' => $sisaPembayaran,
             'order_code' => $order['order_code'],
-            'payment_type' => $totalPaid > 0 ? 'pelunasan' : 'full_payment'
+            'payment_type' => 'pelunasan'
         ]);
     } catch (Exception $e) {
         logMidtrans("❌ Database error: " . $e->getMessage());
@@ -279,9 +272,9 @@ if ($httpCode === 201 && isset($result['redirect_url'])) {
 
 // 🔥 🔥 FUNGSI LOG 🔥 🔥
 function logMidtrans($message) {
-    $logFile = __DIR__ . '/../logs/midtrans.log';
-    if (!is_dir(__DIR__ . '/../logs')) {
-        mkdir(__DIR__ . '/../logs', 0755, true);
+    $logFile = LOG_DIR . '/midtrans.log';
+    if (!is_dir(LOG_DIR)) {
+        mkdir(LOG_DIR, 0755, true);
     }
     $timestamp = date('Y-m-d H:i:s');
     file_put_contents($logFile, "[$timestamp] $message" . PHP_EOL, FILE_APPEND);

@@ -23,7 +23,7 @@ include __DIR__ . '/includes/header.php';
         <ul>
             <li>Setiap pesanan memiliki kode unik untuk pengecekan status di halaman <a href="/cek-pesanan.php">Cek Pesanan</a>.</li>
             <li>Spesifikasi (ukuran, bahan, layanan cetak/desain) yang diisi saat checkout menjadi dasar penawaran harga.</li>
-            <li>Pemesanan dianggap batal otomatis jika pembayaran tidak diterima sesuai metode & DP yang berlaku.</li>
+            <li>Pemesanan dianggap batal otomatis jika pembayaran tidak diterima sesuai metode yang berlaku.</li>
         </ul>
 
         <h2><i class="fas fa-calculator"></i> 2. Harga & Penawaran</h2>
@@ -37,16 +37,16 @@ include __DIR__ . '/includes/header.php';
         <h2><i class="fas fa-money-bill-wave"></i> 3. Pembayaran</h2>
         <p>Pembayaran dilakukan melalui transfer bank atau QRIS sesuai metode yang tersedia:</p>
         <ul>
-            <li><strong>DP 50%</strong> dari total pesanan untuk memulai produksi; sisa pelunasan dibayarkan sebelum barang dikirim/diambil.</li>
-            <li><strong>Transfer penuh</strong> sekaligus juga dapat dilakukan dan langsung mempercepat proses produksi.</li>
-            <li>Pembayaran ditransfer sesuai <strong>total pesanan</strong> (atau DP 70%) ke rekening/QRIS yang tersedia, lalu bukti pembayaran diunggah untuk dikonfirmasi.</li>
+            <li><strong>Pelunasan penuh</strong> sesuai total pesanan untuk memulai proses produksi.</li>
+            <li><strong>Transfer penuh</strong> sekaligus langsung mempercepat proses produksi.</li>
+            <li>Pembayaran ditransfer sesuai <strong>total pesanan</strong> ke rekening/QRIS yang tersedia, lalu bukti pembayaran diunggah untuk dikonfirmasi.</li>
             <li>Pembayaran dikonfirmasi setelah dana benar-benar masuk ke rekening kami. Simpan bukti transfer untuk rekonsiliasi bila diperlukan.</li>
         </ul>
 
         <h2><i class="fas fa-file-image"></i> 4. File Desain & Revisi</h2>
         <ul>
             <li>File desain yang diunggah harus beresolusi sesuai (minimum 300 DPI untuk hasil optimal). Kerusakan/pecah pada hasil cetak akibat file berkualitas rendah menjadi tanggung jawab pemesan.</li>
-            <li>Jika memilih <strong>Jasa Desain</strong>, revisi wajib maksimal sesuai kesepakatan. Perubahan desain setelah produksi dimulai dapat dikenakan biaya tambahan.</li>
+            <li>Desain diunggah pemesan saat checkout menjadi dasar produksi. Perubahan desain setelah produksi dimulai dapat dikenakan biaya tambahan.</li>
             <li>Kami tidak mengunggah kembali file desain tanpa izin kecuali untuk keperluan produksi. Beri tahu kami bila desain akhir ingin disimpan sebagai arsip.</li>
             <li>Dokumen mencetak yang pernah dipesan tetap menjadi milik pemesan; kami menyimpan salinan hanya untuk keperluan operasional dan arsip internal.</li>
         </ul>

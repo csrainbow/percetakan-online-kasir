@@ -98,7 +98,7 @@ include __DIR__ . '/includes/header.php';
                     <li>Atur <strong>ukuran, bahan, dan jumlah</strong> sesuai kebutuhan, lalu klik <strong>Tambah ke Keranjang</strong>.</li>
                     <li>Lanjut ke <strong>Checkout</strong> dan isi data pemesanan Anda.</li>
                     <li>Unggah desain jika Anda sudah punya (opsional).</li>
-                    <li>Pilih metode pembayaran lalu lakukan pembayaran DP atau lunas.</li>
+                    <li>Pilih metode pembayaran lalu lakukan pembayaran (pelunasan penuh).</li>
                     <li>Pesanan otomatis diproses setelah pembayaran terverifikasi.</li>
                 </ul>
             </div>
@@ -113,7 +113,7 @@ include __DIR__ . '/includes/header.php';
                     <li><strong>Cetak Offset:</strong> brosur, kartu nama, undangan, kalender, dan kemasan.</li>
                     <li><strong>UV Printer:</strong> cetak di media akrilik, kaca, kayu, dan merchandise.</li>
                     <li><strong>Sablon:</strong> kaos, totebag, dan merchandise custom.</li>
-                    <li><strong>Jasa Desain Grafis:</strong> logo, konten media sosial, dan desain kemasan.</li>
+                    <li><strong>Desain Grafis:</strong> konsultasi logo, konten media sosial, dan desain kemasan.</li>
                     <li>Semua ukuran dan bahan bisa <strong>custom</strong> sesuai kebutuhan Anda.</li>
                 </ul>
             </div>
@@ -136,7 +136,7 @@ include __DIR__ . '/includes/header.php';
         <details class="faq-item">
             <summary><span class="q-icon">5</span><span class="q-text">Apakah harus punya desain sendiri?</span><span class="chev">▾</span></summary>
             <div class="a-body">
-                <p><strong>Tidak wajib.</strong> Anda bisa mengunggah desain sendiri saat checkout dengan format PDF, AI, CDR, PNG, atau JPG beresolusi tinggi. Jika belum punya desain, kami menyediakan <strong>jasa desain</strong> dengan biaya tambahan — konsultasikan kebutuhan Anda lewat WhatsApp.</p>
+                <p><strong>Tidak wajib.</strong> Anda bisa mengunggah desain sendiri saat checkout dengan format PDF, AI, CDR, PNG, atau JPG beresolusi tinggi. Jika belum punya desain, konsultasikan kebutuhan Anda lewat WhatsApp sebelum memesan.</p>
             </div>
         </details>
 
@@ -155,7 +155,7 @@ include __DIR__ . '/includes/header.php';
                     <li><strong>Transfer Bank:</strong> BCA dan Mandiri (atas nama <?= htmlspecialchars(getSetting('bank1_name_holder') ?: 'Percetakan Rainbow') ?>).</li>
                     <li><strong>QRIS:</strong> scan QR dari aplikasi m-banking atau e-wallet mana pun.</li>
                 </ul>
-                <p>Untuk pesanan tertentu tersedia sistem <strong>DP 50%</strong> dan pelunasan setelah barang jadi.</p>
+                <p>Semua pembayaran dilakukan sebagai <strong>pelunasan penuh</strong> sesuai total pesanan sebelum tahap produksi dimulai.</p>
             </div>
         </details>
 

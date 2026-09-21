@@ -39,14 +39,8 @@ $totalPaid = floatval($totalPaidStmt->fetch()['total']);
 $sisaPembayaran = max(0, $order['total'] - $totalPaid);
 $persentaseDibayar = $order['total'] > 0 ? round(($totalPaid / $order['total']) * 100) : 0;
 
-// 🔥 CEK JASA DESAIN
-$stmt = $db->prepare("SELECT COUNT(*) as c FROM order_items WHERE order_id=? AND design_service='jasa'");
-$stmt->execute([$order['id']]);
-$hasJasa = $stmt->fetch()['c'] > 0;
-
 // 🔥 CEK APAKAH SUDAH LUNAS DARI DATABASE
 $isPaid = $order['payment_status'] === 'paid';
-$isDp = $order['payment_status'] === 'dp';
 $isPendingVerification = $order['payment_status'] === 'pending_verification';
 
 $serverKey = getSetting('midtrans_server_key');
@@ -85,18 +79,16 @@ if ($serverKey && $orderCode) {
                 // 🔥 CEK TOTAL PEMBAYARAN
                 $newTotalPaid = $totalPaid + floatval($grossAmount);
                 
-                // 🔥 TENTUKAN STATUS PEMBAYARAN
+                // 🔥 TENTUKAN STATUS PEMBAYARAN (DP dihapus → selalu lunas)
                 if ($newTotalPaid >= $order['total']) {
                     // ✅ LUNAS
                     $newPaymentStatus = 'paid';
-                    $newOrderStatus = $hasJasa ? 'desain' : 'processed';
                     $_SESSION['success'] = "✅ Pembayaran LUNAS berhasil! Pesanan Anda akan segera diproses.";
                 } else {
-                    // 💰 DP
-                    $newPaymentStatus = 'dp';
-                    $newOrderStatus = $hasJasa ? 'desain' : 'processed';
-                    $_SESSION['success'] = "💰 DP berhasil dibayar! Sisa pembayaran: " . formatRupiah(max(0, $order['total'] - $newTotalPaid));
+                    $newPaymentStatus = 'paid';
+                    $_SESSION['success'] = "✅ Pembayaran diterima! Sisa pembayaran: " . formatRupiah(max(0, $order['total'] - $newTotalPaid));
                 }
+                $newOrderStatus = 'processed';
                 
                 // 🔥 UPDATE ORDER
                 $db->prepare("UPDATE orders SET payment_status=?, status=? WHERE id=?")->execute([
@@ -129,8 +121,8 @@ if ($serverKey && $orderCode) {
             } elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire'])) {
                 // ❌ STATUS GAGAL
                 if ($totalPaid > 0) {
-                    $db->prepare("UPDATE orders SET payment_status='dp' WHERE id=?")->execute([$order['id']]);
-                    $_SESSION['warning'] = "⚠️ Pembayaran baru gagal, tapi DP Anda tetap berlaku.";
+                    $db->prepare("UPDATE orders SET payment_status='paid' WHERE id=?")->execute([$order['id']]);
+                    $_SESSION['warning'] = "⚠️ Pembayaran baru gagal, tapi pembayaran Anda tetap berlaku.";
                 } else {
                     $db->prepare("UPDATE orders SET payment_status='unpaid', status='failed' WHERE id=?")->execute([$order['id']]);
                     $_SESSION['error'] = "❌ Pembayaran gagal. Status: " . $transactionStatus . ". Silakan coba lagi.";
@@ -155,8 +147,8 @@ if (!$isManualCheck && $statusParam) {
         $_SESSION['info'] = "⏳ Pembayaran sedang diproses. Tunggu konfirmasi dari Midtrans.";
     } elseif ($statusParam === 'error') {
         if ($totalPaid > 0) {
-            $db->prepare("UPDATE orders SET payment_status='dp' WHERE id=?")->execute([$order['id']]);
-            $_SESSION['warning'] = "⚠️ Ada masalah dengan pembayaran, tapi DP Anda tetap berlaku.";
+            $db->prepare("UPDATE orders SET payment_status='paid' WHERE id=?")->execute([$order['id']]);
+            $_SESSION['warning'] = "⚠️ Ada masalah dengan pembayaran, tapi pembayaran Anda tetap berlaku.";
         } else {
             $_SESSION['error'] = "❌ Terjadi kesalahan dalam pembayaran. Silakan coba lagi.";
         }
@@ -359,8 +351,6 @@ include '../includes/header.php';
     <div class="success-icon">
         <?php if ($order['payment_status'] === 'paid'): ?>
             ✅
-        <?php elseif ($order['payment_status'] === 'dp'): ?>
-            💰
         <?php elseif ($order['payment_status'] === 'pending_verification'): ?>
             ⏳
         <?php elseif ($order['status'] === 'failed'): ?>
@@ -374,8 +364,6 @@ include '../includes/header.php';
     <h1>
         <?php if ($order['payment_status'] === 'paid'): ?>
             ✅ Pembayaran Berhasil!
-        <?php elseif ($order['payment_status'] === 'dp'): ?>
-            💰 DP Berhasil Dibayar!
         <?php elseif ($order['status'] === 'failed'): ?>
             ❌ Pembayaran Gagal
         <?php elseif ($order['payment_status'] === 'pending_verification'): ?>
@@ -389,8 +377,6 @@ include '../includes/header.php';
     <p class="subtitle">
         <?php if ($order['payment_status'] === 'paid'): ?>
             Terima kasih! Pembayaran Anda telah kami terima. Pesanan akan segera diproses.
-        <?php elseif ($order['payment_status'] === 'dp'): ?>
-            DP berhasil dibayar! Silakan lunasi sisa pembayaran sebesar <strong><?= formatRupiah($sisaPembayaran) ?></strong>.
         <?php elseif ($order['status'] === 'failed'): ?>
             Maaf, pembayaran gagal. Silakan coba lagi atau hubungi admin.
         <?php elseif ($order['payment_status'] === 'pending_verification'): ?>
@@ -453,18 +439,12 @@ include '../includes/header.php';
                 $pl = [
                     'unpaid' => 'Belum Dibayar',
                     'pending_verification' => 'Menunggu Verifikasi',
-                    'paid' => '✅ Lunas',
-                    'dp' => '💰 DP'
+                    'paid' => '✅ Lunas'
                 ];
                 echo $pl[$order['payment_status']] ?? ucfirst($order['payment_status']);
                 ?>
             </span>
         </p>
-        <?php if ($order['payment_status'] === 'dp' && $sisaPembayaran > 0): ?>
-            <p style="color:var(--warning);font-weight:bold;margin-top:5px;">
-                💰 Sisa pembayaran: <?= formatRupiah($sisaPembayaran) ?>
-            </p>
-        <?php endif; ?>
         <?php if ($transactionId): ?>
             <p style="font-size:12px;color:#999;margin-top:5px;">
                 <strong>Transaction ID:</strong> <?= htmlspecialchars($transactionId) ?>
@@ -474,12 +454,6 @@ include '../includes/header.php';
 
     <!-- 🔥 TOMBOL AKSI -->
     <div class="btn-group">
-        <?php if ($order['payment_status'] === 'dp' && $sisaPembayaran > 0): ?>
-            <a href="/payment/confirm.php?order=<?= urlencode($orderCode) ?>" class="btn btn-warning">
-                💰 Bayar Sisa (<?= formatRupiah($sisaPembayaran) ?>)
-            </a>
-        <?php endif; ?>
-
         <?php if ($order['status'] === 'failed'): ?>
             <a href="/payment/confirm.php?order=<?= urlencode($orderCode) ?>" class="btn btn-danger">
                 🔄 Coba Bayar Lagi

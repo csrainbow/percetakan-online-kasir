@@ -61,7 +61,7 @@ if (!$order) {
 try {
     $db->query("SELECT payment_type FROM payments LIMIT 1");
 } catch (PDOException $e) {
-    $db->exec("ALTER TABLE payments ADD COLUMN payment_type VARCHAR(20) DEFAULT 'dp'");
+    $db->exec("ALTER TABLE payments ADD COLUMN payment_type VARCHAR(20) DEFAULT 'pelunasan'");
 }
 
 // Hitung total pembayaran yang sudah terverifikasi
@@ -78,9 +78,9 @@ if ($sisaPembayaran <= 0) {
     exit;
 }
 
-// 🔥 Tentukan jenis pembayaran: DP atau Pelunasan
-$isDp = ($totalPaid == 0);
-$isPelunasan = ($totalPaid > 0 && $sisaPembayaran > 0);
+// 🔥 Sistem DP dihapus: semua pembayaran = pelunasan penuh sisa.
+$isDp = false;
+$isPelunasan = ($sisaPembayaran > 0);
 
 // 🔥 AMBIL DAFTAR BANK DARI DATABASE
 $bankList = [];
@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_payment'])) {
     $accountNumber = trim($_POST['account_number'] ?? '');
     $accountName = trim($_POST['account_name'] ?? '');
     $amount = floatval(str_replace(',', '', $_POST['amount'] ?? 0));
-    $paymentType = $_POST['payment_type'] ?? 'dp';
+    $paymentType = $_POST['payment_type'] ?? 'pelunasan';
     
     // 🔥 Validasi
     if (empty($bankName)) $errors[] = "❌ Nama bank harus diisi";
@@ -145,11 +145,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_payment'])) {
     if (empty($accountName)) $errors[] = "❌ Nama pemilik rekening harus diisi";
     if ($amount <= 0) $errors[] = "❌ Jumlah transfer harus lebih dari 0";
     if ($amount > $sisaPembayaran) $errors[] = "❌ Jumlah transfer tidak boleh melebihi sisa pembayaran (Rp " . formatRupiah($sisaPembayaran) . ")";
-    
-    // 🔥 Validasi minimal DP (50%)
-    if ($paymentType === 'dp' && $amount < ($order['total'] * 0.7)) {
-        $errors[] = "❌ DP minimal 70% dari total pesanan (Rp " . formatRupiah($order['total'] * 0.7) . ")";
-    }
     
     // 🔥 Validasi nomor rekening (hanya angka)
     if (!empty($accountNumber) && !preg_match('/^[0-9\-]+$/', $accountNumber)) {
@@ -206,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_payment'])) {
             try {
                 $adminEmail = getSetting('admin_email');
                 if ($adminEmail) {
-                    $paymentLabel = $paymentType === 'dp' ? 'DP' : 'PELUNASAN';
+                    $paymentLabel = 'PELUNASAN';
                     $subject = '📥 Bukti Pembayaran ' . $paymentLabel . ' - ' . $order['order_code'];
                     $message = "Ada bukti pembayaran baru untuk pesanan:\n\n";
                     $message .= "Kode Pesanan: " . $order['order_code'] . "\n";
@@ -224,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_payment'])) {
                 // Abaikan error email
             }
             
-            $_SESSION['success'] = "✅ Bukti pembayaran " . ($paymentType === 'dp' ? 'DP' : 'pelunasan') . " berhasil diupload! Menunggu verifikasi admin.";
+            $_SESSION['success'] = "✅ Bukti pembayaran pelunasan berhasil diupload! Menunggu verifikasi admin.";
             
             session_write_close();
             
@@ -394,13 +389,6 @@ include '../includes/header.php';
     margin-bottom: 15px;
     border-left: 4px solid;
 }
-.info-box-dp {
-    background: #fef9e7;
-    border-color: var(--danger);
-}
-.info-box-dp strong {
-    color: var(--danger);
-}
 .info-box-pelunasan {
     background: #e8f5e9;
     border-color: var(--success);
@@ -452,16 +440,13 @@ include '../includes/header.php';
         </div>
     <?php endif; ?>
     
-    <!-- 🔥 INFO BOX UNTUK DP -->
-    <?php if ($isDp): ?>
-        <div class="info-box info-box-dp">
-            <strong>💡 Informasi DP</strong>
-            <p style="margin:5px 0 0;font-size:13px;color:#555;">
-                Minimal DP adalah <strong>70%</strong> dari total pesanan (<?= formatRupiah($order['total'] * 0.7) ?>).
-                Anda bisa memilih tombol cepat di bawah.
-            </p>
-        </div>
-    <?php endif; ?>
+    <!-- 🔥 INFO BOX -->
+    <div class="info-box info-box-pelunasan">
+        <strong>✅ Pelunasan Penuh</strong>
+        <p style="margin:5px 0 0;font-size:13px;color:#555;">
+            Silakan bayar lunas sisa tagihan <?= formatRupiah($sisaPembayaran) ?> sesuai metode di bawah.
+        </p>
+    </div>
     
     <!-- 🔥 RINGKASAN PEMBAYARAN -->
     <div class="payment-summary-box">
@@ -486,12 +471,8 @@ include '../includes/header.php';
             </div>
             <div>
                 <span class="label">Jenis Pembayaran:</span>
-                <span class="payment-type-badge <?= $isDp ? 'payment-type-dp' : 'payment-type-pelunasan' ?>">
-                    <?php if ($isDp): ?>
-                        💰 DP (Minimal 70%)
-                    <?php else: ?>
-                        ✅ Pelunasan (Sisa: <?= formatRupiah($sisaPembayaran) ?>)
-                    <?php endif; ?>
+                <span class="payment-type-badge payment-type-pelunasan">
+                    ✅ Pelunasan (Sisa: <?= formatRupiah($sisaPembayaran) ?>)
                 </span>
             </div>
         </div>
@@ -505,7 +486,7 @@ include '../includes/header.php';
     
     <!-- 🔥 FORM -->
     <form method="POST" enctype="multipart/form-data" style="background:#fff;padding:25px;border-radius:10px;border:1px solid #dee2e6;" id="paymentForm">
-        <input type="hidden" name="payment_type" value="<?= $isDp ? 'dp' : 'pelunasan' ?>">
+        <input type="hidden" name="payment_type" value="pelunasan">
         
         <h3 style="margin-top:0;">📋 Informasi Transfer</h3>
         
@@ -538,30 +519,15 @@ include '../includes/header.php';
                        style="width:100%;padding:10px 10px 10px 40px;border:1px solid #ddd;border-radius:6px;font-size:16px;"
                        placeholder="Masukkan jumlah transfer" 
                        min="1" max="<?= $sisaPembayaran ?>" 
-                       value="<?= $isDp ? round($order['total'] * 0.7) : $sisaPembayaran ?>" required>
+                       value="<?= $sisaPembayaran ?>" required>
             </div>
             
             <!-- 🔥 Tombol Cepat -->
             <div style="margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;">
-                <?php if ($isDp): ?>
-                    <button type="button" onclick="setAmount(<?= round($order['total'] * 0.7) ?>)" class="btn btn-sm btn-outline" style="font-size:12px;">
-                        70% (<?= formatRupiah($order['total'] * 0.7) ?>)
-                    </button>
-                    <button type="button" onclick="setAmount(<?= $sisaPembayaran ?>)" class="btn btn-sm btn-outline" style="font-size:12px;">
-                        Lunas (<?= formatRupiah($sisaPembayaran) ?>)
-                    </button>
-                <?php else: ?>
-                    <button type="button" onclick="setAmount(<?= $sisaPembayaran ?>)" class="btn btn-sm btn-primary" style="font-size:12px;">
-                        ✅ Bayar Lunas (<?= formatRupiah($sisaPembayaran) ?>)
-                    </button>
-                <?php endif; ?>
+                <button type="button" onclick="setAmount(<?= $sisaPembayaran ?>)" class="btn btn-sm btn-primary" style="font-size:12px;">
+                    ✅ Bayar Lunas (<?= formatRupiah($sisaPembayaran) ?>)
+                </button>
             </div>
-            
-            <?php if ($isDp): ?>
-                <small style="color:var(--danger);display:block;margin-top:5px;">
-                    ⚠️ Minimal DP adalah 70% dari total pesanan
-                </small>
-            <?php endif; ?>
         </div>
         
         <!-- 🔥 Upload Bukti Transfer -->
@@ -581,22 +547,20 @@ include '../includes/header.php';
         </div>
         
         <!-- 🔥 Info Pelunasan -->
-        <?php if ($isPelunasan): ?>
-            <div class="info-box info-box-pelunasan">
-                <strong>✅ Pelunasan</strong>
-                <p style="margin:5px 0 0;font-size:13px;color:#555;">
-                    Anda sudah membayar DP sebesar <?= formatRupiah($totalPaid) ?>. 
-                    Silakan lunasi sisa pembayaran sebesar <?= formatRupiah($sisaPembayaran) ?>.
-                </p>
-            </div>
-        <?php endif; ?>
+        <div class="info-box info-box-pelunasan">
+            <strong>✅ Pelunasan</strong>
+            <p style="margin:5px 0 0;font-size:13px;color:#555;">
+                Anda sudah membayar <?= formatRupiah($totalPaid) ?>.
+                Silakan lunasi sisa pembayaran sebesar <?= formatRupiah($sisaPembayaran) ?>.
+            </p>
+        </div>
         
         <!-- 🔥 Submit Button -->
         <button type="submit" name="submit_payment" value="1" class="btn btn-primary" 
                 style="width:100%;padding:12px;font-size:16px;" 
                 id="submitBtn"
                 onclick="return handleSubmit(this)">
-            <?= $isDp ? '💰 Kirim Bukti DP' : '✅ Kirim Bukti Pelunasan' ?>
+            ✅ Kirim Bukti Pelunasan
         </button>
         
         <p style="text-align:center;margin-top:12px;font-size:13px;color:#6c757d;">
