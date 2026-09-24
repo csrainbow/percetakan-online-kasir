@@ -623,11 +623,10 @@ if (!function_exists('setting')) {
     }
 }
 
-// 🔥 Biaya layanan QRIS statis (Rp 3.000) — otomatis ditambahkan ke total
-// tagihan order saat metode pembayaran QRIS (statis / cek manual).
+// 🔥 Biaya layanan QRIS DIHAPUS — selalu 0 (nominal bayar = tagihan apa adanya).
 if (!function_exists('qris_statis_fee')) {
     function qris_statis_fee() {
-        return defined('QRIS_STATIS_FEE') ? QRIS_STATIS_FEE : 3000;
+        return defined('QRIS_STATIS_FEE') ? QRIS_STATIS_FEE : 0;
     }
 }
 
@@ -770,8 +769,47 @@ HTML;
         return str_replace(['{{TITLE}}','{{BODY}}'], [$title, $bodyRows], $html);
     }
 }
-if (!function_exists('sendEmail')) {
-    function sendEmail($to, $subject, $message, $contentType = 'text/plain') {
+// 🔥 TABEL & FUNGSI ANTREAN EMAIL (NON-BLOCKING) 🔥
+// msmtp→Gmail lama men-delay ~130 detik per email. Kalau dikirim sinkron dari
+// request web (Server PHP satu-worker), satu pesanan/upload bisa membekukan
+// seluruh website sampai Cloudflare memutus koneksi (error 524). Semua email
+// di-antre dulu; cron-email.php memproses antrean di latar belakang.
+if (!function_exists('email_queue_table')) {
+    function email_queue_table() {
+        global $db;
+        $db->exec("CREATE TABLE IF NOT EXISTS email_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            mail_to TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            body TEXT NOT NULL,
+            content_type TEXT DEFAULT 'text/plain',
+            attempts INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'pending',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            sent_at DATETIME
+        )");
+    }
+}
+
+if (!function_exists('enqueueEmail')) {
+    function enqueueEmail($to, $subject, $message, $contentType = 'text/plain') {
+        global $db;
+        if ($to === '' || $subject === '') return false;
+        try {
+            email_queue_table();
+            $st = $db->prepare("INSERT INTO email_queue (mail_to, subject, body, content_type) VALUES (?, ?, ?, ?)");
+            $st->execute([$to, $subject, $message, $contentType]);
+            return true;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+}
+
+// Kirim email langsung (dipakai cron-email.php, bukan dari request web).
+// SendGrid dulu (API, ≤15 dtk); tanpa SendGrid pakai mail().
+if (!function_exists('_sendEmailRaw')) {
+    function _sendEmailRaw($to, $subject, $message, $contentType = 'text/plain') {
         // Link panjang (bekas tracking) diubah jadi versi pendek via CSLINK
         $message = cs_shorten_links($message);
 
@@ -809,6 +847,17 @@ if (!function_exists('sendEmail')) {
         $headers .= "Reply-To: noreply@rainbowprinting.web.id\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         return @mail($to, $subject, email_html_template($subject, cs_text_to_rows(html_entity_decode($message, ENT_QUOTES, 'UTF-8'))), $headers);
+    }
+}
+
+if (!function_exists('sendEmail')) {
+    function sendEmail($to, $subject, $message, $contentType = 'text/plain') {
+        // Fast path: kalau SendGrid terkonfigurasi, kirim langsung (≤15 detik).
+        if (getSetting('sendgrid_api_key')) {
+            return _sendEmailRaw($to, $subject, $message, $contentType);
+        }
+        // Default: antre — request web tidak boleh menunggu SMTP lambat (524).
+        return enqueueEmail($to, $subject, $message, $contentType);
     }
 }
 
