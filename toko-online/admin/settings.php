@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'qris_fee_percent',
         'qris_api_mid', 'qris_api_nmid', 'qris_api_apikey',
         'midtrans_server_key', 'midtrans_client_key',
+        'midtrans_is_production',
         'invoice_template', 'invoice_footer', 'printer_options',
         'logo_nota_size',
         'whatsapp_number', 'footer_text',
@@ -99,6 +100,15 @@ $settings = [];
 $rows = $db->query("SELECT * FROM settings")->fetchAll();
 foreach ($rows as $row) {
     $settings[$row['key']] = $row['value'];
+}
+
+// 🔥 Ingat tab aktif setelah save (supaya pengguna tetap di tab yang sama)
+$activeTab = 'tab-toko';
+if (isset($_POST['active_tab'])) {
+    $t = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $_POST['active_tab']);
+    if (in_array($t, ['tab-toko', 'tab-bank', 'tab-qris', 'tab-qris-dinamis', 'tab-midtrans', 'tab-invoice'], true)) {
+        $activeTab = $t;
+    }
 }
 
 $pageTitle = 'Pengaturan';
@@ -342,20 +352,21 @@ include '../includes/header.php';
             <div class="alert alert-danger"><?= $error ?></div>
         <?php endif; ?>
 
-        <form method="POST" enctype="multipart/form-data" class="settings-form" id="settingsForm">
+        <form method="POST" enctype="multipart/form-data" class="settings-form" id="settingsForm" onsubmit="return saveUI(this)">
+            <input type="hidden" name="active_tab" id="activeTabInput" value="<?= htmlspecialchars($activeTab) ?>">
             
             <!-- 🔥 TAB NAVIGATION -->
             <div class="tab-nav">
-                <button type="button" class="tab-btn active" data-tab="tab-toko">🏪 Toko</button>
-                <button type="button" class="tab-btn" data-tab="tab-bank">🏦 Bank</button>
-                <button type="button" class="tab-btn" data-tab="tab-qris">📱 QRIS</button>
-                <button type="button" class="tab-btn" data-tab="tab-qris-dinamis">⚡ QRIS Dinamis</button>
-                <button type="button" class="tab-btn" data-tab="tab-midtrans">💳 Midtrans</button>
-                <button type="button" class="tab-btn" data-tab="tab-invoice">🧾 Invoice</button>
+                <button type="button" class="tab-btn<?= $activeTab === 'tab-toko' ? ' active' : '' ?>" data-tab="tab-toko">🏪 Toko</button>
+                <button type="button" class="tab-btn<?= $activeTab === 'tab-bank' ? ' active' : '' ?>" data-tab="tab-bank">🏦 Bank</button>
+                <button type="button" class="tab-btn<?= $activeTab === 'tab-qris' ? ' active' : '' ?>" data-tab="tab-qris">📱 QRIS</button>
+                <button type="button" class="tab-btn<?= $activeTab === 'tab-qris-dinamis' ? ' active' : '' ?>" data-tab="tab-qris-dinamis">⚡ QRIS Dinamis</button>
+                <button type="button" class="tab-btn<?= $activeTab === 'tab-midtrans' ? ' active' : '' ?>" data-tab="tab-midtrans">💳 Midtrans</button>
+                <button type="button" class="tab-btn<?= $activeTab === 'tab-invoice' ? ' active' : '' ?>" data-tab="tab-invoice">🧾 Invoice</button>
             </div>
 
             <!-- 🔥 TAB 1: TOKO -->
-            <div class="tab-section active" id="tab-toko">
+            <div class="tab-section<?= $activeTab === 'tab-toko' ? ' active' : '' ?>" id="tab-toko">
                 <div class="settings-section">
                     <h2>🏪 Informasi Toko</h2>
                     
@@ -392,7 +403,7 @@ include '../includes/header.php';
             </div>
 
             <!-- 🔥 TAB 2: BANK -->
-            <div class="tab-section" id="tab-bank">
+            <div class="tab-section<?= $activeTab === 'tab-bank' ? ' active' : '' ?>" id="tab-bank">
                 <div class="settings-section">
                     <h2>🏦 Rekening Bank 1</h2>
                     <div class="form-row">
@@ -449,7 +460,7 @@ include '../includes/header.php';
             </div>
 
             <!-- 🔥 TAB 3: QRIS STATIS -->
-            <div class="tab-section" id="tab-qris">
+            <div class="tab-section<?= $activeTab === 'tab-qris' ? ' active' : '' ?>" id="tab-qris">
                 <div class="settings-section">
                     <h2>📱 QRIS Statis</h2>
                     <p style="color:#666;font-size:13px;margin-bottom:15px;">Upload QR code untuk pembayaran QRIS. Dipakai jika QRIS Dinamis belum aktif.</p>
@@ -485,7 +496,7 @@ include '../includes/header.php';
             </div>
 
             <!-- 🔥 TAB 3b: QRIS DINAMIS -->
-            <div class="tab-section" id="tab-qris-dinamis">
+            <div class="tab-section<?= $activeTab === 'tab-qris-dinamis' ? ' active' : '' ?>" id="tab-qris-dinamis">
                 <div class="settings-section">
                     <h2>⚡ QRIS Dinamis — InterActive</h2>
                     <p style="color:#666;font-size:13px;margin-bottom:15px;">Konfigurasi QRIS Dinamis (berlaku 30 menit, API live). Isi APIKEY dari email aktivasi.</p>
@@ -510,19 +521,27 @@ include '../includes/header.php';
             </div>
 
             <!-- 🔥 TAB 4: MIDTRANS -->
-            <div class="tab-section" id="tab-midtrans">
+            <div class="tab-section<?= $activeTab === 'tab-midtrans' ? ' active' : '' ?>" id="tab-midtrans">
                 <div class="settings-section">
                     <h2>💳 Midtrans <span class="badge">Opsional</span></h2>
                     <p style="color:#666;font-size:13px;margin-bottom:15px;">Konfigurasi untuk pembayaran via Midtrans. Kosongkan jika tidak menggunakan.</p>
-                    
+
+                    <div class="form-group">
+                        <label>Mode Midtrans</label>
+                        <select name="midtrans_is_production" id="midtransMode">
+                            <option value="1" <?= ($settings['midtrans_is_production'] ?? '1') === '1' ? 'selected' : '' ?>>Production (pembayaran asli, key dimulai "Mid-")</option>
+                            <option value="0" <?= ($settings['midtrans_is_production'] ?? '1') !== '1' ? 'selected' : '' ?>>Sandbox (uji coba, key dimulai "SB-Mid-")</option>
+                        </select>
+                        <div class="helper-text">Pilih "Sandbox" saat testing. Merchant ID & key bisa dilihat di dashboard Midtrans → Settings → Access Keys.</div>
+                    </div>
                     <div class="form-group">
                         <label>Server Key</label>
-                        <input type="text" name="midtrans_server_key" value="<?= htmlspecialchars($settings['midtrans_server_key'] ?? '') ?>" placeholder="SB-Mid-server-xxxx">
+                        <input type="text" name="midtrans_server_key" value="<?= htmlspecialchars($settings['midtrans_server_key'] ?? '') ?>" placeholder="<?= ($settings['midtrans_is_production'] ?? '1') === '1' ? 'Mid-server-xxxx' : 'SB-Mid-server-xxxx' ?>">
                         <div class="helper-text">Dapatkan dari dashboard Midtrans</div>
                     </div>
                     <div class="form-group">
                         <label>Client Key</label>
-                        <input type="text" name="midtrans_client_key" value="<?= htmlspecialchars($settings['midtrans_client_key'] ?? '') ?>" placeholder="SB-Mid-client-xxxx">
+                        <input type="text" name="midtrans_client_key" value="<?= htmlspecialchars($settings['midtrans_client_key'] ?? '') ?>" placeholder="<?= ($settings['midtrans_is_production'] ?? '1') === '1' ? 'Mid-client-xxxx' : 'SB-Mid-client-xxxx' ?>">
                         <div class="helper-text">Dapatkan dari dashboard Midtrans</div>
                     </div>
                     <div class="form-group">
@@ -534,7 +553,7 @@ include '../includes/header.php';
             </div>
 
             <!-- 🔥 TAB 5: INVOICE -->
-            <div class="tab-section" id="tab-invoice">
+            <div class="tab-section<?= $activeTab === 'tab-invoice' ? ' active' : '' ?>" id="tab-invoice">
                 <div class="settings-section">
                     <h2>🖼️ Logo Nota (A5 / Invoice)</h2>
                     <div class="form-group">
@@ -641,8 +660,22 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         this.classList.add('active');
         const target = document.getElementById(this.dataset.tab);
         if (target) target.classList.add('active');
+
+        // 🔥 Simpan tab aktif supaya tetap di tab yang sama setelah save
+        const input = document.getElementById('activeTabInput');
+        if (input) input.value = this.dataset.tab;
     });
 });
+
+// 🔥 Umpan balik saat tombol Simpan ditekan
+function saveUI(form) {
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Menyimpan...';
+    }
+    return true;
+}
 
 // 🔥 QRIS PREVIEW
 document.getElementById('qrisInput')?.addEventListener('change', function(e) {
@@ -699,7 +732,7 @@ function confirmSave() {
     return confirm('⚠️ Yakin ingin menyimpan semua pengaturan?');
 }
 
-// 🔥 AUTO HIDE ALERT
+// 🔥 AUTO HIDE ALERT + scroll ke alert setelah reload
 document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert');
     alerts.forEach(alert => {
@@ -709,6 +742,9 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => alert.remove(), 500);
         }, 5000);
     });
+    if (alerts.length > 0) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 });
 </script>
 
