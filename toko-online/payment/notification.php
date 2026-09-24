@@ -33,6 +33,45 @@ if (!function_exists('sendEmail')) {
     }
 }
 
+// 🔥 🔥 IP WHITELIST NOTIFIKASI MIDTRANS 🔥 🔥
+// Sumber resmi: https://docs.midtrans.com/en/technical-reference/api-overview
+$midtransAllowedIps = [
+    // 🔥 PRODUCTION
+    '8.215.30.222','147.139.209.49','8.215.32.142','147.139.163.77','8.215.25.24',
+    '8.215.3.193','147.139.210.20','149.129.238.95','8.215.9.206','147.139.134.22',
+    '149.129.253.222','8.215.56.174','8.215.27.65','147.139.129.139','149.129.192.10',
+    '8.215.15.117','149.129.234.6','8.215.79.106','149.129.192.204','8.215.83.17',
+    '147.139.197.147','147.139.207.105','147.139.193.191','147.139.201.222','8.215.82.175',
+    '149.129.218.45','8.215.10.140','8.215.83.130','147.139.206.209','8.215.75.234',
+    // 🧪 SANDBOX
+    '149.129.216.115','147.139.167.196','147.139.179.47','147.139.144.184','147.139.169.196',
+    '147.139.168.217','8.215.17.96','149.129.254.13','147.139.203.227','147.139.192.94',
+    '147.139.206.250','147.139.213.108','8.215.23.167','147.139.209.91','8.215.21.228',
+    '147.139.173.83','147.139.132.215','149.129.227.68','149.129.234.77','147.139.137.231',
+    '147.139.180.156','8.215.10.65','8.215.22.163','147.139.215.190','8.215.0.89',
+    '8.215.16.140','147.139.165.251','147.139.209.83','147.139.167.157','147.139.192.232',
+];
+
+// Site berada di belakang Cloudflare → REMOTE_ADDR = IP Cloudflare.
+// IP asli dibaca dari header CF-Connecting-IP (selalu di-set Cloudflare).
+$midtransClientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+    $midtransClientIp = trim($_SERVER['HTTP_CF_CONNECTING_IP']);
+} elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    $midtransClientIp = trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+}
+
+if (!in_array($midtransClientIp, $midtransAllowedIps, true)) {
+    logMidtrans("🚫 Notifikasi DITOLAK - IP tidak ada di whitelist Midtrans", [
+        'client_ip' => $midtransClientIp,
+        'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? ''
+    ]);
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
+    exit;
+}
+logMidtrans("✅ IP valid (whitelist Midtrans)", ['ip' => $midtransClientIp]);
+
 // 🔥 AMBIL NOTIFIKASI
 $notification = json_decode(file_get_contents('php://input'), true);
 logMidtrans("📩 Notification received", $notification);
